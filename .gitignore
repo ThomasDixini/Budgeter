@@ -67,3 +67,4 @@ coverage*.info
 publish/
 **/PublishProfiles/*.pubxml
 *.publish.xml
+*.log
