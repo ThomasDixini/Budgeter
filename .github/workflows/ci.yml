@@ -27,6 +27,9 @@ jobs:
       - name: Restore
         run: dotnet restore Budgeter.slnx
 
+      - name: Format check
+        run: dotnet format Budgeter.slnx --verify-no-changes --no-restore
+
       - name: Build
         run: dotnet build Budgeter.slnx --no-restore --configuration Release
 
@@ -57,6 +60,12 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
 
       - name: Test
         run: npm run test:coverage
