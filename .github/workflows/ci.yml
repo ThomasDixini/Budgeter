@@ -60,7 +60,7 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
 
       - name: Install
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Lint
         run: npm run lint
@@ -113,7 +113,7 @@ jobs:
       # The TypeScript analyzer resolves types from the installed packages
       - name: Install web dependencies
         working-directory: apps/web
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # The scanner is installed in a local tool path so the analysis does not
       # depend on the global tools directory being on the runner PATH.
