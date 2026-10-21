@@ -1,0 +1,26 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Placeholder: the serverless provider is still a pending decision
+      # (see AGENTS.md). Wire the real deploy steps here once chosen.
+      - name: Deployment target not configured
+        run: |
+          echo "No deploy target configured yet."
+          echo "Add the serverless provider deploy steps to this job."
