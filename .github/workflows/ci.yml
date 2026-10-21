@@ -118,7 +118,7 @@ jobs:
       # The scanner is installed in a local tool path so the analysis does not
       # depend on the global tools directory being on the runner PATH.
       - name: Install SonarScanner for .NET
-        run: dotnet tool install --tool-path .sonar/scanner --version 12.0.0
+        run: dotnet tool install dotnet-sonarscanner --tool-path .sonar/scanner --version 12.0.0
 
       - name: Download API coverage
         uses: actions/download-artifact@v4
