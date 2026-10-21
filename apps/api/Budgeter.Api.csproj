@@ -12,4 +12,13 @@
     <None Remove="tests/**" />
   </ItemGroup>
 
+  <!-- The SonarScanner for .NET derives the analysis scope from MSBuild items,
+       so the Angular sources must be linked here to be analyzed by SonarCloud.
+       Spec files are linked by the test project instead, so they are analyzed as test code. -->
+  <ItemGroup>
+    <None Include="..\web\src\**\*.ts" Exclude="..\web\src\**\*.spec.ts" />
+    <None Include="..\web\src\**\*.html" />
+    <None Include="..\web\src\**\*.css" />
+  </ItemGroup>
+
 </Project>

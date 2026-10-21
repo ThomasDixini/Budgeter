@@ -71,6 +71,11 @@ jobs:
       - name: Test
         run: npm run test:coverage
 
+      # SonarCloud resolves LCOV "SF:" entries against the repository root,
+      # but the Angular builder emits them relative to apps/web.
+      - name: Normalize coverage paths
+        run: find coverage -name lcov.info -type f -exec sed -i "s|^SF:|SF:apps/web/|" {} +
+
       - name: Build
         run: npm run build
 
@@ -90,6 +95,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      # The TypeScript analyzer resolves types from the installed packages
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global SonarScanner.Tools.DotNet
+
       - name: Download API coverage
         uses: actions/download-artifact@v4
         with:
@@ -102,10 +125,26 @@ jobs:
           name: web-coverage
           path: apps/web/coverage
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+      # The .NET scanner is the only one able to analyze C#; it also covers the
+      # Angular sources because they are linked as MSBuild items of the solution.
+      - name: Begin analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          dotnet sonarscanner begin
+          /k:ThomasDixini_Budgeter
+          /d:sonar.organization=thomasdixini
+          /d:sonar.host.url=https://sonarcloud.io
+          /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.scanner.scanAll=true
+          /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml"
+          /d:sonar.javascript.lcov.reportPaths="apps/web/coverage/**/lcov.info"
+
+      - name: Build
+        run: dotnet build Budgeter.slnx --configuration Release
+
+      - name: End analysis
+        run: dotnet sonarscanner end
 
       - name: SonarCloud Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1

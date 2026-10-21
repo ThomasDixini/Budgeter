@@ -25,4 +25,9 @@
     <ProjectReference Include="..\..\Budgeter.Api.csproj" />
   </ItemGroup>
 
+  <!-- Linked here so the SonarScanner for .NET classifies the Angular specs as test code -->
+  <ItemGroup>
+    <None Include="..\..\..\web\src\**\*.spec.ts" />
+  </ItemGroup>
+
 </Project>
