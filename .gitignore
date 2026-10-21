@@ -68,3 +68,6 @@ publish/
 **/PublishProfiles/*.pubxml
 *.publish.xml
 *.log
+*.properties
+!sonar-project.properties
+TestResults/
