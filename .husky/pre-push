@@ -1,0 +1,27 @@
+#!/bin/sh
+
+protected_branch="main"
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ "$current_branch" = "$protected_branch" ]; then
+  exit 0
+fi
+
+echo "[pre-push] Formatting .NET code..."
+dotnet format Budgeter.slnx --no-restore || exit 1
+
+echo "[pre-push] Linting and formatting web code..."
+(cd apps/web && npm run format) || exit 1
+(cd apps/web && npm run lint) || exit 1
+
+if ! git diff --quiet; then
+  git add -u
+  git commit --amend --no-edit --no-verify
+fi
+
+if command -v gh >/dev/null 2>&1; then
+  if ! gh pr view "$current_branch" >/dev/null 2>&1; then
+    echo "[pre-push] Opening pull request for $current_branch..."
+    gh pr create --fill --base main --head "$current_branch" || true
+  fi
+fi

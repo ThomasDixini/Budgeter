@@ -1,0 +1,14 @@
+#!/bin/sh
+
+echo "[pre-commit] Formatting .NET code..."
+dotnet format Budgeter.slnx --no-restore || exit 1
+
+echo "[pre-commit] Formatting and linting web code..."
+if [ -d "apps/web/node_modules" ]; then
+  (cd apps/web && npm run format) || exit 1
+  (cd apps/web && npm run lint) || exit 1
+else
+  echo "[pre-commit] apps/web/node_modules missing, skipping web checks."
+fi
+
+git add -u
