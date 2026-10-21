@@ -64,6 +64,7 @@ coverage*.info
 *.coveragexml
 
 # SonarCloud scanner artifacts
+.sonar/
 .sonarqube/
 .scannerwork/
 

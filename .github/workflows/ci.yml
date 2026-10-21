@@ -95,6 +95,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
@@ -110,8 +115,10 @@ jobs:
         working-directory: apps/web
         run: npm ci
 
+      # The scanner is installed in a local tool path so the analysis does not
+      # depend on the global tools directory being on the runner PATH.
       - name: Install SonarScanner for .NET
-        run: dotnet tool install --global SonarScanner.Tools.DotNet
+        run: dotnet tool install --tool-path .sonar/scanner --version 12.0.0
 
       - name: Download API coverage
         uses: actions/download-artifact@v4
@@ -130,24 +137,24 @@ jobs:
       - name: Begin analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          dotnet sonarscanner begin
-          /k:ThomasDixini_Budgeter
-          /d:sonar.organization=thomasdixini
-          /d:sonar.host.url=https://sonarcloud.io
-          /d:sonar.token="$SONAR_TOKEN"
-          /d:sonar.scanner.scanAll=true
-          /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml"
-          /d:sonar.javascript.lcov.reportPaths="apps/web/coverage/**/lcov.info"
+        run: |
+          ./.sonar/scanner/dotnet-sonarscanner begin \
+            /k:"ThomasDixini_Budgeter" \
+            /o:"thomasdixini" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.scanner.scanAll=true \
+            /d:sonar.sourceEncoding="UTF-8" \
+            /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**,**/dist/**,**/.angular/**,**/coverage/**" \
+            /d:sonar.coverage.exclusions="**/*.spec.ts" \
+            /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" \
+            /d:sonar.javascript.lcov.reportPaths="apps/web/coverage/**/lcov.info" \
+            /d:sonar.qualitygate.wait=true \
+            /d:sonar.qualitygate.timeout=300
 
       - name: Build
         run: dotnet build Budgeter.slnx --configuration Release
 
       - name: End analysis
-        run: dotnet sonarscanner end
-
-      - name: SonarCloud Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1
-        timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
