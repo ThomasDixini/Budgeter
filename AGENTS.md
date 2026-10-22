@@ -99,6 +99,24 @@ No task can be considered done without passing the gates:
 - Use structured JSON for logs.
 - Use plain text only for user-facing CLI output.
 
+## Commit message convention (mandatory)
+
+Format: `<type>(<scope>): <description>`
+
+- **Type:** the purpose of the change.
+- **Scope:** the affected module.
+- **Description:** what changed, stated clearly.
+
+Examples:
+
+```
+feat(auth): add JWT authentication
+fix(orders): prevent duplicate order creation
+refactor(users): simplify user validation
+test(payments): add refund unit tests
+docs(api): document pagination parameters
+```
+
 ## Work conventions
 
 - Follow the stack already established in the project; never introduce a new library without clear need and without checking if the repo already has a solution.
