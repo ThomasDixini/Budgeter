@@ -41,7 +41,7 @@ Write-Host "[dev] API  -> http://localhost:5099"
 Write-Host "[dev] Web  -> http://localhost:4200"
 Write-Host "[dev] Press Ctrl+C to stop both."
 
-function Write-NewLogLines {
+function Show-NewLogLines {
     param($Path, $Prefix)
 
     if (-not (Test-Path -LiteralPath $Path)) { return }
@@ -61,8 +61,8 @@ try {
         $anyRunning = $false
 
         foreach ($service in $services) {
-            Write-NewLogLines -Path $service.Out -Prefix $service.Name
-            Write-NewLogLines -Path $service.Err -Prefix $service.Name
+            Show-NewLogLines -Path $service.Out -Prefix $service.Name
+            Show-NewLogLines -Path $service.Err -Prefix $service.Name
             if (-not $service.Process.HasExited) { $anyRunning = $true }
         }
 
