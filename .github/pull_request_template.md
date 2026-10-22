@@ -1,21 +1,21 @@
-## 📋 Descrição
-<!-- O que foi feito e por quê? -->
+## 📋 Description
+<!-- What was done and why? -->
 
-## 🔗 Issue relacionada
+## 🔗 Related issue
 <!-- Ex: Closes #123 -->
 
-## 🧪 Como testar?
-- [ ] Testes automatizados adicionados/atualizados
-- [ ] Testado manualmente
+## 🧪 How to test?
+- [ ] Automated tests added/updated
+- [ ] Manually tested
 
 ## ✅ Checklist
-- [ ] Código segue os padrões do projeto
-- [ ] Não há credenciais ou informações sensíveis
-- [ ] Documentação atualizada, se necessário
-- [ ] Sem alterações desnecessárias
+- [ ] Code follows the project standards
+- [ ] No credentials or sensitive information
+- [ ] Documentation updated, if necessary
+- [ ] No unnecessary changes
 
-## 📸 Evidências
-<!-- Opcional: screenshots, logs ou exemplos de requisição -->
+## 📸 Evidence
+<!-- Optional: screenshots, logs, or request examples -->
 
-## ⚠️ Riscos e observações
-<!-- Possíveis impactos, breaking changes ou pontos de atenção -->
+## ⚠️ Risks and notes
+<!-- Possible impacts, breaking changes, or points of attention -->
