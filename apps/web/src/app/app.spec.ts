@@ -1,7 +1,17 @@
+﻿import { Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { RouterOutlet } from '@angular/router';
 import { App } from './app';
+import { Sidebar } from './components/sidebar/sidebar';
+
+@Component({
+  selector: 'app-sidebar',
+  standalone: true,
+  template: '',
+})
+class MockSidebar {}
 
 describe('App', () => {
   let httpTesting: HttpTestingController;
@@ -10,7 +20,13 @@ describe('App', () => {
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideHttpClient(), provideHttpClientTesting()],
-    }).compileComponents();
+    })
+      .overrideComponent(App, {
+        remove: { imports: [Sidebar, RouterOutlet] },
+        add: { imports: [MockSidebar, RouterOutlet] },
+      })
+      .compileComponents();
+
     httpTesting = TestBed.inject(HttpTestingController);
   });
 
@@ -18,31 +34,7 @@ describe('App', () => {
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);
-    expect(fixture.componentInstance).toBeTruthy();
-  });
-
-  it('should render the hello message returned by the API', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    httpTesting.expectOne('/api', 'GET').flush('Hello World!');
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Budgeter');
-    expect(compiled.querySelector('.api-message')?.textContent).toContain('Hello World!');
-  });
-
-  it('should show a fallback message when the API is unavailable', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-
-    httpTesting.expectOne('/api', 'GET').error(new ProgressEvent('offline'));
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.api-message')?.textContent).toContain('API unavailable');
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
   });
 });
