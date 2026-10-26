@@ -1,0 +1,32 @@
+<div class="home" [style.--module-accent-rgb]="accentRgb()">
+  <div class="stars" aria-hidden="true"></div>
+  <div class="glow glow-mint" aria-hidden="true"></div>
+  <div class="glow glow-violet" aria-hidden="true"></div>
+
+  <app-header />
+
+  <main>
+    <app-module-spotlight
+      [module]="activeModule()"
+      [position]="activeIndex() + 1"
+      [total]="modules.length"
+    />
+  </main>
+
+  <app-module-wheel-nav
+    [modules]="modules"
+    [rotation]="rotation()"
+    [isPickerOpen]="isPickerOpen()"
+    (rotate)="rotateBy($event)"
+    (openPicker)="openPicker()"
+  />
+
+  @if (isPickerOpen()) {
+    <app-module-picker
+      [modules]="modules"
+      [activeIndex]="activeIndex()"
+      (pick)="pickModule($event)"
+      (dismiss)="closePicker()"
+    />
+  }
+</div>

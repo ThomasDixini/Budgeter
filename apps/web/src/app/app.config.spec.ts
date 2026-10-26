@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { appConfig } from './app.config';
 import { routes } from './app.routes';
+import { Home } from './pages/home/home';
 
 describe('appConfig', () => {
   let httpTesting: HttpTestingController;
@@ -23,8 +24,12 @@ describe('appConfig', () => {
 });
 
 describe('routes', () => {
-  it('starts with no routes defined', () => {
-    expect(routes).toEqual([]);
+  it('serves the home page at the root path', () => {
+    expect(routes.find((route) => route.path === '')?.component).toBe(Home);
+  });
+
+  it('redirects unknown paths to the home page', () => {
+    expect(routes.find((route) => route.path === '**')?.redirectTo).toBe('');
   });
 
   it('is wired into the application config', () => {

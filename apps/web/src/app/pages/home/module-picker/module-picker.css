@@ -1,0 +1,135 @@
+:host {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+@keyframes overlay-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ring-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-overlay);
+  backdrop-filter: blur(14px);
+  animation: overlay-fade var(--duration-fast) ease;
+}
+
+.close {
+  position: absolute;
+  top: 28px;
+  right: var(--space-page-x);
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-glass);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ring {
+  position: relative;
+  flex: none;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: radial-gradient(
+    circle at 50% 30%,
+    rgba(255, 255, 255, 0.06),
+    rgba(8, 8, 12, 0.95) 65%
+  );
+  box-shadow:
+    0 0 80px rgba(var(--color-mint-rgb), 0.14),
+    0 0 140px rgba(var(--color-violet-deep-rgb), 0.14);
+  animation: ring-in 0.4s var(--ease-spring);
+}
+
+.ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.ring-eyebrow {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--color-text-subtle);
+}
+
+.ring-title {
+  font-size: 22px;
+  font-weight: var(--font-weight-light);
+}
+
+.ring-arm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+.option {
+  position: absolute;
+  left: -56px;
+  top: -56px;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid var(--color-border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-soft);
+}
+
+.option:hover {
+  background: var(--color-surface-hover);
+}
+
+.option.is-active {
+  border-color: rgb(var(--option-accent-rgb));
+  color: rgb(var(--option-accent-rgb));
+  box-shadow: 0 0 32px rgba(var(--option-accent-rgb), 0.4);
+}
+
+.option-name {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 520px) {
+  .ring {
+    transform: scale(0.72);
+    animation: none;
+  }
+}

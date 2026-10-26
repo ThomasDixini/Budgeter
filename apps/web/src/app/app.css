@@ -1,10 +1,4 @@
-.dashboard {
-  font-family: system-ui, sans-serif;
-  margin: 4rem auto;
-  max-width: 40rem;
-  text-align: center;
-}
-
-.api-message {
-  font-size: 1.25rem;
+:host {
+  display: block;
+  min-height: 100vh;
 }

@@ -1,0 +1,43 @@
+<div class="overlay" role="dialog" aria-modal="true" aria-label="Choose a module">
+  <button #closeButton class="close" type="button" aria-label="Close" (click)="dismiss.emit()">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M6 6l12 12M18 6L6 18"></path>
+    </svg>
+  </button>
+
+  <div class="ring">
+    <div class="ring-label">
+      <span class="ring-eyebrow">Modules</span>
+      <span class="ring-title">Choose one</span>
+    </div>
+    @for (option of options(); track option.index) {
+      <div
+        class="ring-arm"
+        [style.transform]="
+          'rotate(' + option.angle + 'deg) translateY(-160px) rotate(' + -option.angle + 'deg)'
+        "
+      >
+        <button
+          class="option"
+          type="button"
+          [class.is-active]="option.isActive"
+          [attr.aria-current]="option.isActive"
+          [style.--option-accent-rgb]="accentRgbVariable(option.module.accent)"
+          (click)="pick.emit(option.index)"
+        >
+          <app-module-icon [kind]="option.module.kind" [size]="26" />
+          <span class="option-name">{{ option.module.name }}</span>
+        </button>
+      </div>
+    }
+  </div>
+</div>

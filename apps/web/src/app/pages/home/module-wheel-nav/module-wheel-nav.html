@@ -1,0 +1,62 @@
+<nav class="wheel-nav" aria-label="Modules">
+  <div class="halo" aria-hidden="true"></div>
+  <div class="dome" aria-hidden="true"></div>
+
+  <div class="dome-controls">
+    <button
+      class="half half-left"
+      type="button"
+      aria-label="Spin left (previous module)"
+      (click)="rotate.emit(-1)"
+    ></button>
+    <button
+      class="half half-right"
+      type="button"
+      aria-label="Spin right (next module)"
+      (click)="rotate.emit(1)"
+    ></button>
+  </div>
+
+  <div class="track" aria-hidden="true">
+    <div class="spinner" [style.transform]="'rotate(' + spin() + 'deg)'">
+      @for (slot of slots(); track $index) {
+        <div class="arm" [style.transform]="'rotate(' + slot.angle + 'deg) translateY(-150px)'">
+          <div class="upright" [style.transform]="'rotate(' + slot.uprightAngle + 'deg)'">
+            <div
+              class="slot"
+              [class.is-active]="slot.isActive"
+              [class.is-visible]="slot.isVisible"
+              [style.--slot-accent-rgb]="accentRgbVariable(slot.module.accent)"
+            >
+              <app-module-icon [kind]="slot.module.kind" [size]="26" />
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <p class="active-name">{{ activeName() }}</p>
+
+  <button
+    class="all-modules"
+    type="button"
+    [attr.aria-expanded]="isPickerOpen()"
+    (click)="openPicker.emit()"
+  >
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 15l6-6 6 6"></path>
+    </svg>
+    All modules
+  </button>
+</nav>
