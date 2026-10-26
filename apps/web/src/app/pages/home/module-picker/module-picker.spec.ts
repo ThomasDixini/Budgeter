@@ -18,7 +18,7 @@ describe('ModulePicker', () => {
   it('lists every module', () => {
     const fixture = createPicker();
 
-    expect(options(fixture).length).toBe(APP_MODULES.length);
+    expect(options(fixture)).toHaveLength(APP_MODULES.length);
   });
 
   it('marks the active module as current', () => {

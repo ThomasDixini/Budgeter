@@ -27,12 +27,14 @@ export class HomePage {
     await this.page.goto('/');
   }
 
-  /** Clicks a dome half `steps` times; negative steps spin left. */
-  async spin(steps: number): Promise<void> {
-    const button = steps < 0 ? this.spinLeftButton : this.spinRightButton;
-    for (let step = 0; step < Math.abs(steps); step++) {
-      await button.click();
-    }
+  /** Spins the wheel one module back. */
+  async spinLeft(): Promise<void> {
+    await this.spinLeftButton.click();
+  }
+
+  /** Spins the wheel one module forward. */
+  async spinRight(): Promise<void> {
+    await this.spinRightButton.click();
   }
 
   /** Opens the picker and chooses the module with the given name. */

@@ -58,6 +58,6 @@ describe('ModuleWheelNav', () => {
 
     const slots = (fixture.nativeElement as HTMLElement).querySelectorAll('.slot');
 
-    expect(slots.length).toBe(8);
+    expect(slots).toHaveLength(8);
   });
 });

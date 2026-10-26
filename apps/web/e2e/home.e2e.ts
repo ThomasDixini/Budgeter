@@ -16,21 +16,22 @@ test.describe('home module wheel', () => {
   });
 
   test('spinning right brings the next module to the spotlight', async () => {
-    await home.spin(1);
+    await home.spinRight();
 
     await expect(home.title).toHaveText('Finances');
     await expect(home.openModuleLink).toHaveAttribute('href', '/finances');
   });
 
   test('spinning left from the first module wraps to the last one', async () => {
-    await home.spin(-1);
+    await home.spinLeft();
 
     await expect(home.counter).toHaveText('Module 4 of 4');
     await expect(home.title).toHaveText('Coming soon');
   });
 
   test('hides the open link for a module that is not built yet', async () => {
-    await home.spin(2);
+    await home.spinRight();
+    await home.spinRight();
 
     await expect(home.title).toHaveText('Coming soon');
     await expect(home.openModuleLink).toHaveCount(0);

@@ -49,7 +49,7 @@ describe('Home', () => {
 
     clickAndRender(fixture, '.all-modules');
 
-    expect(query(fixture, '[role="dialog"]')).not.toBeNull();
+    expect(query(fixture, 'dialog')).not.toBeNull();
   });
 
   it('closes the picker once a module is picked', () => {
@@ -58,7 +58,7 @@ describe('Home', () => {
 
     clickAndRender(fixture, '.option');
 
-    expect(query(fixture, '[role="dialog"]')).toBeNull();
+    expect(query(fixture, 'dialog')).toBeNull();
   });
 
   it('jumps to the module picked in the picker', () => {

@@ -13,7 +13,7 @@ describe('ModuleIcon', () => {
   it('draws the target glyph for routines', () => {
     const svg = renderIcon('routines', 26);
 
-    expect(svg.querySelectorAll('circle').length).toBe(3);
+    expect(svg.querySelectorAll('circle')).toHaveLength(3);
   });
 
   it('draws the wallet glyph for finances', () => {
