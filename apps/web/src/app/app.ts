@@ -1,19 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { ApiService } from './core/api.service';
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  styleUrl: './app.css',
+  imports: [RouterOutlet],
   templateUrl: './app.html',
+  styleUrl: './app.css',
 })
-export class App implements OnInit {
-  protected readonly apiMessage = signal('Loading...');
-  private readonly api = inject(ApiService);
-
-  ngOnInit(): void {
-    this.api.getHello().subscribe({
-      next: (message) => this.apiMessage.set(message),
-      error: () => this.apiMessage.set('API unavailable'),
-    });
-  }
-}
+export class App {}

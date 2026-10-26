@@ -81,6 +81,23 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: E2E typecheck
+        run: npm run e2e:typecheck
+
+      - name: Install Playwright browser
+        run: npm run e2e:install
+
+      - name: E2E tests
+        run: npm run e2e
+
+      - name: Upload E2E report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-e2e-report
+          path: apps/web/playwright-report
+          if-no-files-found: ignore
+
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
@@ -147,7 +164,7 @@ jobs:
             /d:sonar.scanner.scanAll=true \
             /d:sonar.sourceEncoding="UTF-8" \
             /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**,**/dist/**,**/.angular/**,**/coverage/**" \
-            /d:sonar.coverage.exclusions="**/*.spec.ts,scripts/**,apps/web/eslint.config.js,apps/web/src/main.ts" \
+            /d:sonar.coverage.exclusions="**/*.spec.ts,scripts/**,apps/web/eslint.config.js,apps/web/src/main.ts,apps/web/e2e/**,apps/web/playwright.config.ts" \
             /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" \
             /d:sonar.javascript.lcov.reportPaths="apps/web/coverage/**/lcov.info" \
             /d:sonar.qualitygate.wait=true \
