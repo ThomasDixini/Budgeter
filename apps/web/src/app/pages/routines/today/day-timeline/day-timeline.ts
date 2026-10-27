@@ -10,11 +10,13 @@ import {
 import { Routine } from '../../../../core/routines/routine';
 
 interface TimelineBlockView {
-  readonly id: string;
+  readonly key: string;
   readonly name: string;
   readonly range: string;
   readonly top: number;
   readonly height: number;
+  readonly left: number;
+  readonly width: number;
   readonly isNow: boolean;
   readonly category?: Category;
   readonly background: string;
@@ -41,14 +43,12 @@ export class DayTimeline {
   protected readonly nowOffset = computed(() => nowLineOffset(this.routine(), this.nowMinutes()));
   protected readonly nowLabel = computed(() => formatClock(this.nowMinutes()));
   protected readonly blocks = computed(() =>
-    timelineBlocks(this.routine(), this.nowMinutes()).map(({ block, top, height, isNow }) => {
+    timelineBlocks(this.routine(), this.nowMinutes()).map(({ block, isNow, ...placement }) => {
       const category = findCategory(this.categories(), block.categoryId);
       return {
-        id: block.id,
         name: block.name,
         range: `${block.start} – ${block.end}`,
-        top,
-        height,
+        ...placement,
         isNow,
         category,
         ...this.blockColors(category, isNow),

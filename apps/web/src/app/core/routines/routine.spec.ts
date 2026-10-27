@@ -1,5 +1,6 @@
 import {
   Routine,
+  RoutineBlock,
   hourTicks,
   plannedMinutes,
   routineForWeekday,
@@ -11,6 +12,11 @@ import {
 import { SAMPLE_ROUTINES } from './sample-routines';
 
 const weekdays = SAMPLE_ROUTINES[0];
+const WORK: RoutineBlock = { id: 'work', name: 'Work', start: '08:00', end: '12:00' };
+/** Runs during work on purpose. */
+const PODCAST: RoutineBlock = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
+const SLEEP: RoutineBlock = { id: 'sleep', name: 'Sleep', start: '22:00', end: '06:00' };
+const FULL_DAY: Routine = { ...weekdays, start: '00:00', end: '00:00', blocks: [] };
 
 describe('sortBlocks', () => {
   it('orders blocks by start time', () => {
@@ -25,19 +31,18 @@ describe('scheduleIssues', () => {
     expect(scheduleIssues(weekdays.blocks)).toEqual([]);
   });
 
-  it('flags a block that ends before it starts', () => {
-    const blocks = [{ id: 'x', name: 'Lunch', start: '13:00', end: '12:00' }];
+  it('flags a block that starts and ends at the same time', () => {
+    const blocks = [{ id: 'x', name: 'Lunch', start: '12:00', end: '12:00' }];
 
-    expect(scheduleIssues(blocks)).toEqual(['"Lunch" ends before it starts']);
+    expect(scheduleIssues(blocks)).toEqual(['"Lunch" starts and ends at the same time']);
   });
 
-  it('flags overlapping blocks', () => {
-    const blocks = [
-      { id: 'a', name: 'Work', start: '08:00', end: '12:30' },
-      { id: 'b', name: 'Lunch', start: '12:00', end: '13:00' },
-    ];
+  it('accepts a block that runs past midnight', () => {
+    expect(scheduleIssues([SLEEP])).toEqual([]);
+  });
 
-    expect(scheduleIssues(blocks)).toEqual(['"Work" and "Lunch" overlap']);
+  it('accepts overlapping blocks, which can run side by side on purpose', () => {
+    expect(scheduleIssues([WORK, PODCAST])).toEqual([]);
   });
 });
 
@@ -50,6 +55,20 @@ describe('plannedMinutes', () => {
     const routine: Routine = { ...weekdays, end: '16:00' };
 
     expect(plannedMinutes(routine)).toBe(480);
+  });
+
+  it('counts overlapping time once', () => {
+    const routine: Routine = { ...weekdays, blocks: [WORK, PODCAST] };
+
+    expect(plannedMinutes(routine)).toBe(240);
+  });
+
+  // Regression: a block crossing midnight used to count as zero, so a full day never added up.
+  it('fills a 24-hour day partitioned around a night of sleep', () => {
+    const awake = { id: 'awake', name: 'Awake', start: '06:00', end: '22:00' };
+    const routine: Routine = { ...FULL_DAY, blocks: [awake, SLEEP] };
+
+    expect(plannedMinutes(routine)).toBe(24 * 60);
   });
 });
 
@@ -70,6 +89,26 @@ describe('hourTicks', () => {
       { label: '09:00', offset: 50 },
       { label: '10:00', offset: 100 },
     ]);
+  });
+
+  it('labels a full day every 3 hours, ending at 24:00', () => {
+    const ticks = hourTicks({ start: '00:00', end: '00:00' });
+
+    expect(ticks.map((tick) => tick.label)).toEqual([
+      '00:00',
+      '03:00',
+      '06:00',
+      '09:00',
+      '12:00',
+      '15:00',
+      '18:00',
+      '21:00',
+      '24:00',
+    ]);
+  });
+
+  it('keeps hourly labels on a working day', () => {
+    expect(hourTicks({ start: '08:00', end: '17:00' })).toHaveLength(10);
   });
 });
 

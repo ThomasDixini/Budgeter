@@ -3,9 +3,7 @@ using Microsoft.Data.Sqlite;
 namespace Budgeter.Api.Infrastructure.Sqlite;
 
 /// <summary>
-/// Categories referenced by the sample routines the web app still keeps in memory
-/// (apps/web/src/app/core/routines/sample-routines.ts). Seeding them keeps those blocks linked
-/// until routines are persisted too.
+/// Sample categories, referenced by the blocks of <see cref="SampleRoutineSeed"/>.
 /// </summary>
 internal static class SampleCategorySeed
 {

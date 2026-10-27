@@ -8,11 +8,34 @@
   gap: 28px;
 }
 
+.save-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+.save-message {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.save-message.failed {
+  color: var(--color-danger);
+}
+
 .save {
   height: 48px;
   padding: 0 26px;
   font-size: var(--font-size-md);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
+}
+
+.save:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: default;
 }
 
 .templates {

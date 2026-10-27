@@ -1,13 +1,17 @@
 import {
   appendBlock,
+  partitionLaneCount,
   partitionSegments,
   removeBlock,
   toggleDay,
   updateBlock,
 } from './routine-edits';
+import { RoutineBlock } from './routine';
 import { SAMPLE_ROUTINES } from './sample-routines';
 
 const weekdays = SAMPLE_ROUTINES[0];
+/** Runs during work on purpose. */
+const PODCAST: RoutineBlock = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
 
 describe('toggleDay', () => {
   it('adds a missing weekday', () => {
@@ -57,5 +61,59 @@ describe('partitionSegments', () => {
     const shortDay = { ...weekdays, end: '12:00' };
 
     expect(partitionSegments(shortDay).map((segment) => segment.block.id)).toEqual(['work']);
+  });
+
+  it('fills the bar height when a block overlaps nothing', () => {
+    const [work] = partitionSegments(weekdays);
+
+    expect({ top: work.top, height: work.height }).toEqual({ top: 0, height: 100 });
+  });
+
+  it('stacks overlapping blocks in half-height lanes', () => {
+    const segments = partitionSegments({ ...weekdays, blocks: [...weekdays.blocks, PODCAST] });
+    const podcast = segments.find((segment) => segment.block.id === 'podcast');
+
+    expect({ top: podcast?.top, height: podcast?.height }).toEqual({ top: 50, height: 50 });
+  });
+
+  it('draws a block wrapping around a full day at both ends of the bar', () => {
+    const sleep = { id: 'sleep', name: 'Sleep', start: '22:00', end: '06:00' };
+    const fullDay = { ...weekdays, start: '00:00', end: '00:00', blocks: [sleep] };
+
+    const segments = partitionSegments(fullDay).map(({ key, left, width }) => ({
+      key,
+      left,
+      width,
+    }));
+
+    expect(segments).toEqual([
+      { key: 'sleep#0', left: 0, width: 25 },
+      { key: 'sleep#1', left: (22 / 24) * 100, width: (2 / 24) * 100 },
+    ]);
+  });
+});
+
+describe('appendBlock on a full day', () => {
+  it('wraps the new block past midnight', () => {
+    const late = { id: 'late', name: 'Late', start: '20:00', end: '23:30' };
+    const fullDay = { ...weekdays, start: '00:00', end: '00:00', blocks: [late] };
+
+    expect(appendBlock(fullDay, 'new').blocks.at(-1)).toMatchObject({
+      start: '23:30',
+      end: '00:30',
+    });
+  });
+});
+
+describe('partitionLaneCount', () => {
+  it('grows with overlapping blocks inside the day', () => {
+    expect(partitionLaneCount({ ...weekdays, blocks: [...weekdays.blocks, PODCAST] })).toBe(2);
+  });
+
+  it('ignores overlaps outside the day', () => {
+    const evening = { id: 'e1', name: 'Evening', start: '18:00', end: '19:00' };
+    const overlap = { id: 'e2', name: 'Overlap', start: '18:30', end: '19:30' };
+
+    expect(partitionLaneCount({ ...weekdays, blocks: [evening, overlap] })).toBe(1);
   });
 });

@@ -1,19 +1,28 @@
 <div>
-  <div class="bar" aria-hidden="true">
-    @for (segment of segments(); track segment.id) {
-      <div class="segment-slot" [style.left.%]="segment.left" [style.width.%]="segment.width">
+  <div class="bar" aria-hidden="true" [style.height.px]="barHeight()">
+    <div class="lanes">
+      @for (segment of segments(); track segment.key) {
         <div
-          class="segment"
-          [style.background]="segment.background"
-          [style.border-color]="segment.border"
+          class="segment-slot"
+          [style.left.%]="segment.left"
+          [style.width.%]="segment.width"
+          [style.top.%]="segment.top"
+          [style.height.%]="segment.height"
         >
-          <span class="segment-name">{{ segment.name }}</span>
-          <span class="segment-caption" [style.color]="segment.captionColor">{{
-            segment.caption
-          }}</span>
+          <div
+            class="segment"
+            [attr.title]="segment.name + ' · ' + segment.caption"
+            [style.background]="segment.background"
+            [style.border-color]="segment.border"
+          >
+            <span class="segment-name">{{ segment.name }}</span>
+            <span class="segment-caption" [style.color]="segment.captionColor">{{
+              segment.caption
+            }}</span>
+          </div>
         </div>
-      </div>
-    }
+      }
+    </div>
   </div>
   <div class="ticks" aria-hidden="true">
     @for (tick of ticks(); track tick.label) {

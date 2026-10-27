@@ -34,6 +34,21 @@ describe('timeline geometry', () => {
 
     expect(now.map((item) => item.block.name)).toEqual(['C# study']);
   });
+
+  it('gives a block that overlaps nothing the full width', () => {
+    const lunch = timelineBlocks(weekdays, STUDY_TIME)[1];
+
+    expect({ left: lunch.left, width: lunch.width }).toEqual({ left: 0, width: 100 });
+  });
+
+  it('places overlapping blocks side by side', () => {
+    const podcast = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
+    const routine = { ...weekdays, blocks: [...weekdays.blocks, podcast] };
+
+    const placed = timelineBlocks(routine, STUDY_TIME).find((item) => item.block.id === 'podcast');
+
+    expect({ left: placed?.left, width: placed?.width }).toEqual({ left: 50, width: 50 });
+  });
 });
 
 describe('nowLineOffset', () => {

@@ -1,10 +1,14 @@
-import { formatClock, toMinutes } from '../calendar/time-of-day';
+import { toMinutes } from '../calendar/time-of-day';
+import { blockLength, blockMinutesWithin, dayPieces, hourMarks, routineSpan } from './day-clock';
+
+export { blockMinutesWithin, routineSpan } from './day-clock';
 
 /** A slice of the day, optionally tied to a category so it counts toward its goals. */
 export interface RoutineBlock {
   readonly id: string;
   readonly name: string;
   readonly start: string;
+  /** At or before `start` when the block runs past midnight. */
   readonly end: string;
   readonly categoryId?: string;
 }
@@ -16,32 +20,12 @@ export interface Routine {
   /** Weekday indexes, Monday = 0. */
   readonly days: readonly number[];
   readonly start: string;
+  /** Equal to `start` for a full 24-hour day; before it when the day runs past midnight. */
   readonly end: string;
   readonly blocks: readonly RoutineBlock[];
 }
 
 export const WEEKDAY_LABELS: readonly string[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-/**
- * Length of the routine day in minutes; never zero so it can divide.
- * @example routineSpan({ start: '08:00', end: '17:00' }) // 540
- */
-export function routineSpan(routine: Pick<Routine, 'start' | 'end'>): number {
-  return Math.max(1, toMinutes(routine.end) - toMinutes(routine.start));
-}
-
-/**
- * Minutes of a block that fall inside the routine day.
- * @example blockMinutesWithin(block, routine) // 90
- */
-export function blockMinutesWithin(
-  block: Pick<RoutineBlock, 'start' | 'end'>,
-  routine: Pick<Routine, 'start' | 'end'>,
-): number {
-  const start = Math.max(toMinutes(block.start), toMinutes(routine.start));
-  const end = Math.min(toMinutes(block.end), toMinutes(routine.end));
-  return Math.max(0, end - start);
-}
 
 /**
  * Blocks ordered by start time.
@@ -52,30 +36,30 @@ export function sortBlocks(blocks: readonly RoutineBlock[]): RoutineBlock[] {
 }
 
 /**
- * Human messages for blocks that end before they start or overlap the previous one.
- * @example scheduleIssues([lunchEndingEarly]) // ['"Lunch" ends before it starts']
+ * Human messages for blocks that take no time. An end before the start is not an issue (the
+ * block runs past midnight), and neither is an overlap (a podcast can run during work).
+ * @example scheduleIssues([{ ...lunch, end: lunch.start }]) // ['"Lunch" starts and ends at the same time']
  */
 export function scheduleIssues(blocks: readonly RoutineBlock[]): string[] {
-  const sorted = sortBlocks(blocks);
-  return sorted.flatMap((block, index) => {
-    const issues: string[] = [];
-    if (toMinutes(block.end) <= toMinutes(block.start)) {
-      issues.push(`"${block.name}" ends before it starts`);
-    }
-    const previous = sorted[index - 1];
-    if (previous !== undefined && toMinutes(block.start) < toMinutes(previous.end)) {
-      issues.push(`"${previous.name}" and "${block.name}" overlap`);
-    }
-    return issues;
-  });
+  return sortBlocks(blocks)
+    .filter((block) => blockLength(block) === 0)
+    .map((block) => `"${block.name}" starts and ends at the same time`);
 }
 
 /**
- * Minutes per day covered by blocks.
+ * Minutes per day covered by at least one block; overlapping time counts once.
  * @example plannedMinutes(routine) // 540
  */
 export function plannedMinutes(routine: Routine): number {
-  return routine.blocks.reduce((sum, block) => sum + blockMinutesWithin(block, routine), 0);
+  let covered = 0;
+  let coveredUntil = 0;
+  for (const piece of dayPieces(routine)) {
+    const start = Math.max(piece.start, coveredUntil);
+    if (piece.end <= start) continue;
+    covered += piece.end - start;
+    coveredUntil = piece.end;
+  }
+  return covered;
 }
 
 /**
@@ -92,23 +76,23 @@ export function weeklyMinutesByCategory(routine: Routine): Map<string, number> {
   return totals;
 }
 
+/** Hour labels the horizontal bar fits without overlapping; longer days label every few hours. */
+const MAX_HOUR_TICKS = 10;
+
 /**
- * Hourly tick labels with their position along the day, in percent.
+ * Tick labels with their position along the day, in percent: hourly for a working day,
+ * every few hours for a long one (every 3h across 24 hours).
  * @example hourTicks({ start: '08:00', end: '10:00' })[1] // { label: '09:00', offset: 50 }
  */
 export function hourTicks(
   routine: Pick<Routine, 'start' | 'end'>,
 ): { readonly label: string; readonly offset: number }[] {
-  const start = toMinutes(routine.start);
-  const end = toMinutes(routine.end);
-  const ticks: { label: string; offset: number }[] = [];
-  for (let minute = Math.ceil(start / 60) * 60; minute <= end; minute += 60) {
-    ticks.push({
-      label: formatClock(minute),
-      offset: ((minute - start) / routineSpan(routine)) * 100,
-    });
-  }
-  return ticks;
+  const span = routineSpan(routine);
+  const stepHours = Math.max(1, Math.ceil(span / 60 / (MAX_HOUR_TICKS - 1)));
+  return hourMarks(routine, stepHours).map(({ label, offset }) => ({
+    label,
+    offset: (offset / span) * 100,
+  }));
 }
 
 /**

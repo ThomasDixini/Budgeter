@@ -29,16 +29,21 @@
   border-top: var(--border-hairline) solid var(--color-border-subtle);
 }
 
+/* Blocks sit right of the hour labels; overlapping ones share this column side by side. */
 .blocks {
   list-style: none;
+  position: absolute;
+  inset: 0 0 0 60px;
 }
 
 .block-slot {
   position: absolute;
-  left: 60px;
-  right: 0;
   padding: 3px 0;
   box-sizing: border-box;
+}
+
+.block-slot.is-shared {
+  padding: 3px 2px;
 }
 
 .block {

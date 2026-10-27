@@ -5,6 +5,7 @@ import { Category } from './category';
 import {
   FakeCategoriesGateway,
   FakeGoalsGateway,
+  FakeRoutinesGateway,
   provideFakeRoutinesGateways,
 } from './fake-routines-gateways';
 import { RoutinesStore } from './routines-store';
@@ -29,21 +30,23 @@ interface StoreSetup {
   readonly store: RoutinesStore;
   readonly categories: FakeCategoriesGateway;
   readonly goals: FakeGoalsGateway;
+  readonly routines: FakeRoutinesGateway;
   readonly errors: RecordingErrorHandler;
 }
 
 function createStore(
   categories = new FakeCategoriesGateway(),
   goals = new FakeGoalsGateway(),
+  routines = new FakeRoutinesGateway(),
 ): StoreSetup {
   const errors = new RecordingErrorHandler();
   TestBed.configureTestingModule({
     providers: [
-      ...provideFakeRoutinesGateways(categories, goals),
+      ...provideFakeRoutinesGateways(categories, goals, routines),
       { provide: ErrorHandler, useValue: errors },
     ],
   });
-  return { store: TestBed.inject(RoutinesStore), categories, goals, errors };
+  return { store: TestBed.inject(RoutinesStore), categories, goals, routines, errors };
 }
 
 describe('RoutinesStore', () => {
@@ -162,13 +165,50 @@ describe('RoutinesStore', () => {
     expect(errors.errors).toEqual([categories.failure]);
   });
 
-  it('saves an edited routine', () => {
+  it('loads routines from the gateway', () => {
     const { store } = createStore();
-    const weekdays = store.routines()[0];
 
-    store.saveRoutine({ ...weekdays, end: '18:00' });
+    expect(store.routines().map((routine) => routine.id)).toEqual(['weekdays', 'weekend']);
+  });
 
+  it('stays not loaded when routines fail to load', () => {
+    const routines = new FakeRoutinesGateway();
+    routines.failure = new Error('offline');
+
+    const { store, errors } = createStore(undefined, undefined, routines);
+
+    expect(store.isLoaded()).toBe(false);
+    expect(errors.errors).toEqual([routines.failure]);
+  });
+
+  it('saves an edited routine through the gateway', async () => {
+    const { store, routines } = createStore();
+    const edited = { ...store.routines()[0], end: '18:00' };
+
+    const isSaved = await store.saveRoutine(edited);
+
+    expect(isSaved).toBe(true);
     expect(store.routines()[0].end).toBe('18:00');
+    expect(routines.saved).toEqual([edited]);
+  });
+
+  it('restores the routine when the gateway rejects it', async () => {
+    const { store, routines, errors } = createStore();
+    routines.failure = new Error('offline');
+
+    const isSaved = await store.saveRoutine({ ...store.routines()[0], end: '18:00' });
+
+    expect(isSaved).toBe(false);
+    expect(store.routines()[0].end).toBe('17:00');
+    expect(errors.errors).toEqual([routines.failure]);
+  });
+
+  it('refuses to save a routine it never loaded', async () => {
+    const { store } = createStore();
+
+    await expect(store.saveRoutine({ ...store.routines()[0], id: 'missing' })).rejects.toThrow(
+      '"missing"',
+    );
   });
 
   it('sums weekly minutes of a category across routines', () => {

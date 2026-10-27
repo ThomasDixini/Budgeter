@@ -23,6 +23,24 @@ internal static class SqliteSchema
             deadline TEXT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_goals_category_id ON goals (category_id);
+        CREATE TABLE IF NOT EXISTS routines (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            days TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS routine_blocks (
+            routine_id TEXT NOT NULL REFERENCES routines (id) ON DELETE CASCADE,
+            id TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            category_id TEXT NULL REFERENCES categories (id),
+            PRIMARY KEY (routine_id, id)
+        );
+        CREATE INDEX IF NOT EXISTS ix_routine_blocks_category_id ON routine_blocks (category_id);
         """;
 
     /// <summary>

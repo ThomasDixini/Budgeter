@@ -6,6 +6,8 @@ import { CategoriesGateway } from './core/routines/categories-gateway';
 import { GoalsGateway } from './core/routines/goals-gateway';
 import { HttpCategoriesGateway } from './core/routines/http-categories-gateway';
 import { HttpGoalsGateway } from './core/routines/http-goals-gateway';
+import { HttpRoutinesGateway } from './core/routines/http-routines-gateway';
+import { RoutinesGateway } from './core/routines/routines-gateway';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,5 +16,6 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     { provide: CategoriesGateway, useClass: HttpCategoriesGateway },
     { provide: GoalsGateway, useClass: HttpGoalsGateway },
+    { provide: RoutinesGateway, useClass: HttpRoutinesGateway },
   ],
 };

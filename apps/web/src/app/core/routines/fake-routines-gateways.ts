@@ -6,7 +6,9 @@ import { CategoriesGateway } from './categories-gateway';
 import { Category } from './category';
 import { Goal } from './goal';
 import { GoalsGateway } from './goals-gateway';
-import { SAMPLE_CATEGORIES, SAMPLE_GOALS } from './sample-routines';
+import { Routine } from './routine';
+import { RoutinesGateway } from './routines-gateway';
+import { SAMPLE_CATEGORIES, SAMPLE_GOALS, SAMPLE_ROUTINES } from './sample-routines';
 
 /** Test double answering synchronously from memory; set `failure` to make the next calls fail. */
 export class FakeCategoriesGateway extends CategoriesGateway {
@@ -57,6 +59,26 @@ export class FakeGoalsGateway extends GoalsGateway {
   }
 }
 
+/** Test double answering synchronously from memory; set `failure` to make the next calls fail. */
+export class FakeRoutinesGateway extends RoutinesGateway {
+  failure: Error | undefined;
+  readonly saved: Routine[] = [];
+
+  constructor(private readonly routines: readonly Routine[] = SAMPLE_ROUTINES) {
+    super();
+  }
+
+  override list(): Observable<readonly Routine[]> {
+    return this.failure === undefined ? of(this.routines) : throwError(() => this.failure);
+  }
+
+  override save(routine: Routine): Observable<Routine> {
+    if (this.failure !== undefined) return throwError(() => this.failure);
+    this.saved.push(routine);
+    return of(routine);
+  }
+}
+
 /**
  * Providers that seed the Routines & Goals store with the sample content and predictable ids.
  * @example TestBed.configureTestingModule({ providers: [provideFakeRoutinesGateways()] })
@@ -64,10 +86,12 @@ export class FakeGoalsGateway extends GoalsGateway {
 export function provideFakeRoutinesGateways(
   categories = new FakeCategoriesGateway(),
   goals = new FakeGoalsGateway(),
+  routines = new FakeRoutinesGateway(),
 ): Provider[] {
   return [
     { provide: CategoriesGateway, useValue: categories },
     { provide: GoalsGateway, useValue: goals },
+    { provide: RoutinesGateway, useValue: routines },
     { provide: IdGenerator, useValue: new SequentialIdGenerator() },
   ];
 }

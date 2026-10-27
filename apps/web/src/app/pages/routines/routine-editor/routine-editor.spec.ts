@@ -1,8 +1,20 @@
+import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideFakeRoutinesGateways } from '../../../core/routines/fake-routines-gateways';
+import { NEVER } from 'rxjs';
+import {
+  FakeRoutinesGateway,
+  provideFakeRoutinesGateways,
+} from '../../../core/routines/fake-routines-gateways';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { RoutineEditor } from './routine-editor';
+
+/** Swallows the rejected saves these tests provoke on purpose. */
+class SilentErrorHandler extends ErrorHandler {
+  override handleError(): void {
+    // Expected failures; the editor's own message is what the tests check.
+  }
+}
 
 function createEditor(): ComponentFixture<RoutineEditor> {
   const fixture = TestBed.createComponent(RoutineEditor);
@@ -35,10 +47,38 @@ function blockNames(fixture: ComponentFixture<RoutineEditor>): string[] {
   );
 }
 
+function saveButton(fixture: ComponentFixture<RoutineEditor>): HTMLButtonElement {
+  return element(fixture).querySelector<HTMLButtonElement>('.save')!;
+}
+
+function saveMessage(fixture: ComponentFixture<RoutineEditor>): string | undefined {
+  return element(fixture).querySelector('.save-message')?.textContent?.trim();
+}
+
+/** Planned and free time per day, as the summary shows them. */
+function tileValues(fixture: ComponentFixture<RoutineEditor>): (string | undefined)[] {
+  return [...element(fixture).querySelectorAll('.tile-value')].map((tile) =>
+    tile.textContent?.trim(),
+  );
+}
+
+async function save(fixture: ComponentFixture<RoutineEditor>): Promise<void> {
+  click(fixture, '.save');
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
+let routinesGateway: FakeRoutinesGateway;
+
 describe('RoutineEditor', () => {
   beforeEach(() => {
+    routinesGateway = new FakeRoutinesGateway();
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), ...provideFakeRoutinesGateways()],
+      providers: [
+        provideRouter([]),
+        ...provideFakeRoutinesGateways(undefined, undefined, routinesGateway),
+        { provide: ErrorHandler, useValue: new SilentErrorHandler() },
+      ],
     });
   });
 
@@ -75,15 +115,39 @@ describe('RoutineEditor', () => {
     expect(blockNames(fixture)).toEqual(['Lunch', 'C# study', 'Networking', 'New block']);
   });
 
-  it('warns when blocks overlap', () => {
+  it('stacks overlapping blocks in lanes without warning', () => {
     const fixture = createEditor();
     const lunchStart = element(fixture).querySelectorAll<HTMLInputElement>('.time-input')[2];
 
     changeValue(fixture, lunchStart, '11:00');
 
+    expect(element(fixture).querySelector('[role="status"]')).toBeNull();
+    expect(element(fixture).querySelector<HTMLElement>('.bar')?.style.height).toBe('120px');
+  });
+
+  it('warns when a block starts and ends at the same time', () => {
+    const fixture = createEditor();
+    const lunchEnd = element(fixture).querySelectorAll<HTMLInputElement>('.time-input')[3];
+
+    changeValue(fixture, lunchEnd, '12:00');
+
     expect(element(fixture).querySelector('[role="status"]')?.textContent).toContain(
-      '"Work" and "Lunch" overlap',
+      '"Lunch" starts and ends at the same time',
     );
+  });
+
+  // Regression: 00:00–00:00 used to be a one-minute day instead of the whole 24 hours.
+  it('partitions a full day from midnight to midnight', () => {
+    const fixture = createEditor();
+    const [dayStart, dayEnd] = element(fixture).querySelectorAll<HTMLInputElement>('.hours input');
+
+    changeValue(fixture, dayStart, '00:00');
+    changeValue(fixture, dayEnd, '00:00');
+
+    expect(element(fixture).querySelector('.partition-card .ui-muted')?.textContent).toBe(
+      '00:00 – 00:00',
+    );
+    expect(tileValues(fixture)).toEqual(['9h', '15h']);
   });
 
   it('ignores a cleared time field', () => {
@@ -110,15 +174,65 @@ describe('RoutineEditor', () => {
     ).toContain('Reading');
   });
 
-  it('saves the draft to the store only on save', () => {
+  it('saves the draft to the store only on save', async () => {
     const fixture = createEditor();
     const store = TestBed.inject(RoutinesStore);
     const dayEnd = element(fixture).querySelectorAll<HTMLInputElement>('.hours input')[1];
     changeValue(fixture, dayEnd, '18:00');
     expect(store.routines()[0].end).toBe('17:00');
 
-    click(fixture, '.save');
+    await save(fixture);
 
     expect(store.routines()[0].end).toBe('18:00');
+  });
+
+  it('keeps Save disabled until something changes', () => {
+    const fixture = createEditor();
+
+    expect(saveButton(fixture).disabled).toBe(true);
+  });
+
+  // Regression: linking a block to a category was lost because routines were never persisted.
+  it('saves a block linked to a category through the gateway', async () => {
+    const fixture = createEditor();
+    const workCategory = element(fixture).querySelectorAll<HTMLSelectElement>('.select-input')[0];
+    changeValue(fixture, workCategory, 'reading');
+
+    await save(fixture);
+
+    expect(routinesGateway.saved[0].blocks[0].categoryId).toBe('reading');
+    expect(saveMessage(fixture)).toBe('All changes saved');
+    expect(saveButton(fixture).disabled).toBe(true);
+  });
+
+  it('keeps the edits and says so when saving fails', async () => {
+    const fixture = createEditor();
+    routinesGateway.failure = new Error('offline');
+    click(fixture, '.add-block');
+
+    await save(fixture);
+
+    expect(blockNames(fixture)).toContain('New block');
+    expect(saveMessage(fixture)).toContain("Couldn't save");
+    expect(saveButton(fixture).disabled).toBe(false);
+  });
+
+  it('gives new blocks ids from the id generator', async () => {
+    const fixture = createEditor();
+    click(fixture, '.add-block');
+
+    await save(fixture);
+
+    expect(routinesGateway.saved[0].blocks.at(-1)?.id).toBe('id-1');
+  });
+
+  it('waits for routines before showing the editor', () => {
+    routinesGateway.list = () => NEVER;
+
+    const fixture = createEditor();
+
+    expect(element(fixture).querySelector('.empty')?.textContent?.trim()).toBe(
+      'Loading your routines…',
+    );
   });
 });

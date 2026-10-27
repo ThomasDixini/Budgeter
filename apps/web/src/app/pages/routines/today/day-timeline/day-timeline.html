@@ -7,8 +7,15 @@
   }
 
   <ol class="blocks" aria-label="Blocks of the day">
-    @for (block of blocks(); track block.id) {
-      <li class="block-slot" [style.top.px]="block.top" [style.height.px]="block.height">
+    @for (block of blocks(); track block.key) {
+      <li
+        class="block-slot"
+        [class.is-shared]="block.width < 100"
+        [style.top.px]="block.top"
+        [style.height.px]="block.height"
+        [style.left.%]="block.left"
+        [style.width.%]="block.width"
+      >
         <div
           class="block"
           [class.is-now]="block.isNow"
