@@ -55,6 +55,15 @@ internal static class SqliteSchema
             PRIMARY KEY (task_id, date)
         );
         CREATE INDEX IF NOT EXISTS ix_task_completions_date ON task_completions (date);
+        CREATE TABLE IF NOT EXISTS block_outcomes (
+            routine_id TEXT NOT NULL REFERENCES routines (id) ON DELETE CASCADE,
+            block_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            at TEXT NOT NULL,
+            PRIMARY KEY (routine_id, block_id, date)
+        );
+        CREATE INDEX IF NOT EXISTS ix_block_outcomes_date ON block_outcomes (date);
         """;
 
     /// <summary>

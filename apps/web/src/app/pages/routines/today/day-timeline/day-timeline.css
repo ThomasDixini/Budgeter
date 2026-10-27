@@ -87,6 +87,44 @@
   gap: 6px;
 }
 
+/* Completed today: a check before the name and a calmer card. */
+.block.is-done {
+  opacity: 0.7;
+}
+
+.done-check {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 4px;
+  color: var(--color-mint);
+}
+
+/* Skipped today: crossed out and faded; it does not count as done. */
+.block.is-skipped {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.block.is-skipped .block-name,
+.block.is-skipped .block-range {
+  text-decoration: line-through;
+}
+
+.outcome-label {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
+}
+
+.block.is-done .outcome-label {
+  color: var(--color-mint);
+  border-color: rgba(var(--color-mint-rgb), 0.35);
+}
+
 /* Short blocks: name and time on one line, the category as a dot, details in the tooltip. */
 .block.is-compact {
   padding: 0 12px;

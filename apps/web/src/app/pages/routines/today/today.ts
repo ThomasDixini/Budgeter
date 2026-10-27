@@ -11,6 +11,8 @@ import { routineForWeekday } from '../../../core/routines/routine';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { Task, TaskDraft, repeatLabel } from '../../../core/routines/task';
 import { TasksStore } from '../../../core/routines/tasks-store';
+import { BlockOutcomesStore } from '../../../core/routines/block-outcomes-store';
+import { BlockOutcomeKind, planDay } from '../../../core/routines/day-plan';
 import { DayTimeline } from './day-timeline/day-timeline';
 import { NowCard } from './now-card/now-card';
 import { TaskForm } from './task-form/task-form';
@@ -44,17 +46,26 @@ interface FocusGoalView {
 export class Today {
   private readonly store = inject(RoutinesStore);
   private readonly tasksStore = inject(TasksStore);
-  private readonly now = inject(Clock).now();
+  private readonly outcomesStore = inject(BlockOutcomesStore);
+  private readonly clock = inject(Clock);
+  private readonly now = this.clock.now();
 
-  protected readonly nowMinutes = minutesOfDay(this.now);
+  /** Refreshed when a block ends, so the timeline and the Now card move on with the day. */
+  protected readonly nowMinutes = signal(minutesOfDay(this.now));
   protected readonly dateLabel = longDateLabel(this.now, inject(LOCALE_ID));
   protected readonly categories = this.store.categories;
-  protected readonly routine = computed(() =>
-    routineForWeekday(this.store.routines(), weekdayIndex(this.now)),
+  /** Today's version of the routine, with completed and skipped blocks applied. */
+  protected readonly plan = computed(() => {
+    const routine = routineForWeekday(this.store.routines(), weekdayIndex(this.now));
+    return routine === undefined ? undefined : planDay(routine, this.outcomesStore.outcomes());
+  });
+  protected readonly routine = computed(() => this.plan()?.routine);
+  protected readonly outcomes = computed(
+    () => this.plan()?.outcomes ?? new Map<string, BlockOutcomeKind>(),
   );
   protected readonly dayPercent = computed(() => {
     const routine = this.routine();
-    return routine === undefined ? 0 : dayProgress(routine, this.nowMinutes);
+    return routine === undefined ? 0 : dayProgress(routine, this.nowMinutes());
   });
   protected readonly weekday = weekdayIndex(this.now);
   protected readonly isAddingTask = signal(false);
@@ -74,6 +85,18 @@ export class Today {
       .slice(0, FOCUS_GOAL_COUNT)
       .map((goal) => this.toFocusGoal(goal)),
   );
+
+  /**
+   * Ends the running block now as done or skipped; the rest of today's blocks move earlier.
+   * @example this.endBlock('project', 'done')
+   */
+  protected endBlock(blockId: string, kind: BlockOutcomeKind): void {
+    const routine = this.routine();
+    if (routine === undefined) return;
+    const now = minutesOfDay(this.clock.now());
+    this.nowMinutes.set(now);
+    this.outcomesStore.record(routine.id, blockId, kind, now);
+  }
 
   protected toggleTask(taskId: string): void {
     this.tasksStore.toggleDone(taskId);

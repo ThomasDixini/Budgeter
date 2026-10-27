@@ -5,6 +5,8 @@ import { Category } from './category';
 import { Goal } from './goal';
 import { HttpCategoriesGateway } from './http-categories-gateway';
 import { HttpGoalsGateway } from './http-goals-gateway';
+import { BlockOutcome } from './day-plan';
+import { HttpBlockOutcomesGateway } from './http-block-outcomes-gateway';
 import { HttpRoutinesGateway } from './http-routines-gateway';
 import { Routine } from './routine';
 
@@ -37,6 +39,7 @@ beforeEach(() => {
       HttpCategoriesGateway,
       HttpGoalsGateway,
       HttpRoutinesGateway,
+      HttpBlockOutcomesGateway,
     ],
   });
   httpTesting = TestBed.inject(HttpTestingController);
@@ -99,6 +102,39 @@ describe('HttpRoutinesGateway', () => {
       .flush(null, { status: 204, statusText: 'No Content' });
 
     expect(isDone).toBe(true);
+  });
+});
+
+describe('HttpBlockOutcomesGateway', () => {
+  const outcome: BlockOutcome = {
+    routineId: 'week days',
+    blockId: 'gym',
+    outcome: 'skipped',
+    at: '19:10',
+  };
+
+  it("asks for a day's outcomes", () => {
+    let received: readonly BlockOutcome[] = [];
+
+    TestBed.inject(HttpBlockOutcomesGateway)
+      .list('2026-10-27')
+      .subscribe((outcomes) => (received = outcomes));
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/block-outcomes?date=2026-10-27' })
+      .flush([outcome]);
+
+    expect(received).toEqual([outcome]);
+  });
+
+  it('puts the outcome under the routine, day and block', () => {
+    TestBed.inject(HttpBlockOutcomesGateway).record('2026-10-27', outcome).subscribe();
+
+    const request = httpTesting.expectOne({
+      method: 'PUT',
+      url: '/api/routines/week%20days/days/2026-10-27/blocks/gym',
+    });
+    expect(request.request.body).toEqual({ outcome: 'skipped', at: '19:10' });
+    request.flush(outcome);
   });
 });
 

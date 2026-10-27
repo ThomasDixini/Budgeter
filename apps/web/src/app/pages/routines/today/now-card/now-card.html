@@ -19,8 +19,12 @@
       <div class="ui-fill elapsed" [style.width.%]="current.elapsed"></div>
     </div>
     <div class="actions">
-      <button class="ui-button-primary" type="button">Complete block</button>
-      <button class="ui-button-ghost" type="button">Skip</button>
+      <button class="ui-button-primary" type="button" (click)="complete.emit(current.block.id)">
+        Complete block
+      </button>
+      <button class="ui-button-ghost" type="button" (click)="skip.emit(current.block.id)">
+        Skip
+      </button>
     </div>
   } @else {
     <div class="row">

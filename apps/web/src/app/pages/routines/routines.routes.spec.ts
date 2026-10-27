@@ -28,6 +28,12 @@ async function openPage(
   return harness.routeNativeElement as HTMLElement;
 }
 
+function clickButton(element: HTMLElement, label: string): void {
+  const buttons = [...element.querySelectorAll<HTMLButtonElement>('button')];
+  buttons.find((button) => button.textContent?.trim() === label)!.click();
+  TestBed.tick();
+}
+
 function text(element: HTMLElement, selector: string): string | undefined {
   return element.querySelector(selector)?.textContent?.trim();
 }
@@ -94,6 +100,27 @@ describe('Today page', () => {
       'Finish the C# course',
       '10 new contacts this month',
     ]);
+  });
+
+  it('completes the running block and moves the rest of the day earlier', async () => {
+    const element = await openPage('/routines');
+
+    clickButton(element, 'Complete block');
+
+    expect(text(element, '.now-card .title')).toBe('Networking');
+    expect(text(element, '.now-card .meta .ui-tabular')).toBe('14:10 – 16:10');
+    const study = element.querySelector('.block.is-done');
+    expect(study?.textContent).toContain('C# study');
+    expect(study?.textContent).toContain('13:30 – 14:10');
+  });
+
+  it('skips the running block and crosses it out', async () => {
+    const element = await openPage('/routines');
+
+    clickButton(element, 'Skip');
+
+    expect(element.querySelector('.block.is-skipped')?.textContent).toContain('C# study');
+    expect(text(element, '.now-card .title')).toBe('Networking');
   });
 
   it('lists the tasks that repeat on today, a Monday', async () => {

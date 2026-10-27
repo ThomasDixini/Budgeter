@@ -100,6 +100,28 @@ test.describe('today', () => {
     await expect(row).toContainText('Study');
   });
 
+  test('completing the running block marks it done and moves the next one up', async ({ page }) => {
+    // 14:10 on a Monday, in the sample "C# study" (13:30–15:00). A random far-off week keeps
+    // runs and browser projects from sharing a day, since outcomes are stored per date.
+    const monday = new Date(2030, 0, 7 + 7 * Math.floor(Math.random() * 2000), 14, 10);
+    await page.clock.setFixedTime(monday);
+    await routines.goto();
+    const nowCard = page.getByRole('region', { name: 'C# study' });
+    const recorded = page.waitForResponse((response) => response.url().includes('/days/'));
+
+    await nowCard.getByRole('button', { name: 'Complete block' }).click();
+    await recorded;
+    await page.reload();
+
+    await expect(page.getByRole('heading', { level: 2, name: 'Networking' })).toBeVisible();
+    const study = page
+      .getByRole('list', { name: 'Blocks of the day' })
+      .getByRole('listitem')
+      .filter({ hasText: 'C# study' });
+    await expect(study).toContainText('Done');
+    await expect(study).toContainText('13:30 – 14:10');
+  });
+
   test('checking a task off is kept after a reload', async ({ page, request }) => {
     const task = await createDailyTask(request);
     await routines.goto();

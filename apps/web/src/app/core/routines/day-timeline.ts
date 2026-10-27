@@ -111,7 +111,10 @@ export function dayProgress(routine: Routine, nowMinutes: number): number {
  * The block running at a given minute, if any.
  * @example currentBlock(weekdays, 850)?.name // 'C# study'
  */
-export function currentBlock(routine: Routine, nowMinutes: number): RoutineBlock | undefined {
+export function currentBlock(
+  routine: Pick<Routine, 'blocks'>,
+  nowMinutes: number,
+): RoutineBlock | undefined {
   return routine.blocks.find((block) => isHappening(block, nowMinutes));
 }
 

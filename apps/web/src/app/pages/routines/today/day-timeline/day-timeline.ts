@@ -1,6 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { formatClock } from '../../../../core/calendar/time-of-day';
 import { Category, findCategory, withAlpha } from '../../../../core/routines/category';
+import { BlockOutcomeKind } from '../../../../core/routines/day-plan';
 import {
   isCompactBlock,
   nowLineOffset,
@@ -21,12 +22,19 @@ interface TimelineBlockView {
   readonly left: number;
   readonly width: number;
   readonly isNow: boolean;
+  /** Set once the block was completed or skipped today. */
+  readonly outcome?: BlockOutcomeKind;
   /** Drawn on a single line because the block is short. */
   readonly isCompact: boolean;
   readonly category?: Category;
   readonly background: string;
   readonly border: string;
 }
+
+const OUTCOME_LABELS: Readonly<Record<BlockOutcomeKind, string>> = {
+  done: 'Done',
+  skipped: 'Skipped',
+};
 
 const NEUTRAL_BACKGROUND = 'rgba(255, 255, 255, 0.035)';
 const NEUTRAL_BORDER = 'rgba(255, 255, 255, 0.10)';
@@ -42,21 +50,28 @@ export class DayTimeline {
   readonly routine = input.required<Routine>();
   readonly categories = input.required<readonly Category[]>();
   readonly nowMinutes = input.required<number>();
+  /** How today's blocks ended so far, by block id. */
+  readonly outcomes = input<ReadonlyMap<string, BlockOutcomeKind>>(new Map());
 
   protected readonly height = computed(() => timelineHeight(this.routine()));
   protected readonly hours = computed(() => timelineHours(this.routine()));
   protected readonly nowOffset = computed(() => nowLineOffset(this.routine(), this.nowMinutes()));
   protected readonly nowLabel = computed(() => formatClock(this.nowMinutes()));
+  protected readonly outcomeLabels = OUTCOME_LABELS;
   protected readonly blocks = computed(() =>
     timelineBlocks(this.routine(), this.nowMinutes()).map(({ block, isNow, ...placement }) => {
       const category = findCategory(this.categories(), block.categoryId);
       const range = `${block.start} – ${block.end}`;
+      const outcome = this.outcomes().get(block.id);
       return {
         name: block.name,
         range,
-        summary: [block.name, range, category?.name].filter(Boolean).join(' · '),
+        summary: [block.name, range, category?.name, outcome && OUTCOME_LABELS[outcome]]
+          .filter(Boolean)
+          .join(' · '),
         ...placement,
-        isNow,
+        isNow: isNow && outcome === undefined,
+        outcome,
         isCompact: isCompactBlock(placement.height),
         category,
         ...this.blockColors(category, isNow),

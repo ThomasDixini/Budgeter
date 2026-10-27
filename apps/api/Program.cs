@@ -31,6 +31,8 @@ builder.Services.AddScoped<LogGoalProgress>();
 builder.Services.AddScoped<ListRoutines>();
 builder.Services.AddScoped<SaveRoutine>();
 builder.Services.AddScoped<DeleteRoutine>();
+builder.Services.AddScoped<ListBlockOutcomes>();
+builder.Services.AddScoped<RecordBlockOutcome>();
 builder.Services.AddScoped<ListTasks>();
 builder.Services.AddScoped<SaveTask>();
 builder.Services.AddScoped<DeleteTask>();
@@ -43,6 +45,7 @@ app.MapGet("/", () => "Hello World!");
 app.MapCategoryEndpoints();
 app.MapGoalEndpoints();
 app.MapRoutineEndpoints();
+app.MapBlockOutcomeEndpoints();
 app.MapTaskEndpoints();
 
 await app.RunAsync();

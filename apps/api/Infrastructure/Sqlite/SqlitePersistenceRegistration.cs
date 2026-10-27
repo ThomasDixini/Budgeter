@@ -22,6 +22,7 @@ public static class SqlitePersistenceRegistration
         services.AddSingleton<ICategoryRepository, SqliteCategoryRepository>();
         services.AddSingleton<IGoalRepository, SqliteGoalRepository>();
         services.AddSingleton<IRoutineRepository, SqliteRoutineRepository>();
+        services.AddSingleton<IBlockOutcomeRepository, SqliteBlockOutcomeRepository>();
         services.AddSingleton<ITaskRepository, SqliteTaskRepository>();
         services.AddHostedService<SqliteDatabaseInitializer>();
         return services;

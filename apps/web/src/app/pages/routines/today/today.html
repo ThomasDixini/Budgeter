@@ -39,7 +39,8 @@
         <app-day-timeline
           [routine]="routine"
           [categories]="categories()"
-          [nowMinutes]="nowMinutes"
+          [nowMinutes]="nowMinutes()"
+          [outcomes]="outcomes()"
         />
       } @else {
         <p class="ui-muted no-routine">
@@ -49,7 +50,14 @@
     </section>
 
     <div class="side">
-      <app-now-card [routine]="routine()" [categories]="categories()" [nowMinutes]="nowMinutes" />
+      <app-now-card
+        [routine]="routine()"
+        [categories]="categories()"
+        [nowMinutes]="nowMinutes()"
+        [outcomes]="outcomes()"
+        (complete)="endBlock($event, 'done')"
+        (skip)="endBlock($event, 'skipped')"
+      />
 
       <section class="ui-card side-card" aria-labelledby="tasks-title">
         <div class="card-header centered">

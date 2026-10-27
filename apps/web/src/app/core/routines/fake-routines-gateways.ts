@@ -8,6 +8,8 @@ import { Goal } from './goal';
 import { GoalsGateway } from './goals-gateway';
 import { Routine } from './routine';
 import { RoutinesGateway } from './routines-gateway';
+import { BlockOutcomesGateway } from './block-outcomes-gateway';
+import { FakeBlockOutcomesGateway } from './fake-block-outcomes-gateway';
 import { FakeTasksGateway } from './fake-tasks-gateway';
 import { SAMPLE_CATEGORIES, SAMPLE_GOALS, SAMPLE_ROUTINES } from './sample-routines';
 import { TasksGateway } from './tasks-gateway';
@@ -97,8 +99,10 @@ export function provideFakeRoutinesGateways(
   goals = new FakeGoalsGateway(),
   routines = new FakeRoutinesGateway(),
   tasks = new FakeTasksGateway(),
+  blockOutcomes = new FakeBlockOutcomesGateway(),
 ): Provider[] {
   return [
+    { provide: BlockOutcomesGateway, useValue: blockOutcomes },
     { provide: CategoriesGateway, useValue: categories },
     { provide: GoalsGateway, useValue: goals },
     { provide: RoutinesGateway, useValue: routines },
