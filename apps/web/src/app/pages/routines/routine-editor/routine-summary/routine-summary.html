@@ -1,0 +1,38 @@
+<aside class="ui-card summary" aria-labelledby="summary-title">
+  <h2 id="summary-title" class="ui-card-title">Summary</h2>
+  <div class="tiles">
+    <div class="tile">
+      <div class="tile-label">Planned / day</div>
+      <div class="tile-value ui-tabular">{{ planned() }}</div>
+    </div>
+    <div class="tile">
+      <div class="tile-label">Free / day</div>
+      <div class="tile-value ui-tabular">{{ free() }}</div>
+    </div>
+  </div>
+  <div class="categories">
+    <div class="ui-muted">Hours per category this week</div>
+    @for (item of categoryHours(); track item.category.id) {
+      <div class="category">
+        <div class="category-row">
+          <span class="category-name">
+            <span class="category-dot" [style.background]="item.category.color"></span>
+            {{ item.category.name }}
+          </span>
+          <span class="category-hours ui-tabular">{{ item.hours }}</span>
+        </div>
+        <div class="ui-track" aria-hidden="true">
+          <div
+            class="ui-fill"
+            [style.width.%]="item.percent"
+            [style.background]="item.category.color"
+          ></div>
+        </div>
+      </div>
+    }
+  </div>
+  <p class="note">
+    Blocks without a category (like Work and Lunch) organize the day but don't count toward goals.
+  </p>
+  <a class="ui-link" routerLink="/routines/categories">Manage categories</a>
+</aside>

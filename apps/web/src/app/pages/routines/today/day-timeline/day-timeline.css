@@ -1,0 +1,126 @@
+:host {
+  display: block;
+  margin-top: 28px;
+}
+
+.timeline {
+  position: relative;
+}
+
+.hour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hour-label {
+  width: 44px;
+  flex: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+.hour-line {
+  flex: 1;
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.blocks {
+  list-style: none;
+}
+
+.block-slot {
+  position: absolute;
+  left: 60px;
+  right: 0;
+  padding: 3px 0;
+  box-sizing: border-box;
+}
+
+.block {
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  overflow: hidden;
+  border: var(--border-hairline) solid;
+}
+
+.block.is-now {
+  box-shadow: 0 0 28px rgba(var(--color-mint-rgb), 0.14);
+}
+
+.block-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.block-name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+.block-range {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.block-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
+}
+
+.now-line {
+  position: absolute;
+  left: 56px;
+  right: 0;
+  z-index: 3;
+  height: 0;
+  border-top: 1px solid rgba(var(--color-mint-rgb), 0.8);
+}
+
+.now-dot {
+  position: absolute;
+  left: -4px;
+  top: -4.5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-mint);
+  box-shadow: 0 0 10px rgba(var(--color-mint-rgb), 0.8);
+}
+
+.now-label {
+  position: absolute;
+  left: -58px;
+  top: -9px;
+  padding: 1px 4px;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-mint);
+  background: var(--color-bg);
+}

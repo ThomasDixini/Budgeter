@@ -1,0 +1,232 @@
+/*
+ * Shared building blocks of the module pages (source: "Rotinas" boards of the Design canvas).
+ * Global on purpose: every page repeats the same card, button, chip and field looks.
+ */
+
+.ui-card {
+  padding: 24px;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-border-card);
+  box-sizing: border-box;
+}
+
+.ui-card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.ui-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--color-mint);
+}
+
+.ui-page-title {
+  font-size: clamp(36px, 6vw, var(--font-size-title));
+  line-height: 1.05;
+  font-weight: var(--font-weight-light);
+  letter-spacing: var(--letter-spacing-display);
+}
+
+.ui-link {
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.ui-button-primary,
+.ui-button-ghost {
+  height: var(--touch-target);
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ui-button-primary {
+  border: 0;
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+  font-weight: var(--font-weight-medium);
+}
+
+.ui-button-ghost {
+  border: var(--border-hairline) solid var(--color-border-control);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  transition: background var(--duration-fast);
+}
+
+.ui-button-ghost:hover,
+.ui-icon-button:hover,
+.ui-dashed-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+}
+
+.ui-icon-button {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  flex: none;
+  border-radius: 50%;
+  border: var(--border-hairline) solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ui-dashed-button {
+  border: var(--border-hairline) dashed var(--color-border-dashed);
+  background: transparent;
+  color: var(--color-text-soft);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Selectable pill: neutral glass, solid white once pressed or selected. */
+.ui-chip {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--color-border-card);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text-soft);
+  font-size: var(--font-size-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.ui-chip[aria-pressed='true'],
+.ui-chip[aria-selected='true'] {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+}
+
+.ui-badge-now {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-inverse);
+  background: var(--color-mint);
+}
+
+.ui-tag {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  color: var(--color-text-soft);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ui-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.ui-track {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--color-track);
+  overflow: hidden;
+}
+
+.ui-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s;
+}
+
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.ui-input {
+  height: var(--touch-target);
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+.ui-input option {
+  background: var(--color-option-bg);
+  color: var(--color-text);
+}
+
+.ui-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.ui-legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.ui-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes ui-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.ui-enter {
+  animation: ui-in-up 0.35s var(--ease-spring);
+}

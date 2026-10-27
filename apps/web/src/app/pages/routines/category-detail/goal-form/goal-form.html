@@ -1,0 +1,152 @@
+<form
+  class="goal-form ui-enter"
+  aria-label="Set a new goal"
+  [style.border-color]="ring()"
+  (submit)="submit($event)"
+>
+  <div class="fields">
+    <h3 class="form-title">Set goal</h3>
+    <label class="ui-field">
+      Goal name
+      <input
+        class="ui-input name-input"
+        type="text"
+        placeholder="E.g. Study C# 5x a week"
+        [value]="name()"
+        (input)="name.set(textOf($event))"
+      />
+    </label>
+
+    <fieldset class="ui-fieldset">
+      <legend class="ui-legend">Type</legend>
+      <div class="types">
+        @for (option of typeOptions; track option.value) {
+          @let selected = option.value === type();
+          <button
+            class="type"
+            type="button"
+            [attr.aria-pressed]="selected"
+            [style.background]="selected ? selectedTint() : null"
+            [style.border-color]="selected ? selectedBorder() : null"
+            (click)="type.set(option.value)"
+          >
+            <span class="type-label">
+              <span
+                class="radio"
+                aria-hidden="true"
+                [style.border]="selected ? '5px solid ' + color() : null"
+              ></span>
+              {{ option.label }}
+            </span>
+            <span class="type-description">{{ option.description }}</span>
+          </button>
+        }
+      </div>
+    </fieldset>
+
+    <fieldset class="ui-fieldset">
+      <legend class="ui-legend">Period</legend>
+      <div class="periods">
+        @for (option of periods; track option.value) {
+          <button
+            class="ui-chip"
+            type="button"
+            [attr.aria-pressed]="option.value === period()"
+            (click)="period.set(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+      @if (period() === 'custom') {
+        <div class="inline-fields custom-dates">
+          <label class="ui-field">
+            From
+            <input
+              class="ui-input"
+              type="date"
+              [value]="customFrom()"
+              (change)="from.set(textOf($event))"
+            />
+          </label>
+          <label class="ui-field">
+            To
+            <input
+              class="ui-input"
+              type="date"
+              [value]="customTo()"
+              (change)="to.set(textOf($event))"
+            />
+          </label>
+        </div>
+      }
+    </fieldset>
+
+    @if (type() === 'frequency') {
+      <div class="inline-fields aligned">
+        <label class="ui-field">
+          How many times
+          <input
+            class="ui-input number-input"
+            type="number"
+            min="1"
+            [value]="times()"
+            (change)="times.set(countOf($event))"
+          />
+        </label>
+        <span class="cadence">{{ cadence() }}</span>
+      </div>
+    } @else {
+      <div class="inline-fields">
+        <label class="ui-field">
+          Target value
+          <input
+            class="ui-input number-input"
+            type="number"
+            min="1"
+            [value]="target()"
+            (change)="target.set(countOf($event))"
+          />
+        </label>
+        <label class="ui-field">
+          Unit
+          <input
+            class="ui-input unit-input"
+            type="text"
+            placeholder="E.g. modules, books, km"
+            [value]="unit()"
+            (input)="unit.set(textOf($event))"
+          />
+        </label>
+      </div>
+    }
+
+    <div class="form-actions">
+      <button class="ui-button-primary tall" type="submit">Create goal</button>
+      <button class="ui-button-ghost tall transparent" type="button" (click)="dismiss.emit()">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <div class="preview">
+    <span class="ui-muted">Preview</span>
+    <article class="preview-card">
+      <span class="ui-tag">{{ previewTag() }}</span>
+      <span class="preview-title">{{ name() || 'Your goal name' }}</span>
+      @if (previewUsesDots()) {
+        <div class="preview-dots" aria-hidden="true">
+          @for (dot of previewDots(); track dot) {
+            <span class="preview-dot"></span>
+          }
+        </div>
+      } @else {
+        <div class="ui-track preview-bar" aria-hidden="true"></div>
+      }
+      <div class="preview-bottom">
+        <span class="ui-tabular">{{ previewValue() }}</span>
+        <span class="preview-footer">{{ previewFooter() }}</span>
+      </div>
+    </article>
+  </div>
+</form>
