@@ -87,6 +87,38 @@
   gap: 6px;
 }
 
+/* Short blocks: name and time on one line, the category as a dot, details in the tooltip. */
+.block.is-compact {
+  padding: 0 12px;
+  border-radius: 8px;
+  align-items: center;
+  gap: 8px;
+}
+
+.block.is-compact .block-text {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.block.is-compact .block-name {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.block.is-compact .block-range {
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.block.is-compact .block-badges {
+  flex: none;
+  flex-wrap: nowrap;
+}
+
 .category-badge {
   display: inline-flex;
   align-items: center;

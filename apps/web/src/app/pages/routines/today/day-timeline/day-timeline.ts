@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { formatClock } from '../../../../core/calendar/time-of-day';
 import { Category, findCategory, withAlpha } from '../../../../core/routines/category';
 import {
+  isCompactBlock,
   nowLineOffset,
   timelineBlocks,
   timelineHeight,
@@ -13,11 +14,15 @@ interface TimelineBlockView {
   readonly key: string;
   readonly name: string;
   readonly range: string;
+  /** Name, time and category in one line, for the tooltip of blocks too short to show them all. */
+  readonly summary: string;
   readonly top: number;
   readonly height: number;
   readonly left: number;
   readonly width: number;
   readonly isNow: boolean;
+  /** Drawn on a single line because the block is short. */
+  readonly isCompact: boolean;
   readonly category?: Category;
   readonly background: string;
   readonly border: string;
@@ -45,11 +50,14 @@ export class DayTimeline {
   protected readonly blocks = computed(() =>
     timelineBlocks(this.routine(), this.nowMinutes()).map(({ block, isNow, ...placement }) => {
       const category = findCategory(this.categories(), block.categoryId);
+      const range = `${block.start} – ${block.end}`;
       return {
         name: block.name,
-        range: `${block.start} – ${block.end}`,
+        range,
+        summary: [block.name, range, category?.name].filter(Boolean).join(' · '),
         ...placement,
         isNow,
+        isCompact: isCompactBlock(placement.height),
         category,
         ...this.blockColors(category, isNow),
       } satisfies TimelineBlockView;

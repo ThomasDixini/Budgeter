@@ -13,6 +13,19 @@ import { Routine, RoutineBlock } from './routine';
 
 /** Vertical pixels per hour on the Today timeline. */
 export const TIMELINE_HOUR_HEIGHT = 48;
+/**
+ * Below this height a block cannot fit its name and time on two lines with padding, so it is
+ * drawn on one compact line (about 80 minutes at 48px per hour).
+ */
+const COMPACT_BLOCK_MAX_HEIGHT = 64;
+
+/**
+ * Whether a timeline block is too short for the two-line layout.
+ * @example isCompactBlock(24) // true (a 30-minute block)
+ */
+export function isCompactBlock(heightPixels: number): boolean {
+  return heightPixels < COMPACT_BLOCK_MAX_HEIGHT;
+}
 const MINUTES_PER_HOUR = 60;
 
 export interface TimelineHour {

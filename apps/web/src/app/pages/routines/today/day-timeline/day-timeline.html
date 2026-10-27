@@ -19,23 +19,34 @@
         <div
           class="block"
           [class.is-now]="block.isNow"
+          [class.is-compact]="block.isCompact"
           [style.background]="block.background"
           [style.border-color]="block.border"
           [attr.aria-current]="block.isNow ? 'time' : null"
+          [attr.title]="block.isCompact ? block.summary : null"
         >
           <div class="block-text">
             <span class="block-name">{{ block.name }}</span>
             <span class="block-range ui-tabular">{{ block.range }}</span>
           </div>
           <div class="block-badges">
-            @if (block.isNow) {
+            @if (block.isNow && !block.isCompact) {
               <span class="ui-badge-now">Now</span>
             }
             @if (block.category; as category) {
-              <span class="category-badge" [style.color]="category.color">
-                <span class="ui-dot" [style.background]="category.color"></span>
-                {{ category.name }}
-              </span>
+              @if (block.isCompact) {
+                <span
+                  class="ui-dot"
+                  role="img"
+                  [attr.aria-label]="category.name"
+                  [style.background]="category.color"
+                ></span>
+              } @else {
+                <span class="category-badge" [style.color]="category.color">
+                  <span class="ui-dot" [style.background]="category.color"></span>
+                  {{ category.name }}
+                </span>
+              }
             }
           </div>
         </div>

@@ -2,6 +2,7 @@ import {
   blockElapsed,
   currentBlock,
   dayProgress,
+  isCompactBlock,
   minutesLeft,
   nowLineOffset,
   timelineBlocks,
@@ -48,6 +49,16 @@ describe('timeline geometry', () => {
     const placed = timelineBlocks(routine, STUDY_TIME).find((item) => item.block.id === 'podcast');
 
     expect({ left: placed?.left, width: placed?.width }).toEqual({ left: 50, width: 50 });
+  });
+});
+
+describe('isCompactBlock', () => {
+  it('draws a 30-minute block on one line', () => {
+    expect(isCompactBlock(24)).toBe(true);
+  });
+
+  it('keeps the two-line layout from about 80 minutes up', () => {
+    expect(isCompactBlock(64)).toBe(false);
   });
 });
 
