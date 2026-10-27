@@ -24,6 +24,15 @@ export interface PartitionSegment {
 }
 
 /**
+ * A blank routine for the "New routine" button: a working day with no blocks, applying to
+ * no weekday until the user picks some, so it never takes over a day another routine owns.
+ * @example newRoutine('3f2b7c1e').name // 'New routine'
+ */
+export function newRoutine(routineId: string): Routine {
+  return { id: routineId, name: 'New routine', days: [], start: '08:00', end: '17:00', blocks: [] };
+}
+
+/**
  * Adds the weekday when missing, removes it when present.
  * @example toggleDay(weekdays, 5).days // [0, 1, 2, 3, 4, 5]
  */

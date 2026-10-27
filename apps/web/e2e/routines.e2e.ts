@@ -94,6 +94,20 @@ test.describe('routine editor', () => {
     await expect(page.getByRole('textbox', { name: 'Block name' }).last()).toHaveValue('New block');
   });
 
+  test('"New routine" creates a routine that survives a reload', async ({ page }) => {
+    const name = uniqueTitle('Night');
+    await routines.goto('/routines/routine');
+
+    await page.getByRole('button', { name: 'New routine' }).click();
+    await page.getByLabel('Routine name').fill(name);
+    await page.getByLabel('Routine name').blur();
+    await page.getByRole('button', { name: 'Save routine' }).click();
+
+    await expect(page.getByText('All changes saved')).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('tab', { name })).toBeVisible();
+  });
+
   test('a block linked to a new category survives a reload', async ({ page, request }) => {
     const category = await createCategory(request, 'Languages');
     const routine = await createRoutine(request);
@@ -118,10 +132,16 @@ test.describe('categories & goals', () => {
 
     await page.getByRole('button', { name: 'New category' }).click();
     await page.getByLabel('Category name').fill(name);
+    // The category opens before the API answers; reloading earlier would abort the request.
+    const saved = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/categories') && response.request().method() === 'POST',
+    );
     await page.getByRole('button', { name: 'Create', exact: true }).click();
 
     await expect(routines.title).toHaveText(name);
     await expect(page.getByRole('form', { name: 'Set a new goal' })).toBeVisible();
+    await saved;
     await page.reload();
     await expect(routines.title).toHaveText(name);
   });

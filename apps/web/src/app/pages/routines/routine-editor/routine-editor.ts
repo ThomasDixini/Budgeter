@@ -6,6 +6,7 @@ import { Routine, WEEKDAY_LABELS } from '../../../core/routines/routine';
 import {
   BlockChanges,
   appendBlock,
+  newRoutine,
   removeBlock,
   toggleDay,
   updateBlock,
@@ -22,7 +23,7 @@ const SAVE_STATE_MESSAGES: Readonly<Record<SaveState, string>> = {
   idle: '',
   saving: 'Saving…',
   saved: 'All changes saved',
-  failed: "Couldn't save. Check the block names and times, then try again.",
+  failed: "Couldn't save. Check the routine and block names, then try again.",
 };
 
 /** Lets the user pick a day template, its weekdays and hours, and split the day into blocks. */
@@ -43,9 +44,13 @@ export class RoutineEditor {
   protected readonly weekdayLabels = WEEKDAY_LABELS;
   protected readonly categories = this.store.categories;
   protected readonly isLoaded = this.store.isLoaded;
-  protected readonly routines = computed(() =>
-    this.store.routines().map((routine) => this.edits().get(routine.id) ?? routine),
-  );
+  /** Stored routines with their unsaved edits, then routines created here and not saved yet. */
+  protected readonly routines = computed(() => {
+    const stored = this.store.routines();
+    const storedIds = new Set(stored.map((routine) => routine.id));
+    const created = [...this.edits().values()].filter((routine) => !storedIds.has(routine.id));
+    return [...stored.map((routine) => this.edits().get(routine.id) ?? routine), ...created];
+  });
   protected readonly draft = computed(
     () => this.routines().find((routine) => routine.id === this.selectedId()) ?? this.routines()[0],
   );
@@ -67,6 +72,17 @@ export class RoutineEditor {
   protected selectRoutine(routineId: string): void {
     this.selectedId.set(routineId);
     this.saveState.set('idle');
+  }
+
+  /** Opens a blank routine as an unsaved draft; it is stored on "Save routine". */
+  protected createRoutine(): void {
+    const routine = newRoutine(this.ids.next());
+    this.edits.update((edits) => new Map(edits).set(routine.id, routine));
+    this.selectRoutine(routine.id);
+  }
+
+  protected rename(name: string): void {
+    this.edit((routine) => ({ ...routine, name }));
   }
 
   protected toggleWeekday(day: number): void {

@@ -119,17 +119,12 @@ export class RoutinesStore {
   }
 
   /**
-   * Replaces a routine with its edited version and saves it. Resolves to whether the gateway
-   * accepted it, so the editor knows when its draft is safe to drop.
+   * Saves a routine: replaces the stored one with the same id, or adds it when it is new.
+   * Resolves to whether the gateway accepted it, so the editor knows when its draft is safe to drop.
    * @example const saved = await store.saveRoutine({ ...weekdays, end: '18:00' })
    */
   saveRoutine(routine: Routine): Promise<boolean> {
-    const previous = this.routineList().find((current) => current.id === routine.id);
-    if (previous === undefined) {
-      const error = new RangeError(`Expected a known routine id, received "${routine.id}"`);
-      return Promise.reject(error);
-    }
-    replaceById(this.routineList, routine);
+    const restore = this.applyRoutine(routine);
     return new Promise((resolve) => {
       this.routinesGateway.save(routine).subscribe({
         next: (saved) => {
@@ -137,7 +132,7 @@ export class RoutinesStore {
           resolve(true);
         },
         error: (error: unknown) => {
-          this.rejected(error, () => replaceById(this.routineList, previous));
+          this.rejected(error, restore);
           resolve(false);
         },
       });
@@ -178,6 +173,17 @@ export class RoutinesStore {
   ): void {
     list.set(records);
     flag.set(true);
+  }
+
+  /** Shows the routine right away and returns how to undo that if the gateway rejects it. */
+  private applyRoutine(routine: Routine): () => void {
+    const previous = this.routineList().find((current) => current.id === routine.id);
+    if (previous === undefined) {
+      this.routineList.update((routines) => [...routines, routine]);
+      return () => removeById(this.routineList, routine.id);
+    }
+    replaceById(this.routineList, routine);
+    return () => replaceById(this.routineList, previous);
   }
 
   private rejected(error: unknown, rollback: () => void): void {

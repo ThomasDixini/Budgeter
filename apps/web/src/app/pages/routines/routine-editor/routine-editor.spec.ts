@@ -6,6 +6,7 @@ import {
   FakeRoutinesGateway,
   provideFakeRoutinesGateways,
 } from '../../../core/routines/fake-routines-gateways';
+import { RoutinesGateway } from '../../../core/routines/routines-gateway';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { RoutineEditor } from './routine-editor';
 
@@ -45,6 +46,16 @@ function blockNames(fixture: ComponentFixture<RoutineEditor>): string[] {
   return [...element(fixture).querySelectorAll<HTMLInputElement>('.name-input')].map(
     (input) => input.value,
   );
+}
+
+function tabNames(fixture: ComponentFixture<RoutineEditor>): (string | undefined)[] {
+  return [...element(fixture).querySelectorAll('[role="tab"]')].map((tab) =>
+    tab.textContent?.trim(),
+  );
+}
+
+function selectedTab(fixture: ComponentFixture<RoutineEditor>): string | undefined {
+  return element(fixture).querySelector('[role="tab"][aria-selected="true"]')?.textContent?.trim();
 }
 
 function saveButton(fixture: ComponentFixture<RoutineEditor>): HTMLButtonElement {
@@ -224,6 +235,53 @@ describe('RoutineEditor', () => {
     await save(fixture);
 
     expect(routinesGateway.saved[0].blocks.at(-1)?.id).toBe('id-1');
+  });
+
+  it('opens a blank, unsaved routine from "New routine"', () => {
+    const fixture = createEditor();
+
+    click(fixture, '.new-routine');
+
+    expect(selectedTab(fixture)).toBe('New routine');
+    expect(blockNames(fixture)).toEqual([]);
+    expect(saveButton(fixture).disabled).toBe(false);
+    expect(saveMessage(fixture)).toBe('Unsaved changes');
+  });
+
+  it('saves a new routine under the name the user gives it', async () => {
+    const fixture = createEditor();
+    click(fixture, '.new-routine');
+    changeValue(
+      fixture,
+      element(fixture).querySelector<HTMLInputElement>('.routine-name input')!,
+      'Night shift',
+    );
+    click(fixture, '.day', 6);
+
+    await save(fixture);
+
+    expect(routinesGateway.saved[0]).toMatchObject({ id: 'id-1', name: 'Night shift', days: [6] });
+    expect(selectedTab(fixture)).toBe('Night shift');
+    expect(saveMessage(fixture)).toBe('All changes saved');
+  });
+
+  it('keeps an unsaved new routine while switching tabs', () => {
+    const fixture = createEditor();
+    click(fixture, '.new-routine');
+
+    click(fixture, '[role="tab"]', 0);
+
+    expect(tabNames(fixture)).toEqual(['Weekdays', 'Weekend', 'New routine']);
+  });
+
+  it('offers "New routine" when there are no routines yet', () => {
+    routinesGateway = new FakeRoutinesGateway([]);
+    TestBed.overrideProvider(RoutinesGateway, { useValue: routinesGateway });
+    const fixture = createEditor();
+
+    click(fixture, '.new-routine');
+
+    expect(selectedTab(fixture)).toBe('New routine');
   });
 
   it('waits for routines before showing the editor', () => {

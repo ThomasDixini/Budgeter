@@ -117,6 +117,15 @@
   gap: 12px;
 }
 
+/* The name sits on its own row above the weekdays and hours. */
+.routine-name {
+  flex: 1 1 100%;
+}
+
+.routine-name .ui-input {
+  max-width: 320px;
+}
+
 .partition-card {
   padding: 28px;
   display: flex;

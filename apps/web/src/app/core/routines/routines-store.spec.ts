@@ -203,12 +203,24 @@ describe('RoutinesStore', () => {
     expect(errors.errors).toEqual([routines.failure]);
   });
 
-  it('refuses to save a routine it never loaded', async () => {
-    const { store } = createStore();
+  it('adds a new routine after the loaded ones and saves it', async () => {
+    const { store, routines } = createStore();
+    const night = { ...store.routines()[0], id: 'night', name: 'Night shift' };
 
-    await expect(store.saveRoutine({ ...store.routines()[0], id: 'missing' })).rejects.toThrow(
-      '"missing"',
-    );
+    const isSaved = await store.saveRoutine(night);
+
+    expect(isSaved).toBe(true);
+    expect(store.routines().map((routine) => routine.id)).toEqual(['weekdays', 'weekend', 'night']);
+    expect(routines.saved).toEqual([night]);
+  });
+
+  it('drops a new routine the gateway rejects', async () => {
+    const { store, routines } = createStore();
+    routines.failure = new Error('offline');
+
+    await store.saveRoutine({ ...store.routines()[0], id: 'night' });
+
+    expect(store.routines().map((routine) => routine.id)).toEqual(['weekdays', 'weekend']);
   });
 
   it('sums weekly minutes of a category across routines', () => {
