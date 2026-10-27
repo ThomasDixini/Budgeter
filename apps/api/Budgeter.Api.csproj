@@ -21,4 +21,8 @@
     <None Include="..\web\src\**\*.css" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+  </ItemGroup>
+
 </Project>

@@ -76,3 +76,8 @@ publish/
 *.properties
 !sonar-project.properties
 TestResults/
+
+# Local SQLite databases
+*.db
+*.db-shm
+*.db-wal

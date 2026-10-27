@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideFakeRoutinesGateways } from '../../../core/routines/fake-routines-gateways';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { RoutineEditor } from './routine-editor';
 
@@ -36,7 +37,9 @@ function blockNames(fixture: ComponentFixture<RoutineEditor>): string[] {
 
 describe('RoutineEditor', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), ...provideFakeRoutinesGateways()],
+    });
   });
 
   it('starts on the weekday routine', () => {

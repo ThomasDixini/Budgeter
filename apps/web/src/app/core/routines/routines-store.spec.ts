@@ -1,12 +1,77 @@
+import { ErrorHandler } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { Observable, of } from 'rxjs';
+import { Category } from './category';
+import {
+  FakeCategoriesGateway,
+  FakeGoalsGateway,
+  provideFakeRoutinesGateways,
+} from './fake-routines-gateways';
 import { RoutinesStore } from './routines-store';
 
-function createStore(): RoutinesStore {
-  return new RoutinesStore();
+/** Records reported errors instead of logging them. */
+class RecordingErrorHandler extends ErrorHandler {
+  readonly errors: unknown[] = [];
+
+  override handleError(error: unknown): void {
+    this.errors.push(error);
+  }
+}
+
+/** Answers creations with the normalized category the API would store. */
+class NormalizingCategoriesGateway extends FakeCategoriesGateway {
+  override create(category: Category): Observable<Category> {
+    return of({ ...category, name: category.name.trim(), color: category.color.toUpperCase() });
+  }
+}
+
+interface StoreSetup {
+  readonly store: RoutinesStore;
+  readonly categories: FakeCategoriesGateway;
+  readonly goals: FakeGoalsGateway;
+  readonly errors: RecordingErrorHandler;
+}
+
+function createStore(
+  categories = new FakeCategoriesGateway(),
+  goals = new FakeGoalsGateway(),
+): StoreSetup {
+  const errors = new RecordingErrorHandler();
+  TestBed.configureTestingModule({
+    providers: [
+      ...provideFakeRoutinesGateways(categories, goals),
+      { provide: ErrorHandler, useValue: errors },
+    ],
+  });
+  return { store: TestBed.inject(RoutinesStore), categories, goals, errors };
 }
 
 describe('RoutinesStore', () => {
+  it('loads categories and goals from the gateways', () => {
+    const { store } = createStore();
+
+    expect(store.categories().map((category) => category.id)).toEqual([
+      'study',
+      'networking',
+      'reading',
+      'exercise',
+    ]);
+    expect(store.goals()).toHaveLength(7);
+    expect(store.isLoaded()).toBe(true);
+  });
+
+  it('reports a failed load and stays not loaded', () => {
+    const categories = new FakeCategoriesGateway();
+    categories.failure = new Error('offline');
+
+    const { store, errors } = createStore(categories);
+
+    expect(store.isLoaded()).toBe(false);
+    expect(errors.errors).toEqual([categories.failure]);
+  });
+
   it('toggles a task', () => {
-    const store = createStore();
+    const { store } = createStore();
 
     store.toggleTask('t3');
 
@@ -14,15 +79,33 @@ describe('RoutinesStore', () => {
   });
 
   it('increments a goal without passing its target', () => {
-    const store = createStore();
+    const { store } = createStore();
 
     store.incrementGoal('g3');
 
     expect(store.goals().find((goal) => goal.id === 'g3')?.done).toBe(1);
   });
 
-  it('adds a goal with no progress', () => {
-    const store = createStore();
+  it('ignores progress on an unknown goal', () => {
+    const { store, errors } = createStore();
+
+    store.incrementGoal('missing');
+
+    expect(errors.errors).toEqual([]);
+  });
+
+  it('restores the progress when logging it fails', () => {
+    const { store, goals, errors } = createStore();
+    goals.failure = new Error('offline');
+
+    store.incrementGoal('g1');
+
+    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(3);
+    expect(errors.errors).toEqual([goals.failure]);
+  });
+
+  it('adds a goal with no progress and saves it', () => {
+    const { store, goals } = createStore();
 
     const goal = store.addGoal({
       categoryId: 'study',
@@ -33,18 +116,54 @@ describe('RoutinesStore', () => {
     });
 
     expect(store.goals().at(-1)).toEqual({ ...goal, done: 0 });
+    expect(goals.saved).toEqual([goal]);
   });
 
-  it('adds a category with a fresh id', () => {
-    const store = createStore();
+  it('drops a goal the gateway rejects', () => {
+    const { store, goals } = createStore();
+    goals.failure = new Error('offline');
+
+    store.addGoal({
+      categoryId: 'study',
+      title: 'X',
+      type: 'frequency',
+      period: 'daily',
+      target: 1,
+    });
+
+    expect(store.goals()).toHaveLength(7);
+  });
+
+  it('adds a category with a fresh id and saves it', () => {
+    const { store, categories } = createStore();
 
     const category = store.addCategory('Languages', '#86EFAC');
 
+    expect(category.id).toBe('id-1');
     expect(store.categories().at(-1)).toEqual(category);
+    expect(categories.saved).toEqual([category]);
+  });
+
+  it('keeps the version of the category the gateway stored', () => {
+    const { store } = createStore(new NormalizingCategoriesGateway());
+
+    store.addCategory(' Languages ', '#86efac');
+
+    expect(store.categories().at(-1)).toMatchObject({ name: 'Languages', color: '#86EFAC' });
+  });
+
+  it('drops a category the gateway rejects', () => {
+    const { store, categories, errors } = createStore();
+    categories.failure = new Error('offline');
+
+    store.addCategory('Languages', '#86EFAC');
+
+    expect(store.categories()).toHaveLength(4);
+    expect(errors.errors).toEqual([categories.failure]);
   });
 
   it('saves an edited routine', () => {
-    const store = createStore();
+    const { store } = createStore();
     const weekdays = store.routines()[0];
 
     store.saveRoutine({ ...weekdays, end: '18:00' });
@@ -53,11 +172,11 @@ describe('RoutinesStore', () => {
   });
 
   it('sums weekly minutes of a category across routines', () => {
-    expect(createStore().weeklyMinutes('networking')).toBe(600);
+    expect(createStore().store.weeklyMinutes('networking')).toBe(600);
   });
 
   it('lists the routine blocks of a category', () => {
-    expect(createStore().categoryBlocks('study')).toEqual([
+    expect(createStore().store.categoryBlocks('study')).toEqual([
       { name: 'C# study', when: 'Mon–Fri · 13:30–15:00' },
     ]);
   });

@@ -37,6 +37,7 @@ export class CategoryDetail {
   protected readonly periodFilter = signal<PeriodFilter>('all');
   protected readonly typeFilter = signal<TypeFilter>('all');
   protected readonly isAdding = signal(this.route.snapshot.queryParamMap.get('newGoal') === 'true');
+  protected readonly isLoaded = this.store.isLoaded;
 
   protected readonly category = computed(() =>
     this.store.categories().find((category) => category.id === this.categoryId()),

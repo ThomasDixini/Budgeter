@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { HomePage } from './pages/home.page';
 import { RoutinesPage } from './pages/routines.page';
+import { createWeeklyGoal, uniqueTitle } from './support/routines-api';
 
 let routines: RoutinesPage;
 
@@ -80,32 +81,42 @@ test.describe('routine editor', () => {
 });
 
 test.describe('categories & goals', () => {
-  test('creating a category opens it with the goal form', async ({ page }) => {
+  test('a created category opens with the goal form and survives a reload', async ({ page }) => {
+    const name = uniqueTitle('Languages');
     await routines.goto('/routines/categories');
 
     await page.getByRole('button', { name: 'New category' }).click();
-    await page.getByLabel('Category name').fill('Languages');
+    await page.getByLabel('Category name').fill(name);
     await page.getByRole('button', { name: 'Create', exact: true }).click();
 
-    await expect(routines.title).toHaveText('Languages');
+    await expect(routines.title).toHaveText(name);
     await expect(page.getByRole('form', { name: 'Set a new goal' })).toBeVisible();
+    await page.reload();
+    await expect(routines.title).toHaveText(name);
   });
 
-  test('creating a goal adds its card', async ({ page }) => {
+  test('a created goal adds its card and survives a reload', async ({ page }) => {
+    const title = uniqueTitle('Read before bed');
     await routines.goto('/routines/categories/reading');
 
     await page.getByRole('button', { name: 'New goal' }).click();
-    await page.getByLabel('Goal name').fill('Read before bed');
+    await page.getByLabel('Goal name').fill(title);
     await page.getByRole('button', { name: 'Create goal' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Read before bed' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('heading', { name: title })).toBeVisible();
   });
 
-  test('+1 logs progress on a goal', async ({ page }) => {
+  test('+1 logs progress on a goal and keeps it', async ({ page, request }) => {
+    const goal = await createWeeklyGoal(request, 'exercise', 3);
     await routines.goto('/routines/categories/exercise');
+    const card = page.getByRole('article').filter({ hasText: goal.title });
 
-    await page.getByRole('button', { name: 'Log progress on Work out 3x a week' }).click();
+    await page.getByRole('button', { name: `Log progress on ${goal.title}` }).click();
 
-    await expect(page.getByText('2 of 3 times')).toBeVisible();
+    await expect(card.getByText('1 of 3 times')).toBeVisible();
+    await page.reload();
+    await expect(card.getByText('1 of 3 times')).toBeVisible();
   });
 });

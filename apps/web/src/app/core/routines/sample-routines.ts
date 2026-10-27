@@ -5,7 +5,8 @@ import { Task } from './task';
 
 /*
  * Placeholder content taken from the "Rotinas & Metas" boards of the Design canvas (artifact 8b717000).
- * It seeds the in-memory store until routines, tasks and goals can be persisted.
+ * Routines and tasks seed the in-memory store until they can be persisted. Categories and goals
+ * now come from the API; their samples only feed the fake gateways used by tests.
  */
 
 export const SAMPLE_CATEGORIES: readonly Category[] = [

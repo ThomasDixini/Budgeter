@@ -3,6 +3,13 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Clock } from '../../../core/calendar/clock';
 import { FixedClock } from '../../../core/calendar/fixed-clock';
+import { NEVER, Observable } from 'rxjs';
+import {
+  FakeCategoriesGateway,
+  FakeGoalsGateway,
+  provideFakeRoutinesGateways,
+} from '../../../core/routines/fake-routines-gateways';
+import { Goal } from '../../../core/routines/goal';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { CategoryDetail } from './category-detail';
 
@@ -11,11 +18,19 @@ interface Page {
   readonly render: () => void;
 }
 
-async function openCategory(url: string): Promise<Page> {
+/** Goals that never arrive, as while the API is still answering. */
+class PendingGoalsGateway extends FakeGoalsGateway {
+  override list(): Observable<readonly Goal[]> {
+    return NEVER;
+  }
+}
+
+async function openCategory(url: string, goals = new FakeGoalsGateway()): Promise<Page> {
   TestBed.configureTestingModule({
     providers: [
       provideRouter([{ path: 'routines/categories/:categoryId', component: CategoryDetail }]),
       { provide: Clock, useValue: new FixedClock(new Date(2026, 9, 26, 9)) },
+      ...provideFakeRoutinesGateways(new FakeCategoriesGateway(), goals),
     ],
   });
   const harness = await RouterTestingHarness.create(url);
@@ -99,5 +114,11 @@ describe('CategoryDetail', () => {
     const page = await openCategory('/routines/categories/unknown');
 
     expect(page.element.textContent).toContain('This category does not exist anymore.');
+  });
+
+  it('does not claim the category is missing while data is loading', async () => {
+    const page = await openCategory('/routines/categories/unknown', new PendingGoalsGateway());
+
+    expect(page.element.textContent).not.toContain('does not exist');
   });
 });
