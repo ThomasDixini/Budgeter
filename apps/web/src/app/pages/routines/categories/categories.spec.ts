@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { provideFakeRoutinesGateways } from '../../../core/routines/fake-routines-gateways';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { Categories } from './categories';
 
@@ -32,7 +33,9 @@ function submit(fixture: ComponentFixture<Categories>): void {
 
 describe('Categories', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), ...provideFakeRoutinesGateways()],
+    });
   });
 
   it('summarizes each category on its card', () => {

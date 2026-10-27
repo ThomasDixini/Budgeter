@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { Clock } from '../../core/calendar/clock';
 import { FixedClock } from '../../core/calendar/fixed-clock';
+import { provideFakeRoutinesGateways } from '../../core/routines/fake-routines-gateways';
 import { RoutinesStore } from '../../core/routines/routines-store';
 
 /** Monday 26 Oct 2026, 14:10: during the "C# study" block of the weekday routine. */
@@ -15,7 +16,11 @@ async function openPage(
   prepare: (store: RoutinesStore) => void = () => undefined,
 ): Promise<HTMLElement> {
   TestBed.configureTestingModule({
-    providers: [provideRouter(routes), { provide: Clock, useValue: new FixedClock(now) }],
+    providers: [
+      provideRouter(routes),
+      { provide: Clock, useValue: new FixedClock(now) },
+      ...provideFakeRoutinesGateways(),
+    ],
   });
   prepare(TestBed.inject(RoutinesStore));
   const harness = await RouterTestingHarness.create(url);

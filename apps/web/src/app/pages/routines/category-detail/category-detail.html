@@ -149,7 +149,7 @@
         <div class="no-goals">No goals here yet. Use “New goal” to set the first one.</div>
       }
     </section>
-  } @else {
+  } @else if (isLoaded()) {
     <p class="ui-muted">This category does not exist anymore.</p>
   }
 </div>

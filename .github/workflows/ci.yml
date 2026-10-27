@@ -61,6 +61,11 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
 
+      # The E2E suite starts the API next to the dev server
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
       - name: Install
         run: npm ci --ignore-scripts
 

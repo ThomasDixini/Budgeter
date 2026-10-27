@@ -1,8 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { ErrorHandler, Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
+import { IdGenerator } from '../ids/id-generator';
+import { CategoriesGateway } from './categories-gateway';
 import { Category } from './category';
 import { Goal } from './goal';
+import { GoalsGateway } from './goals-gateway';
 import { Routine, blockMinutesWithin, weekdaysLabel, weeklyMinutesByCategory } from './routine';
-import { SAMPLE_CATEGORIES, SAMPLE_GOALS, SAMPLE_ROUTINES, SAMPLE_TASKS } from './sample-routines';
+import { SAMPLE_ROUTINES, SAMPLE_TASKS } from './sample-routines';
 import { Task } from './task';
 
 /** A routine block seen from its category: which block and when it happens. */
@@ -13,22 +16,45 @@ export interface CategoryBlock {
 
 export type GoalDraft = Omit<Goal, 'id' | 'done'>;
 
+interface Identified {
+  readonly id: string;
+}
+
 /**
- * In-memory state of the Routines & Goals module, seeded with sample content.
- * Pages depend on this class only, so a persisted adapter can replace it later.
+ * State of the Routines & Goals module. Categories and goals are loaded from and saved through
+ * their gateways; routines and tasks are still sample content kept in memory.
+ * Mutations apply locally first and roll back if the gateway rejects them.
  */
 @Injectable({ providedIn: 'root' })
 export class RoutinesStore {
-  private nextId = 1;
-  private readonly categoryList = signal<readonly Category[]>(SAMPLE_CATEGORIES);
+  private readonly categoriesGateway = inject(CategoriesGateway);
+  private readonly goalsGateway = inject(GoalsGateway);
+  private readonly ids = inject(IdGenerator);
+  private readonly errorHandler = inject(ErrorHandler);
+  private readonly categoryList = signal<readonly Category[]>([]);
   private readonly routineList = signal<readonly Routine[]>(SAMPLE_ROUTINES);
   private readonly taskList = signal<readonly Task[]>(SAMPLE_TASKS);
-  private readonly goalList = signal<readonly Goal[]>(SAMPLE_GOALS);
+  private readonly goalList = signal<readonly Goal[]>([]);
+  private readonly categoriesLoaded = signal(false);
+  private readonly goalsLoaded = signal(false);
 
   readonly categories = this.categoryList.asReadonly();
   readonly routines = this.routineList.asReadonly();
   readonly tasks = this.taskList.asReadonly();
   readonly goals = this.goalList.asReadonly();
+  /** Whether categories and goals arrived, so "not found" can be told apart from "still loading". */
+  readonly isLoaded = computed(() => this.categoriesLoaded() && this.goalsLoaded());
+
+  constructor() {
+    this.categoriesGateway.list().subscribe({
+      next: (categories) => this.loaded(this.categoryList, this.categoriesLoaded, categories),
+      error: (error: unknown) => this.errorHandler.handleError(error),
+    });
+    this.goalsGateway.list().subscribe({
+      next: (goals) => this.loaded(this.goalList, this.goalsLoaded, goals),
+      error: (error: unknown) => this.errorHandler.handleError(error),
+    });
+  }
 
   /**
    * Flips a task between done and pending.
@@ -45,11 +71,13 @@ export class RoutinesStore {
    * @example store.incrementGoal('g1')
    */
   incrementGoal(goalId: string): void {
-    this.goalList.update((goals) =>
-      goals.map((goal) =>
-        goal.id === goalId ? { ...goal, done: Math.min(goal.target, goal.done + 1) } : goal,
-      ),
-    );
+    const previous = this.goalList().find((goal) => goal.id === goalId);
+    if (previous === undefined) return;
+    replaceById(this.goalList, { ...previous, done: Math.min(previous.target, previous.done + 1) });
+    this.goalsGateway.logProgress(goalId).subscribe({
+      next: (saved) => replaceById(this.goalList, saved),
+      error: (error: unknown) => this.rejected(error, () => replaceById(this.goalList, previous)),
+    });
   }
 
   /**
@@ -57,18 +85,27 @@ export class RoutinesStore {
    * @example store.addGoal({ categoryId: 'study', title: 'Read docs', type: 'frequency', period: 'weekly', target: 3 })
    */
   addGoal(draft: GoalDraft): Goal {
-    const goal: Goal = { ...draft, id: this.createId('goal'), done: 0 };
+    const goal: Goal = { ...draft, id: this.ids.next(), done: 0 };
     this.goalList.update((goals) => [...goals, goal]);
+    this.goalsGateway.create(goal).subscribe({
+      next: (saved) => replaceById(this.goalList, saved),
+      error: (error: unknown) => this.rejected(error, () => removeById(this.goalList, goal.id)),
+    });
     return goal;
   }
 
   /**
-   * Creates a category and returns it so the caller can open it.
+   * Creates a category and returns it right away so the caller can open it.
    * @example store.addCategory('Languages', '#86EFAC').id
    */
   addCategory(name: string, color: string): Category {
-    const category: Category = { id: this.createId('category'), name, color };
+    const category: Category = { id: this.ids.next(), name, color };
     this.categoryList.update((categories) => [...categories, category]);
+    this.categoriesGateway.create(category).subscribe({
+      next: (saved) => replaceById(this.categoryList, saved),
+      error: (error: unknown) =>
+        this.rejected(error, () => removeById(this.categoryList, category.id)),
+    });
     return category;
   }
 
@@ -77,9 +114,7 @@ export class RoutinesStore {
    * @example store.saveRoutine({ ...weekdays, end: '18:00' })
    */
   saveRoutine(routine: Routine): void {
-    this.routineList.update((routines) =>
-      routines.map((current) => (current.id === routine.id ? routine : current)),
-    );
+    replaceById(this.routineList, routine);
   }
 
   /**
@@ -109,7 +144,31 @@ export class RoutinesStore {
     );
   }
 
-  private createId(prefix: string): string {
-    return `${prefix}-${this.nextId++}`;
+  private loaded<TRecord>(
+    list: WritableSignal<readonly TRecord[]>,
+    flag: WritableSignal<boolean>,
+    records: readonly TRecord[],
+  ): void {
+    list.set(records);
+    flag.set(true);
   }
+
+  private rejected(error: unknown, rollback: () => void): void {
+    rollback();
+    this.errorHandler.handleError(error);
+  }
+}
+
+function replaceById<TRecord extends Identified>(
+  list: WritableSignal<readonly TRecord[]>,
+  record: TRecord,
+): void {
+  list.update((records) => records.map((current) => (current.id === record.id ? record : current)));
+}
+
+function removeById<TRecord extends Identified>(
+  list: WritableSignal<readonly TRecord[]>,
+  id: string,
+): void {
+  list.update((records) => records.filter((current) => current.id !== id));
 }

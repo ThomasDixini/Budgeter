@@ -1,14 +1,14 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Budgeter.Api.Tests.Endpoints;
 using Shouldly;
 
 namespace Budgeter.Api.Tests;
 
-public class HelloEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class HelloEndpointTests : IClassFixture<ApiFactory>
 {
     private readonly HttpClient _client;
 
-    public HelloEndpointTests(WebApplicationFactory<Program> factory)
+    public HelloEndpointTests(ApiFactory factory)
     {
         _client = factory.CreateClient();
     }
