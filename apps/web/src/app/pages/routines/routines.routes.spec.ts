@@ -96,6 +96,18 @@ describe('Today page', () => {
     ]);
   });
 
+  it('lists the tasks that repeat on today, a Monday', async () => {
+    const element = await openPage('/routines');
+
+    expect([...element.querySelectorAll('.task-title')].map((title) => title.textContent)).toEqual([
+      'Reply to pending emails',
+      'Review class notes',
+      'Message 2 contacts',
+      'Read 20 pages',
+    ]);
+    expect(text(element, '.task-repeat')).toBe('Every day');
+  });
+
   it('checks a task off', async () => {
     const element = await openPage('/routines');
     const checkbox = element.querySelectorAll<HTMLInputElement>('.task input')[2];
@@ -103,6 +115,31 @@ describe('Today page', () => {
     checkbox.click();
     TestBed.tick();
 
-    expect(text(element, '.title-with-count .ui-muted')).toBe('3/5');
+    expect(text(element, '.title-with-count .ui-muted')).toBe('1/4');
+  });
+
+  it('adds a task from the + button', async () => {
+    const element = await openPage('/routines');
+    element.querySelector<HTMLButtonElement>('[aria-label="New task"]')!.click();
+    TestBed.tick();
+    const title = element.querySelector<HTMLInputElement>('.task-form input')!;
+
+    title.value = 'Call the bank';
+    title.dispatchEvent(new Event('input'));
+    TestBed.tick();
+    element.querySelector<HTMLButtonElement>('.task-form [type="submit"]')!.click();
+    TestBed.tick();
+
+    expect(element.querySelector('.task-form')).toBeNull();
+    expect([...element.querySelectorAll('.task-title')].at(-1)?.textContent).toBe('Call the bank');
+  });
+
+  it('deletes a task', async () => {
+    const element = await openPage('/routines');
+
+    element.querySelector<HTMLButtonElement>('[aria-label="Delete Read 20 pages"]')!.click();
+    TestBed.tick();
+
+    expect(text(element, '.title-with-count .ui-muted')).toBe('0/3');
   });
 });

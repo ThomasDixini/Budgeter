@@ -3,6 +3,7 @@ import { HomePage } from './pages/home.page';
 import { RoutinesPage } from './pages/routines.page';
 import {
   createCategory,
+  createDailyTask,
   createRoutine,
   createWeeklyGoal,
   SeededRoutine,
@@ -75,13 +76,41 @@ test.describe('section tabs', () => {
 });
 
 test.describe('today', () => {
-  test('checking a task updates the counter', async ({ page }) => {
+  test('a task added with + repeats daily, keeps its category and survives a reload', async ({
+    page,
+  }) => {
+    const title = uniqueTitle('Practice English');
     await routines.goto();
-
-    await page.getByRole('checkbox', { name: 'Do the LINQ exercises' }).check();
-
     const tasksCard = page.getByRole('region', { name: "Today's tasks" });
-    await expect(tasksCard.getByText('3/5', { exact: true })).toBeVisible();
+    const saved = page.waitForResponse(
+      (response) => response.url().includes('/api/tasks/') && response.request().method() === 'PUT',
+    );
+
+    await tasksCard.getByRole('button', { name: 'New task' }).click();
+    const form = tasksCard.getByRole('form', { name: 'New task' });
+    await form.getByLabel('Task').fill(title);
+    await form.getByLabel('Category').selectOption({ label: 'Study' });
+    await form.getByRole('button', { name: 'Every day' }).click();
+    await form.getByRole('button', { name: 'Add task' }).click();
+    await saved;
+    await page.reload();
+
+    const row = tasksCard.getByRole('listitem').filter({ hasText: title });
+    await expect(row).toContainText('Every day');
+    await expect(row).toContainText('Study');
+  });
+
+  test('checking a task off is kept after a reload', async ({ page, request }) => {
+    const task = await createDailyTask(request);
+    await routines.goto();
+    const checkbox = page.getByRole('checkbox', { name: task.title });
+    const marked = page.waitForResponse((response) => response.url().includes('/completions/'));
+
+    await checkbox.check();
+    await marked;
+    await page.reload();
+
+    await expect(checkbox).toBeChecked();
   });
 });
 

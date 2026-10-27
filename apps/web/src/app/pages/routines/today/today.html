@@ -57,7 +57,13 @@
             <h2 id="tasks-title" class="ui-card-title">Today's tasks</h2>
             <span class="ui-muted ui-tabular">{{ doneCount() }}/{{ tasks().length }}</span>
           </div>
-          <button class="ui-icon-button" type="button" aria-label="New task">
+          <button
+            class="ui-icon-button"
+            type="button"
+            aria-label="New task"
+            [attr.aria-expanded]="isAddingTask()"
+            (click)="isAddingTask.set(!isAddingTask())"
+          >
             <svg
               width="18"
               height="18"
@@ -72,16 +78,27 @@
             </svg>
           </button>
         </div>
+        @if (isAddingTask()) {
+          <app-task-form
+            [categories]="categories()"
+            [weekday]="weekday"
+            (create)="addTask($event)"
+            (dismiss)="isAddingTask.set(false)"
+          />
+        }
         <ul class="tasks">
           @for (item of tasks(); track item.task.id) {
-            <li>
-              <label class="task" [class.is-done]="item.task.done">
+            <li class="task-row">
+              <label class="task" [class.is-done]="item.isDone">
                 <input
                   type="checkbox"
-                  [checked]="item.task.done"
+                  [checked]="item.isDone"
                   (change)="toggleTask(item.task.id)"
                 />
-                <span class="task-title">{{ item.task.title }}</span>
+                <span class="task-text">
+                  <span class="task-title">{{ item.task.title }}</span>
+                  <span class="task-repeat">{{ item.repeat }}</span>
+                </span>
                 @if (item.category; as category) {
                   <span class="task-category" [style.color]="category.color">
                     <span class="ui-dot" [style.background]="category.color"></span>
@@ -89,7 +106,28 @@
                   </span>
                 }
               </label>
+              <button
+                class="task-delete"
+                type="button"
+                [attr.aria-label]="'Delete ' + item.task.title"
+                (click)="deleteTask(item.task.id)"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M6 6l12 12M18 6L6 18"></path>
+                </svg>
+              </button>
             </li>
+          } @empty {
+            <li class="ui-muted no-tasks">Nothing for today. Add a task with +.</li>
           }
         </ul>
       </section>

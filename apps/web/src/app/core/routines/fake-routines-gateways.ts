@@ -8,7 +8,9 @@ import { Goal } from './goal';
 import { GoalsGateway } from './goals-gateway';
 import { Routine } from './routine';
 import { RoutinesGateway } from './routines-gateway';
+import { FakeTasksGateway } from './fake-tasks-gateway';
 import { SAMPLE_CATEGORIES, SAMPLE_GOALS, SAMPLE_ROUTINES } from './sample-routines';
+import { TasksGateway } from './tasks-gateway';
 
 /** Test double answering synchronously from memory; set `failure` to make the next calls fail. */
 export class FakeCategoriesGateway extends CategoriesGateway {
@@ -94,11 +96,13 @@ export function provideFakeRoutinesGateways(
   categories = new FakeCategoriesGateway(),
   goals = new FakeGoalsGateway(),
   routines = new FakeRoutinesGateway(),
+  tasks = new FakeTasksGateway(),
 ): Provider[] {
   return [
     { provide: CategoriesGateway, useValue: categories },
     { provide: GoalsGateway, useValue: goals },
     { provide: RoutinesGateway, useValue: routines },
+    { provide: TasksGateway, useValue: tasks },
     { provide: IdGenerator, useValue: new SequentialIdGenerator() },
   ];
 }

@@ -6,8 +6,6 @@ import { Goal } from './goal';
 import { GoalsGateway } from './goals-gateway';
 import { Routine, blockMinutesWithin, weekdaysLabel, weeklyMinutesByCategory } from './routine';
 import { RoutinesGateway } from './routines-gateway';
-import { SAMPLE_TASKS } from './sample-routines';
-import { Task } from './task';
 
 /** A routine block seen from its category: which block and when it happens. */
 export interface CategoryBlock {
@@ -22,9 +20,9 @@ interface Identified {
 }
 
 /**
- * State of the Routines & Goals module. Categories, goals and routines are loaded from and saved
- * through their gateways; tasks are still sample content kept in memory.
- * Mutations apply locally first and roll back if the gateway rejects them.
+ * Categories, goals and routines of the Routines & Goals module, loaded from and saved through
+ * their gateways (tasks live in `TasksStore`). Mutations apply locally first and roll back if
+ * the gateway rejects them.
  */
 @Injectable({ providedIn: 'root' })
 export class RoutinesStore {
@@ -35,7 +33,6 @@ export class RoutinesStore {
   private readonly errorHandler = inject(ErrorHandler);
   private readonly categoryList = signal<readonly Category[]>([]);
   private readonly routineList = signal<readonly Routine[]>([]);
-  private readonly taskList = signal<readonly Task[]>(SAMPLE_TASKS);
   private readonly goalList = signal<readonly Goal[]>([]);
   private readonly categoriesLoaded = signal(false);
   private readonly goalsLoaded = signal(false);
@@ -43,7 +40,6 @@ export class RoutinesStore {
 
   readonly categories = this.categoryList.asReadonly();
   readonly routines = this.routineList.asReadonly();
-  readonly tasks = this.taskList.asReadonly();
   readonly goals = this.goalList.asReadonly();
   /** Whether everything arrived, so "not found" or "empty" can be told apart from "still loading". */
   readonly isLoaded = computed(
@@ -63,16 +59,6 @@ export class RoutinesStore {
       next: (routines) => this.loaded(this.routineList, this.routinesLoaded, routines),
       error: (error: unknown) => this.errorHandler.handleError(error),
     });
-  }
-
-  /**
-   * Flips a task between done and pending.
-   * @example store.toggleTask('t3')
-   */
-  toggleTask(taskId: string): void {
-    this.taskList.update((tasks) =>
-      tasks.map((task) => (task.id === taskId ? { ...task, done: !task.done } : task)),
-    );
   }
 
   /**

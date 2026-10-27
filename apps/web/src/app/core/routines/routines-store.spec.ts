@@ -73,14 +73,6 @@ describe('RoutinesStore', () => {
     expect(errors.errors).toEqual([categories.failure]);
   });
 
-  it('toggles a task', () => {
-    const { store } = createStore();
-
-    store.toggleTask('t3');
-
-    expect(store.tasks().find((task) => task.id === 't3')?.done).toBe(true);
-  });
-
   it('increments a goal without passing its target', () => {
     const { store } = createStore();
 

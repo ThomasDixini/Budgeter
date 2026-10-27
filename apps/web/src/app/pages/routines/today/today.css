@@ -110,8 +110,68 @@
   accent-color: var(--color-mint);
 }
 
-.task-title {
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-row .task {
   flex: 1;
+  min-width: 0;
+}
+
+.task-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.task-title {
+  font-size: 14px;
+}
+
+.task-repeat {
+  font-size: 11px;
+  color: var(--color-text-faint);
+}
+
+/* Hidden until the row is hovered or focused, so the list stays calm. */
+.task-delete {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.task-row:hover .task-delete,
+.task-delete:focus-visible {
+  opacity: 1;
+}
+
+.task-delete:hover {
+  color: var(--color-danger);
+  background: rgba(var(--color-danger-rgb), 0.08);
+}
+
+@media (hover: none) {
+  .task-delete {
+    opacity: 1;
+  }
+}
+
+.no-tasks {
+  padding: 6px 10px;
   font-size: 14px;
 }
 

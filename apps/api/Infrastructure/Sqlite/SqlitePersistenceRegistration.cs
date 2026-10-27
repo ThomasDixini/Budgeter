@@ -1,6 +1,7 @@
 using Budgeter.Api.Application.Categories;
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Routines;
+using Budgeter.Api.Application.Tasks;
 
 namespace Budgeter.Api.Infrastructure.Sqlite;
 
@@ -21,6 +22,7 @@ public static class SqlitePersistenceRegistration
         services.AddSingleton<ICategoryRepository, SqliteCategoryRepository>();
         services.AddSingleton<IGoalRepository, SqliteGoalRepository>();
         services.AddSingleton<IRoutineRepository, SqliteRoutineRepository>();
+        services.AddSingleton<ITaskRepository, SqliteTaskRepository>();
         services.AddHostedService<SqliteDatabaseInitializer>();
         return services;
     }

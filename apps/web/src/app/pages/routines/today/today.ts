@@ -1,4 +1,4 @@
-import { Component, LOCALE_ID, computed, inject } from '@angular/core';
+import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { Clock } from '../../../core/calendar/clock';
@@ -9,16 +9,21 @@ import { dayProgress } from '../../../core/routines/day-timeline';
 import { GOAL_TYPE_LABELS, Goal, goalPeriodInfo, goalProgress } from '../../../core/routines/goal';
 import { routineForWeekday } from '../../../core/routines/routine';
 import { RoutinesStore } from '../../../core/routines/routines-store';
-import { Task } from '../../../core/routines/task';
+import { Task, TaskDraft, repeatLabel } from '../../../core/routines/task';
+import { TasksStore } from '../../../core/routines/tasks-store';
 import { DayTimeline } from './day-timeline/day-timeline';
 import { NowCard } from './now-card/now-card';
+import { TaskForm } from './task-form/task-form';
 
 /** Goals shown in the "Goals in focus" card. */
 const FOCUS_GOAL_COUNT = 3;
 
 interface TaskView {
   readonly task: Task;
+  readonly isDone: boolean;
   readonly category?: Category;
+  /** How often it repeats, e.g. "Every day". */
+  readonly repeat: string;
 }
 
 interface FocusGoalView {
@@ -32,12 +37,13 @@ interface FocusGoalView {
 /** Module landing page: today's timeline, the block happening now, tasks and goals in focus. */
 @Component({
   selector: 'app-routines-today',
-  imports: [RouterLink, PageHeading, DayTimeline, NowCard],
+  imports: [RouterLink, PageHeading, DayTimeline, NowCard, TaskForm],
   templateUrl: './today.html',
   styleUrl: './today.css',
 })
 export class Today {
   private readonly store = inject(RoutinesStore);
+  private readonly tasksStore = inject(TasksStore);
   private readonly now = inject(Clock).now();
 
   protected readonly nowMinutes = minutesOfDay(this.now);
@@ -50,12 +56,17 @@ export class Today {
     const routine = this.routine();
     return routine === undefined ? 0 : dayProgress(routine, this.nowMinutes);
   });
+  protected readonly weekday = weekdayIndex(this.now);
+  protected readonly isAddingTask = signal(false);
   protected readonly tasks = computed(() =>
-    this.store.tasks().map((task): TaskView => ({ task, category: this.categoryOf(task) })),
+    this.tasksStore.todayTasks().map(({ task, isDone }): TaskView => ({
+      task,
+      isDone,
+      category: this.categoryOf(task),
+      repeat: repeatLabel(task),
+    })),
   );
-  protected readonly doneCount = computed(
-    () => this.store.tasks().filter((task) => task.done).length,
-  );
+  protected readonly doneCount = computed(() => this.tasks().filter((item) => item.isDone).length);
   protected readonly focusGoals = computed(() =>
     this.store
       .goals()
@@ -65,7 +76,16 @@ export class Today {
   );
 
   protected toggleTask(taskId: string): void {
-    this.store.toggleTask(taskId);
+    this.tasksStore.toggleDone(taskId);
+  }
+
+  protected addTask(draft: TaskDraft): void {
+    this.tasksStore.addTask(draft);
+    this.isAddingTask.set(false);
+  }
+
+  protected deleteTask(taskId: string): void {
+    this.tasksStore.deleteTask(taskId);
   }
 
   private categoryOf(item: { readonly categoryId?: string }): Category | undefined {

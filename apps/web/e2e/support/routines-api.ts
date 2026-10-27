@@ -58,6 +58,21 @@ export async function createRoutine(request: APIRequestContext): Promise<SeededR
 }
 
 /**
+ * Creates a task that shows up every day, so a test can work on it whatever today is.
+ * @example const task = await createDailyTask(request);
+ */
+export async function createDailyTask(
+  request: APIRequestContext,
+): Promise<{ readonly id: string; readonly title: string }> {
+  const task = { id: randomUUID(), title: uniqueTitle('Stretch') };
+  const response = await request.put(`/api/tasks/${task.id}`, {
+    data: { title: task.title, repeat: 'daily' },
+  });
+  expect(response.status()).toBe(200);
+  return task;
+}
+
+/**
  * Creates a weekly frequency goal straight through the API, for tests that start from an existing goal.
  * @example const goal = await createWeeklyGoal(request, 'exercise', 3);
  */

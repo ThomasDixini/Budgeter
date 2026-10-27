@@ -14,6 +14,7 @@ internal sealed class SqliteDatabaseInitializer(
         {
             await SampleCategorySeed.ApplyAsync(connection, cancellationToken);
             await SampleRoutineSeed.ApplyAsync(connection, cancellationToken);
+            await SampleTaskSeed.ApplyAsync(connection, cancellationToken);
         }
         logger.LogInformation(
             "SQLite database ready at {DataSource} (sample data seeded: {Seeded})",
