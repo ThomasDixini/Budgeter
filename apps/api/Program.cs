@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Budgeter.Api.Application.Categories;
 using Budgeter.Api.Application.Goals;
+using Budgeter.Api.Application.Routines;
 using Budgeter.Api.Endpoints;
 using Budgeter.Api.Infrastructure.Sqlite;
 
@@ -26,6 +27,8 @@ builder.Services.AddScoped<CreateCategory>();
 builder.Services.AddScoped<ListGoals>();
 builder.Services.AddScoped<CreateGoal>();
 builder.Services.AddScoped<LogGoalProgress>();
+builder.Services.AddScoped<ListRoutines>();
+builder.Services.AddScoped<SaveRoutine>();
 
 var app = builder.Build();
 
@@ -33,5 +36,6 @@ app.UseExceptionHandler();
 app.MapGet("/", () => "Hello World!");
 app.MapCategoryEndpoints();
 app.MapGoalEndpoints();
+app.MapRoutineEndpoints();
 
 await app.RunAsync();

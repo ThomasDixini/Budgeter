@@ -6,7 +6,6 @@
 
 .bar {
   position: relative;
-  height: 64px;
   border-radius: 16px;
   background: repeating-linear-gradient(
     135deg,
@@ -17,11 +16,15 @@
   overflow: hidden;
 }
 
+/* Segment slots are placed in percent of this area, so the bar keeps a 4px gutter. */
+.lanes {
+  position: absolute;
+  inset: 4px 0;
+}
+
 .segment-slot {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  padding: 0 2px;
+  padding: 2px;
   box-sizing: border-box;
 }
 

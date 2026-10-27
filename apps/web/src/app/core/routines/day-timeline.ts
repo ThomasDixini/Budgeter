@@ -1,5 +1,13 @@
 import { formatClock, toMinutes } from '../calendar/time-of-day';
-import { Routine, RoutineBlock, blockMinutesWithin, routineSpan, sortBlocks } from './routine';
+import {
+  Routine,
+  RoutineBlock,
+  SINGLE_LANE,
+  blockLanes,
+  blockMinutesWithin,
+  routineSpan,
+  visibleBlocks,
+} from './routine';
 
 /** Vertical pixels per hour on the Today timeline. */
 export const TIMELINE_HOUR_HEIGHT = 48;
@@ -10,10 +18,13 @@ export interface TimelineHour {
   readonly top: number;
 }
 
+/** A block on the Today timeline: `top`/`height` in pixels, `left`/`width` in percent of the column. */
 export interface TimelineBlock {
   readonly block: RoutineBlock;
   readonly top: number;
   readonly height: number;
+  readonly left: number;
+  readonly width: number;
   readonly isNow: boolean;
 }
 
@@ -39,19 +50,24 @@ export function timelineHours(routine: Pick<Routine, 'start' | 'end'>): Timeline
 }
 
 /**
- * Blocks placed on the timeline, flagging the one happening now.
+ * Blocks placed on the timeline, side by side where they overlap, flagging the ones happening now.
  * @example timelineBlocks(weekdays, 850).find((item) => item.isNow)?.block.name // 'C# study'
  */
 export function timelineBlocks(routine: Routine, nowMinutes: number): TimelineBlock[] {
   const start = toMinutes(routine.start);
-  return sortBlocks(routine.blocks)
-    .filter((block) => blockMinutesWithin(block, routine) > 0)
-    .map((block) => ({
+  const visible = visibleBlocks(routine);
+  const lanes = blockLanes(visible);
+  return visible.map((block) => {
+    const { lane, lanes: laneCount } = lanes.get(block.id) ?? SINGLE_LANE;
+    return {
       block,
       top: toPixels(Math.max(toMinutes(block.start), start) - start),
       height: toPixels(blockMinutesWithin(block, routine)),
+      left: (lane / laneCount) * 100,
+      width: 100 / laneCount,
       isNow: isHappening(block, nowMinutes),
-    }));
+    };
+  });
 }
 
 /**

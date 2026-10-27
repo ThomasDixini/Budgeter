@@ -52,30 +52,101 @@ export function sortBlocks(blocks: readonly RoutineBlock[]): RoutineBlock[] {
 }
 
 /**
- * Human messages for blocks that end before they start or overlap the previous one.
+ * Human messages for blocks that end before they start. Overlaps are not issues: a block can
+ * run alongside another on purpose (a podcast during work), so views lay them out in lanes.
  * @example scheduleIssues([lunchEndingEarly]) // ['"Lunch" ends before it starts']
  */
 export function scheduleIssues(blocks: readonly RoutineBlock[]): string[] {
-  const sorted = sortBlocks(blocks);
-  return sorted.flatMap((block, index) => {
-    const issues: string[] = [];
-    if (toMinutes(block.end) <= toMinutes(block.start)) {
-      issues.push(`"${block.name}" ends before it starts`);
-    }
-    const previous = sorted[index - 1];
-    if (previous !== undefined && toMinutes(block.start) < toMinutes(previous.end)) {
-      issues.push(`"${previous.name}" and "${block.name}" overlap`);
-    }
-    return issues;
-  });
+  return sortBlocks(blocks)
+    .filter((block) => toMinutes(block.end) <= toMinutes(block.start))
+    .map((block) => `"${block.name}" ends before it starts`);
 }
 
 /**
- * Minutes per day covered by blocks.
+ * Minutes per day covered by at least one block; overlapping time counts once.
  * @example plannedMinutes(routine) // 540
  */
 export function plannedMinutes(routine: Routine): number {
-  return routine.blocks.reduce((sum, block) => sum + blockMinutesWithin(block, routine), 0);
+  let covered = 0;
+  let coveredUntil = toMinutes(routine.start);
+  for (const block of sortBlocks(routine.blocks)) {
+    const start = Math.max(toMinutes(block.start), coveredUntil);
+    const end = Math.min(toMinutes(block.end), toMinutes(routine.end));
+    if (end <= start) continue;
+    covered += end - start;
+    coveredUntil = end;
+  }
+  return covered;
+}
+
+/**
+ * Blocks with time inside the routine day, by start.
+ * @example visibleBlocks(shortDay).map((block) => block.id) // ['work']
+ */
+export function visibleBlocks(routine: Routine): RoutineBlock[] {
+  return sortBlocks(routine.blocks).filter((block) => blockMinutesWithin(block, routine) > 0);
+}
+
+/** Where a block sits among the blocks it overlaps: lane `lane` (0-based) of `lanes`. */
+export interface LanePlacement {
+  readonly lane: number;
+  readonly lanes: number;
+}
+
+/** Placement of a block that overlaps nothing. */
+export const SINGLE_LANE: LanePlacement = { lane: 0, lanes: 1 };
+
+/**
+ * Spreads overlapping blocks over side-by-side lanes. Blocks that overlap nothing get the whole
+ * width (one lane); each group of overlapping blocks shares as many lanes as it needs.
+ * @example blockLanes([work, podcast]).get('podcast') // { lane: 1, lanes: 2 }
+ */
+export function blockLanes(blocks: readonly RoutineBlock[]): Map<string, LanePlacement> {
+  const placements = new Map<string, LanePlacement>();
+  for (const group of overlapGroups(sortBlocks(blocks))) {
+    const lanes = laneIndexes(group);
+    const laneCount = Math.max(...lanes.values()) + 1;
+    for (const [blockId, lane] of lanes) placements.set(blockId, { lane, lanes: laneCount });
+  }
+  return placements;
+}
+
+/**
+ * Most lanes any group of overlapping blocks needs, at least one.
+ * @example maxLanes([work, podcast, lunch]) // 2
+ */
+export function maxLanes(blocks: readonly RoutineBlock[]): number {
+  return Math.max(1, ...[...blockLanes(blocks).values()].map((placement) => placement.lanes));
+}
+
+/** Splits blocks sorted by start into runs where each block overlaps the run before it. */
+function overlapGroups(sorted: readonly RoutineBlock[]): RoutineBlock[][] {
+  const groups: RoutineBlock[][] = [];
+  let groupEnd = -1;
+  for (const block of sorted) {
+    if (groups.length === 0 || toMinutes(block.start) >= groupEnd) groups.push([]);
+    groups[groups.length - 1].push(block);
+    groupEnd = Math.max(groupEnd, endMinutes(block));
+  }
+  return groups;
+}
+
+/** Puts each block in the first lane free at its start, opening a lane when none is. */
+function laneIndexes(group: readonly RoutineBlock[]): Map<string, number> {
+  const laneEnds: number[] = [];
+  const lanes = new Map<string, number>();
+  for (const block of group) {
+    const free = laneEnds.findIndex((laneEnd) => laneEnd <= toMinutes(block.start));
+    const lane = free === -1 ? laneEnds.length : free;
+    laneEnds[lane] = endMinutes(block);
+    lanes.set(block.id, lane);
+  }
+  return lanes;
+}
+
+/** A block that ends before it starts takes no time, so it never pushes others aside. */
+function endMinutes(block: Pick<RoutineBlock, 'start' | 'end'>): number {
+  return Math.max(toMinutes(block.start), toMinutes(block.end));
 }
 
 /**

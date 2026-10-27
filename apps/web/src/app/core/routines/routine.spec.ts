@@ -1,6 +1,9 @@
 import {
   Routine,
+  RoutineBlock,
+  blockLanes,
   hourTicks,
+  maxLanes,
   plannedMinutes,
   routineForWeekday,
   scheduleIssues,
@@ -11,6 +14,9 @@ import {
 import { SAMPLE_ROUTINES } from './sample-routines';
 
 const weekdays = SAMPLE_ROUTINES[0];
+const WORK: RoutineBlock = { id: 'work', name: 'Work', start: '08:00', end: '12:00' };
+/** Runs during work on purpose. */
+const PODCAST: RoutineBlock = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
 
 describe('sortBlocks', () => {
   it('orders blocks by start time', () => {
@@ -31,13 +37,8 @@ describe('scheduleIssues', () => {
     expect(scheduleIssues(blocks)).toEqual(['"Lunch" ends before it starts']);
   });
 
-  it('flags overlapping blocks', () => {
-    const blocks = [
-      { id: 'a', name: 'Work', start: '08:00', end: '12:30' },
-      { id: 'b', name: 'Lunch', start: '12:00', end: '13:00' },
-    ];
-
-    expect(scheduleIssues(blocks)).toEqual(['"Work" and "Lunch" overlap']);
+  it('accepts overlapping blocks, which can run side by side on purpose', () => {
+    expect(scheduleIssues([WORK, PODCAST])).toEqual([]);
   });
 });
 
@@ -50,6 +51,47 @@ describe('plannedMinutes', () => {
     const routine: Routine = { ...weekdays, end: '16:00' };
 
     expect(plannedMinutes(routine)).toBe(480);
+  });
+
+  it('counts overlapping time once', () => {
+    const routine: Routine = { ...weekdays, blocks: [WORK, PODCAST] };
+
+    expect(plannedMinutes(routine)).toBe(240);
+  });
+});
+
+describe('blockLanes', () => {
+  it('gives a block that overlaps nothing the whole width', () => {
+    expect(blockLanes(weekdays.blocks).get('lunch')).toEqual({ lane: 0, lanes: 1 });
+  });
+
+  it('puts overlapping blocks in separate lanes', () => {
+    const lanes = blockLanes([PODCAST, WORK]);
+
+    expect(lanes.get('work')).toEqual({ lane: 0, lanes: 2 });
+    expect(lanes.get('podcast')).toEqual({ lane: 1, lanes: 2 });
+  });
+
+  it('reuses a lane once its block has ended', () => {
+    const afterPodcast = { id: 'emails', name: 'Emails', start: '10:00', end: '11:00' };
+
+    expect(blockLanes([WORK, PODCAST, afterPodcast]).get('emails')).toEqual({ lane: 1, lanes: 2 });
+  });
+
+  it('keeps blocks that only touch in one lane', () => {
+    const lunch = { id: 'lunch', name: 'Lunch', start: '12:00', end: '13:00' };
+
+    expect(blockLanes([WORK, lunch]).get('lunch')).toEqual({ lane: 0, lanes: 1 });
+  });
+});
+
+describe('maxLanes', () => {
+  it('is one when nothing overlaps', () => {
+    expect(maxLanes(weekdays.blocks)).toBe(1);
+  });
+
+  it('counts the lanes of the busiest overlap', () => {
+    expect(maxLanes([...weekdays.blocks, PODCAST])).toBe(2);
   });
 });
 

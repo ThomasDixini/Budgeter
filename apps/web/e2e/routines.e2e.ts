@@ -1,9 +1,24 @@
-import { expect, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 import { HomePage } from './pages/home.page';
 import { RoutinesPage } from './pages/routines.page';
-import { createWeeklyGoal, uniqueTitle } from './support/routines-api';
+import {
+  createCategory,
+  createRoutine,
+  createWeeklyGoal,
+  SeededRoutine,
+  uniqueTitle,
+} from './support/routines-api';
 
 let routines: RoutinesPage;
+
+/** Selects a routine tab and waits until the editor shows its single block. */
+async function openRoutine(page: Page, routine: SeededRoutine): Promise<void> {
+  await page.getByRole('tab', { name: routine.name }).click();
+  const blockNames = page.getByRole('textbox', { name: 'Block name' });
+  // Count first: it retries until the editor re-renders, while a strict-mode match fails at once.
+  await expect(blockNames).toHaveCount(1);
+  await expect(blockNames).toHaveValue(routine.blockName);
+}
 
 test.beforeEach(async ({ page }) => {
   routines = new RoutinesPage(page);
@@ -78,6 +93,22 @@ test.describe('routine editor', () => {
 
     await expect(page.getByRole('textbox', { name: 'Block name' }).last()).toHaveValue('New block');
   });
+
+  test('a block linked to a new category survives a reload', async ({ page, request }) => {
+    const category = await createCategory(request, 'Languages');
+    const routine = await createRoutine(request);
+    await routines.goto('/routines/routine');
+    await openRoutine(page, routine);
+    const blockCategory = page.getByRole('combobox', { name: 'Category' });
+
+    await blockCategory.selectOption({ label: category.name });
+    await page.getByRole('button', { name: 'Save routine' }).click();
+
+    await expect(page.getByText('All changes saved')).toBeVisible();
+    await page.reload();
+    await openRoutine(page, routine);
+    await expect(blockCategory).toHaveValue(category.id);
+  });
 });
 
 test.describe('categories & goals', () => {
@@ -101,9 +132,14 @@ test.describe('categories & goals', () => {
 
     await page.getByRole('button', { name: 'New goal' }).click();
     await page.getByLabel('Goal name').fill(title);
+    // The card appears before the API answers; reloading earlier would abort the request.
+    const saved = page.waitForResponse(
+      (response) => response.url().endsWith('/api/goals') && response.request().method() === 'POST',
+    );
     await page.getByRole('button', { name: 'Create goal' }).click();
 
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
+    await saved;
     await page.reload();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
   });
@@ -112,10 +148,13 @@ test.describe('categories & goals', () => {
     const goal = await createWeeklyGoal(request, 'exercise', 3);
     await routines.goto('/routines/categories/exercise');
     const card = page.getByRole('article').filter({ hasText: goal.title });
+    // Progress shows before the API answers; reloading earlier would abort the request.
+    const logged = page.waitForResponse((response) => response.url().endsWith('/progress'));
 
     await page.getByRole('button', { name: `Log progress on ${goal.title}` }).click();
 
     await expect(card.getByText('1 of 3 times')).toBeVisible();
+    await logged;
     await page.reload();
     await expect(card.getByText('1 of 3 times')).toBeVisible();
   });

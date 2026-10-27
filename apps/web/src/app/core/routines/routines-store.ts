@@ -5,7 +5,8 @@ import { Category } from './category';
 import { Goal } from './goal';
 import { GoalsGateway } from './goals-gateway';
 import { Routine, blockMinutesWithin, weekdaysLabel, weeklyMinutesByCategory } from './routine';
-import { SAMPLE_ROUTINES, SAMPLE_TASKS } from './sample-routines';
+import { RoutinesGateway } from './routines-gateway';
+import { SAMPLE_TASKS } from './sample-routines';
 import { Task } from './task';
 
 /** A routine block seen from its category: which block and when it happens. */
@@ -21,29 +22,33 @@ interface Identified {
 }
 
 /**
- * State of the Routines & Goals module. Categories and goals are loaded from and saved through
- * their gateways; routines and tasks are still sample content kept in memory.
+ * State of the Routines & Goals module. Categories, goals and routines are loaded from and saved
+ * through their gateways; tasks are still sample content kept in memory.
  * Mutations apply locally first and roll back if the gateway rejects them.
  */
 @Injectable({ providedIn: 'root' })
 export class RoutinesStore {
   private readonly categoriesGateway = inject(CategoriesGateway);
   private readonly goalsGateway = inject(GoalsGateway);
+  private readonly routinesGateway = inject(RoutinesGateway);
   private readonly ids = inject(IdGenerator);
   private readonly errorHandler = inject(ErrorHandler);
   private readonly categoryList = signal<readonly Category[]>([]);
-  private readonly routineList = signal<readonly Routine[]>(SAMPLE_ROUTINES);
+  private readonly routineList = signal<readonly Routine[]>([]);
   private readonly taskList = signal<readonly Task[]>(SAMPLE_TASKS);
   private readonly goalList = signal<readonly Goal[]>([]);
   private readonly categoriesLoaded = signal(false);
   private readonly goalsLoaded = signal(false);
+  private readonly routinesLoaded = signal(false);
 
   readonly categories = this.categoryList.asReadonly();
   readonly routines = this.routineList.asReadonly();
   readonly tasks = this.taskList.asReadonly();
   readonly goals = this.goalList.asReadonly();
-  /** Whether categories and goals arrived, so "not found" can be told apart from "still loading". */
-  readonly isLoaded = computed(() => this.categoriesLoaded() && this.goalsLoaded());
+  /** Whether everything arrived, so "not found" or "empty" can be told apart from "still loading". */
+  readonly isLoaded = computed(
+    () => this.categoriesLoaded() && this.goalsLoaded() && this.routinesLoaded(),
+  );
 
   constructor() {
     this.categoriesGateway.list().subscribe({
@@ -52,6 +57,10 @@ export class RoutinesStore {
     });
     this.goalsGateway.list().subscribe({
       next: (goals) => this.loaded(this.goalList, this.goalsLoaded, goals),
+      error: (error: unknown) => this.errorHandler.handleError(error),
+    });
+    this.routinesGateway.list().subscribe({
+      next: (routines) => this.loaded(this.routineList, this.routinesLoaded, routines),
       error: (error: unknown) => this.errorHandler.handleError(error),
     });
   }
@@ -110,11 +119,29 @@ export class RoutinesStore {
   }
 
   /**
-   * Replaces a routine with its edited version.
-   * @example store.saveRoutine({ ...weekdays, end: '18:00' })
+   * Replaces a routine with its edited version and saves it. Resolves to whether the gateway
+   * accepted it, so the editor knows when its draft is safe to drop.
+   * @example const saved = await store.saveRoutine({ ...weekdays, end: '18:00' })
    */
-  saveRoutine(routine: Routine): void {
+  saveRoutine(routine: Routine): Promise<boolean> {
+    const previous = this.routineList().find((current) => current.id === routine.id);
+    if (previous === undefined) {
+      const error = new RangeError(`Expected a known routine id, received "${routine.id}"`);
+      return Promise.reject(error);
+    }
     replaceById(this.routineList, routine);
+    return new Promise((resolve) => {
+      this.routinesGateway.save(routine).subscribe({
+        next: (saved) => {
+          replaceById(this.routineList, saved);
+          resolve(true);
+        },
+        error: (error: unknown) => {
+          this.rejected(error, () => replaceById(this.routineList, previous));
+          resolve(false);
+        },
+      });
+    });
   }
 
   /**

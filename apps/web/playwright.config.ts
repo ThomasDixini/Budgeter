@@ -37,7 +37,7 @@ export default defineConfig({
       env: {
         ASPNETCORE_ENVIRONMENT: 'Development',
         ConnectionStrings__Budgeter: `Data Source=${e2eDatabase}`,
-        Persistence__SeedSampleCategories: 'true',
+        Persistence__SeedSampleData: 'true',
       },
     },
     {

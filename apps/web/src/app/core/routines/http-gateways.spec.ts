@@ -5,8 +5,18 @@ import { Category } from './category';
 import { Goal } from './goal';
 import { HttpCategoriesGateway } from './http-categories-gateway';
 import { HttpGoalsGateway } from './http-goals-gateway';
+import { HttpRoutinesGateway } from './http-routines-gateway';
+import { Routine } from './routine';
 
 const STUDY: Category = { id: 'study', name: 'Study', color: '#7DD3FC' };
+const WEEKEND: Routine = {
+  id: 'weekend',
+  name: 'Weekend',
+  days: [5, 6],
+  start: '09:00',
+  end: '14:00',
+  blocks: [{ id: 'read', name: 'Reading', start: '10:00', end: '12:00', categoryId: 'study' }],
+};
 const WEEKLY_GOAL: Goal = {
   id: 'g1',
   categoryId: 'study',
@@ -26,6 +36,7 @@ beforeEach(() => {
       provideHttpClientTesting(),
       HttpCategoriesGateway,
       HttpGoalsGateway,
+      HttpRoutinesGateway,
     ],
   });
   httpTesting = TestBed.inject(HttpTestingController);
@@ -52,6 +63,29 @@ describe('HttpCategoriesGateway', () => {
 
     expect(request.request.body).toEqual(STUDY);
     request.flush(STUDY);
+  });
+});
+
+describe('HttpRoutinesGateway', () => {
+  it('lists routines from the API', () => {
+    let received: readonly Routine[] = [];
+
+    TestBed.inject(HttpRoutinesGateway)
+      .list()
+      .subscribe((routines) => (received = routines));
+    httpTesting.expectOne({ method: 'GET', url: '/api/routines' }).flush([WEEKEND]);
+
+    expect(received).toEqual([WEEKEND]);
+  });
+
+  it('puts the whole routine at its escaped id', () => {
+    const routine: Routine = { ...WEEKEND, id: 'week end' };
+
+    TestBed.inject(HttpRoutinesGateway).save(routine).subscribe();
+
+    const request = httpTesting.expectOne({ method: 'PUT', url: '/api/routines/week%20end' });
+    expect(request.request.body).toEqual(routine);
+    request.flush(routine);
   });
 });
 

@@ -13,7 +13,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting($"ConnectionStrings:{SqliteOptions.ConnectionStringName}", _database.ConnectionString);
-        builder.UseSetting(SqliteOptions.SeedSampleCategoriesKey, "false");
+        builder.UseSetting(SqliteOptions.SeedSampleDataKey, "false");
     }
 
     protected override void Dispose(bool disposing)
