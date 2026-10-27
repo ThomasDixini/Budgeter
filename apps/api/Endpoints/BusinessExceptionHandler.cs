@@ -18,8 +18,12 @@ internal sealed class BusinessExceptionHandler(
         var statusCode = StatusCodeFor(exception);
         if (statusCode is null) return false;
 
+        var methodForLog = SanitizeForLog(httpContext.Request.Method);
+        var pathForLog = SanitizeForLog(httpContext.Request.Path.ToString());
+        var reasonForLog = SanitizeForLog(exception.Message);
+
         logger.LogWarning("Rejected {Method} {Path}: {Reason}",
-            httpContext.Request.Method, httpContext.Request.Path, exception.Message);
+            methodForLog, pathForLog, reasonForLog);
         httpContext.Response.StatusCode = statusCode.Value;
         return await problemDetails.TryWriteAsync(new ProblemDetailsContext
         {
@@ -28,6 +32,9 @@ internal sealed class BusinessExceptionHandler(
             ProblemDetails = { Status = statusCode, Detail = exception.Message },
         });
     }
+
+    private static string SanitizeForLog(string? value) =>
+        (value ?? string.Empty).Replace("\r", string.Empty).Replace("\n", string.Empty);
 
     private static int? StatusCodeFor(Exception exception) => exception switch
     {
