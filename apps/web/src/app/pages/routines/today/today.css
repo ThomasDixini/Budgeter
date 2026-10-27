@@ -1,0 +1,167 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.day-progress {
+  height: var(--touch-target);
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--border-hairline) solid var(--color-border-card);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.day-track {
+  width: 120px;
+}
+
+.day-fill {
+  background: linear-gradient(90deg, var(--color-mint), var(--color-sky));
+}
+
+.day-value {
+  font-size: var(--font-size-sm);
+}
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.timeline-card {
+  flex: 999 1 560px;
+  min-width: 0;
+  padding: 28px;
+}
+
+.side {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-header.centered {
+  align-items: center;
+}
+
+.no-routine {
+  margin-top: 28px;
+}
+
+.side-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title-with-count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.tasks {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.task {
+  min-height: var(--touch-target);
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.task:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.task input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--color-mint);
+}
+
+.task-title {
+  flex: 1;
+  font-size: 14px;
+}
+
+.task.is-done .task-title {
+  color: var(--color-text-faint);
+  text-decoration: line-through;
+}
+
+.task-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.goals-card {
+  gap: 18px;
+}
+
+.focus-goal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.focus-goal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.focus-goal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.focus-goal-title {
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+}
+
+.focus-goal-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.focus-goal-value {
+  flex: none;
+  font-size: var(--font-size-sm);
+}

@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.shell {
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: 130px;
+  /* clip, not hidden: hidden makes the shell a scroll container that focus can shift sideways. */
+  overflow-x: clip;
+  background: var(--color-bg);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.glow-mint {
+  left: -300px;
+  top: -260px;
+  width: 760px;
+  height: 760px;
+  background: radial-gradient(circle, rgba(var(--color-mint-rgb), 0.1), transparent 65%);
+}
+
+.glow-violet {
+  right: -320px;
+  top: 260px;
+  width: 820px;
+  height: 820px;
+  background: radial-gradient(circle, rgba(var(--color-violet-deep-rgb), 0.1), transparent 65%);
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px var(--space-page-x) 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 639px) {
+  .tabs {
+    order: 3;
+    width: 100%;
+  }
+}

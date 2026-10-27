@@ -1,0 +1,40 @@
+<section class="now-card" aria-labelledby="now-title">
+  @if (current(); as current) {
+    <div class="row">
+      <span class="ui-badge-now">Now</span>
+      <span class="ui-muted">{{ current.remaining }}</span>
+    </div>
+    <div class="details">
+      <h2 id="now-title" class="title">{{ current.block.name }}</h2>
+      <div class="meta">
+        <span class="ui-tabular">{{ current.block.start }} – {{ current.block.end }}</span>
+        @if (current.category; as category) {
+          <span aria-hidden="true">·</span>
+          <span class="ui-dot" [style.background]="category.color"></span>
+          <span [style.color]="category.color">{{ category.name }}</span>
+        }
+      </div>
+    </div>
+    <div class="ui-track" aria-hidden="true">
+      <div class="ui-fill elapsed" [style.width.%]="current.elapsed"></div>
+    </div>
+    <div class="actions">
+      <button class="ui-button-primary" type="button">Complete block</button>
+      <button class="ui-button-ghost" type="button">Skip</button>
+    </div>
+  } @else {
+    <div class="row">
+      <span class="ui-tag">Free time</span>
+    </div>
+    <div class="details">
+      <h2 id="now-title" class="title">No block right now</h2>
+      <p class="meta">
+        @if (nextBlock(); as next) {
+          Next: {{ next.name }} at <span class="ui-tabular">{{ next.start }}</span>
+        } @else {
+          Your routine for today is over.
+        }
+      </p>
+    </div>
+  }
+</section>

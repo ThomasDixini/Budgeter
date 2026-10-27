@@ -1,0 +1,80 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.bar {
+  position: relative;
+  height: 64px;
+  border-radius: 16px;
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03) 0 6px,
+    transparent 6px 12px
+  );
+  border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.segment-slot {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  padding: 0 2px;
+  box-sizing: border-box;
+}
+
+.segment {
+  height: 100%;
+  border-radius: var(--radius-control);
+  padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  border: var(--border-hairline) solid;
+  box-sizing: border-box;
+}
+
+.segment-name,
+.segment-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.segment-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.segment-caption {
+  font-size: 11px;
+}
+
+.ticks {
+  position: relative;
+  height: 20px;
+  margin-top: 8px;
+}
+
+.tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--color-text-faint);
+}
+
+.issue {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-sm);
+  color: var(--color-warning-text);
+  background: rgba(var(--color-amber-rgb), 0.08);
+  border: var(--border-hairline) solid rgba(var(--color-amber-rgb), 0.3);
+}

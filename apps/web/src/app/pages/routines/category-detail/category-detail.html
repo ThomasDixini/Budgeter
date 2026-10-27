@@ -1,0 +1,155 @@
+<div class="page ui-enter">
+  <a class="back" routerLink="/routines/categories">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M15 5l-7 7 7 7"></path>
+    </svg>
+    Categories
+  </a>
+
+  @if (category(); as category) {
+    <div class="overview">
+      <section
+        class="hero"
+        aria-labelledby="category-title"
+        [style.background]="
+          'radial-gradient(120% 120% at 0% 0%, ' +
+          accent().tint +
+          ', rgba(255, 255, 255, 0.02) 60%)'
+        "
+        [style.border-color]="accent().ring"
+        [style.box-shadow]="'0 0 40px ' + accent().glow"
+      >
+        <div class="hero-top">
+          <span
+            class="orb"
+            aria-hidden="true"
+            [style.background]="
+              'radial-gradient(circle at 35% 30%, ' + category.color + ', transparent 75%)'
+            "
+            [style.border-color]="accent().ring"
+          ></span>
+          <button class="ui-button-ghost small" type="button">Edit category</button>
+        </div>
+        <div class="hero-text">
+          <h1 id="category-title" class="hero-title">{{ category.name }}</h1>
+          <span class="hero-caption">{{ stats().blocksLabel }}</span>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-value ui-tabular">{{ stats().goalCount }}</span>
+            <span class="stat-label">active goals</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value ui-tabular">{{ stats().average }}%</span>
+            <span class="stat-label">average progress</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value ui-tabular">{{ stats().weekly }}</span>
+            <span class="stat-label">in routine / week</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="ui-card in-routine" aria-labelledby="blocks-title">
+        <h2 id="blocks-title" class="in-routine-title">In the routine</h2>
+        @for (block of blocks(); track block.name + block.when) {
+          <div class="routine-block">
+            <span class="routine-block-name">{{ block.name }}</span>
+            <span class="routine-block-when ui-tabular">{{ block.when }}</span>
+          </div>
+        } @empty {
+          <p class="no-blocks">No block uses this category yet.</p>
+        }
+        <a class="ui-link adjust" routerLink="/routines/routine">Adjust in routine</a>
+      </section>
+    </div>
+
+    <section class="goals" aria-labelledby="goals-title">
+      <div class="goals-header">
+        <h2 id="goals-title" class="goals-title">{{ category.name }} goals</h2>
+        @if (!isAdding()) {
+          <button class="ui-button-primary" type="button" (click)="isAdding.set(true)">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            New goal
+          </button>
+        }
+      </div>
+
+      @if (isAdding()) {
+        <app-goal-form
+          [categoryId]="category.id"
+          [color]="category.color"
+          [today]="today"
+          (create)="addGoal($event)"
+          (dismiss)="isAdding.set(false)"
+        />
+      }
+
+      <div class="filters">
+        <div class="periods" role="group" aria-label="Period">
+          @for (option of periodOptions(); track option.value) {
+            <button
+              class="ui-chip period"
+              type="button"
+              [attr.aria-pressed]="option.value === periodFilter()"
+              (click)="periodFilter.set(option.value)"
+            >
+              {{ option.label }}
+              <span class="period-count ui-tabular">{{ option.count }}</span>
+            </button>
+          }
+        </div>
+        <div class="types" role="group" aria-label="Goal type">
+          @for (option of typeFilters; track option.value) {
+            <button
+              class="type"
+              type="button"
+              [attr.aria-pressed]="option.value === typeFilter()"
+              (click)="typeFilter.set(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="goal-grid">
+        @for (goal of visibleGoals(); track goal.id) {
+          <app-goal-card
+            [goal]="goal"
+            [color]="category.color"
+            [today]="today"
+            (increment)="incrementGoal($event)"
+          />
+        }
+      </div>
+
+      @if (visibleGoals().length === 0) {
+        <div class="no-goals">No goals here yet. Use “New goal” to set the first one.</div>
+      }
+    </section>
+  } @else {
+    <p class="ui-muted">This category does not exist anymore.</p>
+  }
+</div>

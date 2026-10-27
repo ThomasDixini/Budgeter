@@ -1,0 +1,89 @@
+<div class="page ui-enter">
+  <app-page-heading
+    eyebrow="Routines & Goals"
+    heading="Categories"
+    description="Each category groups the blocks of your routine and the goals you set for it. Open one to see and create goals."
+  />
+
+  <div class="grid">
+    @for (card of cards(); track card.category.id) {
+      <a class="card" [routerLink]="['/routines/categories', card.category.id]">
+        <div class="card-top">
+          <span
+            class="orb"
+            aria-hidden="true"
+            [style.background]="
+              'radial-gradient(circle at 35% 30%, ' + card.category.color + ', transparent 75%)'
+            "
+            [style.border-color]="card.ring"
+          ></span>
+          <span class="goals-count">{{ card.goalsLabel }}</span>
+        </div>
+        <div class="card-text">
+          <span class="card-name">{{ card.category.name }}</span>
+          <span class="ui-muted">{{ card.caption }}</span>
+        </div>
+        <div class="ui-track card-track" aria-hidden="true">
+          <div
+            class="ui-fill"
+            [style.width.%]="card.progress"
+            [style.background]="card.category.color"
+          ></div>
+        </div>
+      </a>
+    }
+
+    @if (isCreating()) {
+      <form class="create-form" aria-label="New category" (submit)="create($event)">
+        <label class="ui-field">
+          Category name
+          <input
+            class="ui-input"
+            type="text"
+            placeholder="E.g. Languages"
+            [value]="newName()"
+            (input)="newName.set(valueOf($event))"
+          />
+        </label>
+        <fieldset class="ui-fieldset">
+          <legend class="ui-legend">Color</legend>
+          <div class="swatches">
+            @for (swatch of swatches; track swatch.color) {
+              <button
+                class="swatch"
+                type="button"
+                [attr.aria-label]="swatch.label"
+                [attr.aria-pressed]="swatch.color === newColor()"
+                (click)="newColor.set(swatch.color)"
+              >
+                <span class="swatch-color" [style.background]="swatch.color"></span>
+              </button>
+            }
+          </div>
+        </fieldset>
+        <div class="form-actions">
+          <button class="ui-button-primary" type="submit">Create</button>
+          <button class="ui-button-ghost transparent" type="button" (click)="cancelCreating()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    } @else {
+      <button class="ui-dashed-button new-category" type="button" (click)="startCreating()">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        New category
+      </button>
+    }
+  </div>
+</div>

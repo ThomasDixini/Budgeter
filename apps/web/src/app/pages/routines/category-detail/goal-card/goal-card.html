@@ -1,0 +1,66 @@
+<article class="goal">
+  <div class="top">
+    <span class="ui-tag">
+      @if (goal().type === 'frequency') {
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M4 12a8 8 0 0 1 14-5.3L20 9M20 4v5h-5M20 12a8 8 0 0 1-14 5.3L4 15M4 20v-5h5"
+          ></path>
+        </svg>
+      } @else {
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 21V4M5 4h11l-2 4 2 4H5"></path>
+        </svg>
+      }
+      {{ tag() }}
+    </span>
+    <button
+      class="ui-button-ghost increment ui-tabular"
+      type="button"
+      [attr.aria-label]="'Log progress on ' + goal().title"
+      (click)="increment.emit(goal().id)"
+    >
+      +1
+    </button>
+  </div>
+  <h3 class="title">{{ goal().title }}</h3>
+  @if (showsDots()) {
+    <div class="dots" aria-hidden="true">
+      @for (filled of dots(); track $index) {
+        <span
+          class="dot"
+          [style.background]="filled ? color() : null"
+          [style.border-color]="filled ? color() : null"
+        ></span>
+      }
+    </div>
+  } @else {
+    <div class="ui-track bar" aria-hidden="true">
+      <div class="ui-fill" [style.width.%]="percent()" [style.background]="color()"></div>
+    </div>
+  }
+  <div class="bottom">
+    <span class="value ui-tabular">{{ value() }}</span>
+    <span class="footer">{{ footer() }}</span>
+  </div>
+</article>
