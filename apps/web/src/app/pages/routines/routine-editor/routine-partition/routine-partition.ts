@@ -9,7 +9,7 @@ const LANE_HEIGHT = 56;
 const BAR_GUTTER = 8;
 
 interface SegmentView {
-  readonly id: string;
+  readonly key: string;
   readonly name: string;
   readonly caption: string;
   readonly left: number;
@@ -44,7 +44,6 @@ export class RoutinePartition {
       const category = findCategory(this.categories(), block.categoryId);
       const range = `${block.start}–${block.end}`;
       return {
-        id: block.id,
         name: block.name,
         caption: category ? `${category.name} · ${range}` : range,
         ...placement,

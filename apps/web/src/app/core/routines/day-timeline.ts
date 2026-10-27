@@ -1,13 +1,15 @@
-import { formatClock, toMinutes } from '../calendar/time-of-day';
+import { toMinutes } from '../calendar/time-of-day';
 import {
-  Routine,
-  RoutineBlock,
-  SINGLE_LANE,
-  blockLanes,
-  blockMinutesWithin,
+  blockLength,
+  clockDistance,
+  dayPieces,
+  hourMarks,
+  isHappening,
+  offsetInDay,
   routineSpan,
-  visibleBlocks,
-} from './routine';
+} from './day-clock';
+import { SINGLE_LANE, pieceLanes } from './day-lanes';
+import { Routine, RoutineBlock } from './routine';
 
 /** Vertical pixels per hour on the Today timeline. */
 export const TIMELINE_HOUR_HEIGHT = 48;
@@ -18,9 +20,14 @@ export interface TimelineHour {
   readonly top: number;
 }
 
-/** A block on the Today timeline: `top`/`height` in pixels, `left`/`width` in percent of the column. */
+/**
+ * A block (or one piece of a block wrapping around a 24-hour day) on the Today timeline:
+ * `top`/`height` in pixels, `left`/`width` in percent of the column.
+ */
 export interface TimelineBlock {
   readonly block: RoutineBlock;
+  /** Unique per entry; a wrapping block yields two. */
+  readonly key: string;
   readonly top: number;
   readonly height: number;
   readonly left: number;
@@ -41,12 +48,7 @@ export function timelineHeight(routine: Pick<Routine, 'start' | 'end'>): number 
  * @example timelineHours({ start: '08:00', end: '09:00' }) // [{ label: '08:00', top: 0 }, { label: '09:00', top: 48 }]
  */
 export function timelineHours(routine: Pick<Routine, 'start' | 'end'>): TimelineHour[] {
-  const start = toMinutes(routine.start);
-  const hours: TimelineHour[] = [];
-  for (let minute = Math.ceil(start / 60) * 60; minute <= toMinutes(routine.end); minute += 60) {
-    hours.push({ label: formatClock(minute), top: toPixels(minute - start) });
-  }
-  return hours;
+  return hourMarks(routine).map(({ label, offset }) => ({ label, top: toPixels(offset) }));
 }
 
 /**
@@ -54,18 +56,18 @@ export function timelineHours(routine: Pick<Routine, 'start' | 'end'>): Timeline
  * @example timelineBlocks(weekdays, 850).find((item) => item.isNow)?.block.name // 'C# study'
  */
 export function timelineBlocks(routine: Routine, nowMinutes: number): TimelineBlock[] {
-  const start = toMinutes(routine.start);
-  const visible = visibleBlocks(routine);
-  const lanes = blockLanes(visible);
-  return visible.map((block) => {
-    const { lane, lanes: laneCount } = lanes.get(block.id) ?? SINGLE_LANE;
+  const pieces = dayPieces(routine);
+  const lanes = pieceLanes(pieces);
+  return pieces.map((piece) => {
+    const { lane, lanes: laneCount } = lanes.get(piece.key) ?? SINGLE_LANE;
     return {
-      block,
-      top: toPixels(Math.max(toMinutes(block.start), start) - start),
-      height: toPixels(blockMinutesWithin(block, routine)),
+      block: piece.block,
+      key: piece.key,
+      top: toPixels(piece.start),
+      height: toPixels(piece.end - piece.start),
       left: (lane / laneCount) * 100,
       width: 100 / laneCount,
-      isNow: isHappening(block, nowMinutes),
+      isNow: isHappening(piece.block, nowMinutes),
     };
   });
 }
@@ -75,18 +77,21 @@ export function timelineBlocks(routine: Routine, nowMinutes: number): TimelineBl
  * @example nowLineOffset(weekdays, 850) // 296
  */
 export function nowLineOffset(routine: Routine, nowMinutes: number): number | undefined {
-  const start = toMinutes(routine.start);
-  if (nowMinutes < start || nowMinutes > toMinutes(routine.end)) return undefined;
-  return toPixels(nowMinutes - start);
+  const offset = offsetInDay(nowMinutes, routine);
+  return offset > routineSpan(routine) ? undefined : toPixels(offset);
 }
 
 /**
- * How much of the routine day has passed, 0 to 100.
+ * How much of the routine day has passed, 0 to 100; 100 once it is over, 0 before it begins.
  * @example dayProgress(weekdays, 850) // 69
  */
 export function dayProgress(routine: Routine, nowMinutes: number): number {
-  const elapsed = nowMinutes - toMinutes(routine.start);
-  return Math.round(Math.max(0, Math.min(1, elapsed / routineSpan(routine))) * 100);
+  const offset = offsetInDay(nowMinutes, routine);
+  const span = routineSpan(routine);
+  if (offset <= span) return Math.round((offset / span) * 100);
+  const sinceEnd = clockDistance(toMinutes(routine.end), nowMinutes);
+  const untilStart = clockDistance(nowMinutes, toMinutes(routine.start));
+  return sinceEnd < untilStart ? 100 : 0;
 }
 
 /**
@@ -98,28 +103,27 @@ export function currentBlock(routine: Routine, nowMinutes: number): RoutineBlock
 }
 
 /**
- * Elapsed share of a block, 0 to 100.
+ * Elapsed share of a running block, 0 to 100; works for blocks that cross midnight.
  * @example blockElapsed({ start: '13:30', end: '15:00' }, 850) // 44
  */
 export function blockElapsed(
   block: Pick<RoutineBlock, 'start' | 'end'>,
   nowMinutes: number,
 ): number {
-  const length = Math.max(1, toMinutes(block.end) - toMinutes(block.start));
-  const elapsed = nowMinutes - toMinutes(block.start);
-  return Math.round(Math.max(0, Math.min(1, elapsed / length)) * 100);
+  const length = Math.max(1, blockLength(block));
+  const elapsed = clockDistance(toMinutes(block.start), nowMinutes);
+  return Math.round(Math.min(1, elapsed / length) * 100);
 }
 
 /**
- * Minutes until a block ends, never negative.
- * @example minutesLeft({ end: '15:00' }, 850) // 50
+ * Minutes until a running block ends, never negative; works for blocks that cross midnight.
+ * @example minutesLeft({ start: '13:30', end: '15:00' }, 850) // 50
  */
-export function minutesLeft(block: Pick<RoutineBlock, 'end'>, nowMinutes: number): number {
-  return Math.max(0, toMinutes(block.end) - nowMinutes);
-}
-
-function isHappening(block: Pick<RoutineBlock, 'start' | 'end'>, nowMinutes: number): boolean {
-  return nowMinutes >= toMinutes(block.start) && nowMinutes < toMinutes(block.end);
+export function minutesLeft(
+  block: Pick<RoutineBlock, 'start' | 'end'>,
+  nowMinutes: number,
+): number {
+  return Math.max(0, blockLength(block) - clockDistance(toMinutes(block.start), nowMinutes));
 }
 
 function toPixels(minutes: number): number {

@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Budgeter.Api.Domain;
@@ -18,16 +17,6 @@ public static partial class ClockTime
                 $"Expected the {description} to be a time shaped like HH:mm, received \"{clock}\"");
         }
         return clock;
-    }
-
-    /// <summary>
-    /// Minutes since midnight of a valid <c>HH:mm</c> time.
-    /// </summary>
-    /// <example><code>ClockTime.ToMinutes("13:30"); // 810</code></example>
-    public static int ToMinutes(string clock)
-    {
-        return int.Parse(clock[..2], CultureInfo.InvariantCulture) * 60
-            + int.Parse(clock[3..], CultureInfo.InvariantCulture);
     }
 
     [GeneratedRegex("^([01][0-9]|2[0-3]):[0-5][0-9]$")]

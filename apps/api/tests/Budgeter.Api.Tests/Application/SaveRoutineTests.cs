@@ -49,7 +49,7 @@ public class SaveRoutineTests
     [Fact]
     public async Task ExecuteAsync_RejectsInvalidRoutineWithoutSaving()
     {
-        var command = Routines.WeekdaysCommand() with { End = "07:00" };
+        var command = Routines.WeekdaysCommand() with { End = "25:00" };
 
         await Should.ThrowAsync<DomainRuleException>(() =>
             new SaveRoutine(_routines, _categories).ExecuteAsync(command, CancellationToken.None));

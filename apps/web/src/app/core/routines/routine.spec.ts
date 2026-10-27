@@ -1,9 +1,7 @@
 import {
   Routine,
   RoutineBlock,
-  blockLanes,
   hourTicks,
-  maxLanes,
   plannedMinutes,
   routineForWeekday,
   scheduleIssues,
@@ -17,6 +15,8 @@ const weekdays = SAMPLE_ROUTINES[0];
 const WORK: RoutineBlock = { id: 'work', name: 'Work', start: '08:00', end: '12:00' };
 /** Runs during work on purpose. */
 const PODCAST: RoutineBlock = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
+const SLEEP: RoutineBlock = { id: 'sleep', name: 'Sleep', start: '22:00', end: '06:00' };
+const FULL_DAY: Routine = { ...weekdays, start: '00:00', end: '00:00', blocks: [] };
 
 describe('sortBlocks', () => {
   it('orders blocks by start time', () => {
@@ -31,10 +31,14 @@ describe('scheduleIssues', () => {
     expect(scheduleIssues(weekdays.blocks)).toEqual([]);
   });
 
-  it('flags a block that ends before it starts', () => {
-    const blocks = [{ id: 'x', name: 'Lunch', start: '13:00', end: '12:00' }];
+  it('flags a block that starts and ends at the same time', () => {
+    const blocks = [{ id: 'x', name: 'Lunch', start: '12:00', end: '12:00' }];
 
-    expect(scheduleIssues(blocks)).toEqual(['"Lunch" ends before it starts']);
+    expect(scheduleIssues(blocks)).toEqual(['"Lunch" starts and ends at the same time']);
+  });
+
+  it('accepts a block that runs past midnight', () => {
+    expect(scheduleIssues([SLEEP])).toEqual([]);
   });
 
   it('accepts overlapping blocks, which can run side by side on purpose', () => {
@@ -58,40 +62,13 @@ describe('plannedMinutes', () => {
 
     expect(plannedMinutes(routine)).toBe(240);
   });
-});
 
-describe('blockLanes', () => {
-  it('gives a block that overlaps nothing the whole width', () => {
-    expect(blockLanes(weekdays.blocks).get('lunch')).toEqual({ lane: 0, lanes: 1 });
-  });
+  // Regression: a block crossing midnight used to count as zero, so a full day never added up.
+  it('fills a 24-hour day partitioned around a night of sleep', () => {
+    const awake = { id: 'awake', name: 'Awake', start: '06:00', end: '22:00' };
+    const routine: Routine = { ...FULL_DAY, blocks: [awake, SLEEP] };
 
-  it('puts overlapping blocks in separate lanes', () => {
-    const lanes = blockLanes([PODCAST, WORK]);
-
-    expect(lanes.get('work')).toEqual({ lane: 0, lanes: 2 });
-    expect(lanes.get('podcast')).toEqual({ lane: 1, lanes: 2 });
-  });
-
-  it('reuses a lane once its block has ended', () => {
-    const afterPodcast = { id: 'emails', name: 'Emails', start: '10:00', end: '11:00' };
-
-    expect(blockLanes([WORK, PODCAST, afterPodcast]).get('emails')).toEqual({ lane: 1, lanes: 2 });
-  });
-
-  it('keeps blocks that only touch in one lane', () => {
-    const lunch = { id: 'lunch', name: 'Lunch', start: '12:00', end: '13:00' };
-
-    expect(blockLanes([WORK, lunch]).get('lunch')).toEqual({ lane: 0, lanes: 1 });
-  });
-});
-
-describe('maxLanes', () => {
-  it('is one when nothing overlaps', () => {
-    expect(maxLanes(weekdays.blocks)).toBe(1);
-  });
-
-  it('counts the lanes of the busiest overlap', () => {
-    expect(maxLanes([...weekdays.blocks, PODCAST])).toBe(2);
+    expect(plannedMinutes(routine)).toBe(24 * 60);
   });
 });
 
@@ -112,6 +89,26 @@ describe('hourTicks', () => {
       { label: '09:00', offset: 50 },
       { label: '10:00', offset: 100 },
     ]);
+  });
+
+  it('labels a full day every 3 hours, ending at 24:00', () => {
+    const ticks = hourTicks({ start: '00:00', end: '00:00' });
+
+    expect(ticks.map((tick) => tick.label)).toEqual([
+      '00:00',
+      '03:00',
+      '06:00',
+      '09:00',
+      '12:00',
+      '15:00',
+      '18:00',
+      '21:00',
+      '24:00',
+    ]);
+  });
+
+  it('keeps hourly labels on a working day', () => {
+    expect(hourTicks({ start: '08:00', end: '17:00' })).toHaveLength(10);
   });
 });
 

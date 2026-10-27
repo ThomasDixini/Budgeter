@@ -1,7 +1,7 @@
 <div>
   <div class="bar" aria-hidden="true" [style.height.px]="barHeight()">
     <div class="lanes">
-      @for (segment of segments(); track segment.id) {
+      @for (segment of segments(); track segment.key) {
         <div
           class="segment-slot"
           [style.left.%]="segment.left"

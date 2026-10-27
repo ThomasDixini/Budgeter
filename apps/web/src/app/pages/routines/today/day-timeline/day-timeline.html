@@ -7,7 +7,7 @@
   }
 
   <ol class="blocks" aria-label="Blocks of the day">
-    @for (block of blocks(); track block.id) {
+    @for (block of blocks(); track block.key) {
       <li
         class="block-slot"
         [class.is-shared]="block.width < 100"

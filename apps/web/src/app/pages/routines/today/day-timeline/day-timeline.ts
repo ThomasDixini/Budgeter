@@ -10,7 +10,7 @@ import {
 import { Routine } from '../../../../core/routines/routine';
 
 interface TimelineBlockView {
-  readonly id: string;
+  readonly key: string;
   readonly name: string;
   readonly range: string;
   readonly top: number;
@@ -46,7 +46,6 @@ export class DayTimeline {
     timelineBlocks(this.routine(), this.nowMinutes()).map(({ block, isNow, ...placement }) => {
       const category = findCategory(this.categories(), block.categoryId);
       return {
-        id: block.id,
         name: block.name,
         range: `${block.start} – ${block.end}`,
         ...placement,

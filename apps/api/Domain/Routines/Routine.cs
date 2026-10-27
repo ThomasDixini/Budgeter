@@ -31,7 +31,8 @@ public sealed class Routine
     }
 
     /// <summary>
-    /// Builds a valid routine: sorted distinct weekdays, a day that ends after it starts and unique block ids.
+    /// Builds a valid routine: sorted distinct weekdays and unique block ids. An end at or before the start
+    /// is valid: the day runs past midnight, and an end equal to the start is the whole 24 hours.
     /// </summary>
     /// <example><code>Routine.Create("weekdays", "Weekdays", [0, 1, 2, 3, 4], "08:00", "17:00", blocks).Days.Count; // 5</code></example>
     public static Routine Create(
@@ -39,13 +40,12 @@ public sealed class Routine
     {
         var blockList = blocks.ToList();
         RequireUniqueBlockIds(blockList);
-        var validStart = ClockTime.Require(start, "routine start");
         return new Routine(
             EntityId.Require(id, "routine id"),
             RequiredText.Require(name, MaxNameLength, "routine name"),
             RequireWeekdays(days),
-            validStart,
-            RequireEndAfter(validStart, end),
+            ClockTime.Require(start, "routine start"),
+            ClockTime.Require(end, "routine end"),
             blockList);
     }
 
@@ -59,17 +59,6 @@ public sealed class Routine
                 $"Expected weekdays from 0 (Monday) to 6 (Sunday), received [{string.Join(", ", invalid)}]");
         }
         return sorted;
-    }
-
-    private static string RequireEndAfter(string start, string end)
-    {
-        ClockTime.Require(end, "routine end");
-        if (ClockTime.ToMinutes(end) <= ClockTime.ToMinutes(start))
-        {
-            throw new DomainRuleException(
-                $"Expected the routine end to be after its start ({start}), received \"{end}\"");
-        }
-        return end;
     }
 
     private static void RequireUniqueBlockIds(IReadOnlyList<RoutineBlock> blocks)

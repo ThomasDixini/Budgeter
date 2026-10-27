@@ -75,6 +75,34 @@ describe('partitionSegments', () => {
 
     expect({ top: podcast?.top, height: podcast?.height }).toEqual({ top: 50, height: 50 });
   });
+
+  it('draws a block wrapping around a full day at both ends of the bar', () => {
+    const sleep = { id: 'sleep', name: 'Sleep', start: '22:00', end: '06:00' };
+    const fullDay = { ...weekdays, start: '00:00', end: '00:00', blocks: [sleep] };
+
+    const segments = partitionSegments(fullDay).map(({ key, left, width }) => ({
+      key,
+      left,
+      width,
+    }));
+
+    expect(segments).toEqual([
+      { key: 'sleep#0', left: 0, width: 25 },
+      { key: 'sleep#1', left: (22 / 24) * 100, width: (2 / 24) * 100 },
+    ]);
+  });
+});
+
+describe('appendBlock on a full day', () => {
+  it('wraps the new block past midnight', () => {
+    const late = { id: 'late', name: 'Late', start: '20:00', end: '23:30' };
+    const fullDay = { ...weekdays, start: '00:00', end: '00:00', blocks: [late] };
+
+    expect(appendBlock(fullDay, 'new').blocks.at(-1)).toMatchObject({
+      start: '23:30',
+      end: '00:30',
+    });
+  });
 });
 
 describe('partitionLaneCount', () => {

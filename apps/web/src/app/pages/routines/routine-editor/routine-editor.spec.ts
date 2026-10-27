@@ -55,6 +55,13 @@ function saveMessage(fixture: ComponentFixture<RoutineEditor>): string | undefin
   return element(fixture).querySelector('.save-message')?.textContent?.trim();
 }
 
+/** Planned and free time per day, as the summary shows them. */
+function tileValues(fixture: ComponentFixture<RoutineEditor>): (string | undefined)[] {
+  return [...element(fixture).querySelectorAll('.tile-value')].map((tile) =>
+    tile.textContent?.trim(),
+  );
+}
+
 async function save(fixture: ComponentFixture<RoutineEditor>): Promise<void> {
   click(fixture, '.save');
   await fixture.whenStable();
@@ -118,15 +125,29 @@ describe('RoutineEditor', () => {
     expect(element(fixture).querySelector<HTMLElement>('.bar')?.style.height).toBe('120px');
   });
 
-  it('warns when a block ends before it starts', () => {
+  it('warns when a block starts and ends at the same time', () => {
     const fixture = createEditor();
     const lunchEnd = element(fixture).querySelectorAll<HTMLInputElement>('.time-input')[3];
 
-    changeValue(fixture, lunchEnd, '11:00');
+    changeValue(fixture, lunchEnd, '12:00');
 
     expect(element(fixture).querySelector('[role="status"]')?.textContent).toContain(
-      '"Lunch" ends before it starts',
+      '"Lunch" starts and ends at the same time',
     );
+  });
+
+  // Regression: 00:00–00:00 used to be a one-minute day instead of the whole 24 hours.
+  it('partitions a full day from midnight to midnight', () => {
+    const fixture = createEditor();
+    const [dayStart, dayEnd] = element(fixture).querySelectorAll<HTMLInputElement>('.hours input');
+
+    changeValue(fixture, dayStart, '00:00');
+    changeValue(fixture, dayEnd, '00:00');
+
+    expect(element(fixture).querySelector('.partition-card .ui-muted')?.textContent).toBe(
+      '00:00 – 00:00',
+    );
+    expect(tileValues(fixture)).toEqual(['9h', '15h']);
   });
 
   it('ignores a cleared time field', () => {

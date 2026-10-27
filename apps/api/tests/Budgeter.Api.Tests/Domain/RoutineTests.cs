@@ -34,14 +34,19 @@ public class RoutineTests
     }
 
     [Theory]
-    [InlineData("17:00")]
-    [InlineData("07:00")]
-    public void Create_RejectsDayEndingAtOrBeforeItsStart(string end)
+    [InlineData("00:00", "00:00")]
+    [InlineData("22:00", "06:00")]
+    public void Create_AcceptsFullAndOvernightDays(string start, string end)
     {
-        var exception = Should.Throw<DomainRuleException>(() =>
-            Routine.Create("r1", "Weekdays", [0], "17:00", end, []));
+        var routine = Routine.Create("r1", "All day", [0], start, end, []);
 
-        exception.Message.ShouldContain($"\"{end}\"");
+        (routine.Start, routine.End).ShouldBe((start, end));
+    }
+
+    [Fact]
+    public void BlockCreate_AcceptsABlockRunningPastMidnight()
+    {
+        RoutineBlock.Create("sleep", "Sleep", "22:00", "06:00", null).End.ShouldBe("06:00");
     }
 
     [Theory]
