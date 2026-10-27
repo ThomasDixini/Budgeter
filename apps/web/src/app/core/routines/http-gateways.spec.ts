@@ -87,6 +87,19 @@ describe('HttpRoutinesGateway', () => {
     expect(request.request.body).toEqual(routine);
     request.flush(routine);
   });
+
+  it('deletes the routine at its escaped id', () => {
+    let isDone = false;
+
+    TestBed.inject(HttpRoutinesGateway)
+      .delete('week end')
+      .subscribe({ complete: () => (isDone = true) });
+    httpTesting
+      .expectOne({ method: 'DELETE', url: '/api/routines/week%20end' })
+      .flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(isDone).toBe(true);
+  });
 });
 
 describe('HttpGoalsGateway', () => {

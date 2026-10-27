@@ -175,6 +175,25 @@ export class RoutinesStore {
     flag.set(true);
   }
 
+  /**
+   * Removes a routine right away and deletes it; puts it back in place if the gateway rejects it.
+   * Resolves to whether the deletion went through.
+   * @example const deleted = await store.deleteRoutine('weekend')
+   */
+  deleteRoutine(routineId: string): Promise<boolean> {
+    const before = this.routineList();
+    removeById(this.routineList, routineId);
+    return new Promise((resolve) => {
+      this.routinesGateway.delete(routineId).subscribe({
+        next: () => resolve(true),
+        error: (error: unknown) => {
+          this.rejected(error, () => this.routineList.set(before));
+          resolve(false);
+        },
+      });
+    });
+  }
+
   /** Shows the routine right away and returns how to undo that if the gateway rejects it. */
   private applyRoutine(routine: Routine): () => void {
     const previous = this.routineList().find((current) => current.id === routine.id);

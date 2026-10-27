@@ -214,6 +214,27 @@ describe('RoutinesStore', () => {
     expect(routines.saved).toEqual([night]);
   });
 
+  it('deletes a routine through the gateway', async () => {
+    const { store, routines } = createStore();
+
+    const isDeleted = await store.deleteRoutine('weekdays');
+
+    expect(isDeleted).toBe(true);
+    expect(store.routines().map((routine) => routine.id)).toEqual(['weekend']);
+    expect(routines.deleted).toEqual(['weekdays']);
+  });
+
+  it('puts a routine back in its place when deleting it fails', async () => {
+    const { store, routines, errors } = createStore();
+    routines.failure = new Error('offline');
+
+    const isDeleted = await store.deleteRoutine('weekdays');
+
+    expect(isDeleted).toBe(false);
+    expect(store.routines().map((routine) => routine.id)).toEqual(['weekdays', 'weekend']);
+    expect(errors.errors).toEqual([routines.failure]);
+  });
+
   it('drops a new routine the gateway rejects', async () => {
     const { store, routines } = createStore();
     routines.failure = new Error('offline');

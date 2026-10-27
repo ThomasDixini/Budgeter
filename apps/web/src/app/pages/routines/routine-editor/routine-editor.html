@@ -100,6 +100,31 @@
               />
             </label>
           </div>
+          <div class="danger-zone">
+            @if (isConfirmingDelete()) {
+              <div class="delete-confirm" role="group" aria-label="Confirm deletion">
+                <span>Delete "{{ draft.name || 'Untitled' }}" and its blocks?</span>
+                <button class="ui-button-ghost delete-yes" type="button" (click)="deleteRoutine()">
+                  Delete
+                </button>
+                <button
+                  class="ui-button-ghost"
+                  type="button"
+                  (click)="isConfirmingDelete.set(false)"
+                >
+                  Cancel
+                </button>
+              </div>
+            } @else {
+              <button
+                class="ui-button-ghost delete-routine"
+                type="button"
+                (click)="isConfirmingDelete.set(true)"
+              >
+                Delete routine
+              </button>
+            }
+          </div>
         </section>
 
         <section class="ui-card partition-card" aria-labelledby="partition-title">

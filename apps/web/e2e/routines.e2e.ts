@@ -108,6 +108,27 @@ test.describe('routine editor', () => {
     await expect(page.getByRole('tab', { name })).toBeVisible();
   });
 
+  test('a deleted routine stays gone after a reload', async ({ page, request }) => {
+    const routine = await createRoutine(request);
+    await routines.goto('/routines/routine');
+    await openRoutine(page, routine);
+    const deleted = page.waitForResponse(
+      (response) => response.url().endsWith(routine.id) && response.request().method() === 'DELETE',
+    );
+
+    await page.getByRole('button', { name: 'Delete routine' }).click();
+    await page
+      .getByRole('group', { name: 'Confirm deletion' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+
+    await expect(page.getByRole('tab', { name: routine.name })).toHaveCount(0);
+    await deleted;
+    await page.reload();
+    await expect(page.getByRole('tab', { name: 'Weekdays' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: routine.name })).toHaveCount(0);
+  });
+
   test('a block linked to a new category survives a reload', async ({ page, request }) => {
     const category = await createCategory(request, 'Languages');
     const routine = await createRoutine(request);

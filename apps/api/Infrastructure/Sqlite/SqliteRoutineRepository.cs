@@ -39,6 +39,14 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
         await transaction.CommitAsync(cancellationToken);
     }
 
+    public async Task DeleteAsync(string routineId, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        // Blocks go with it through ON DELETE CASCADE (foreign keys are enforced per connection).
+        await SqliteCommands.ExecuteAsync(
+            connection, "DELETE FROM routines WHERE id = $id", cancellationToken, ("$id", routineId));
+    }
+
     /// <summary>
     /// Upserts the routine row (keeping its position in the list) and rewrites its blocks.
     /// Runs inside the caller's transaction, if any.

@@ -71,6 +71,20 @@ public sealed class SqliteRoutineRepositoryTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task Delete_RemovesTheRoutineAndItsBlocks()
+    {
+        await _routines.SaveAsync(Routines.Weekdays(), CancellationToken.None);
+
+        await _routines.DeleteAsync("weekdays", CancellationToken.None);
+
+        (await _routines.ListAsync(CancellationToken.None)).ShouldBeEmpty();
+        await using var connection = await _connections.OpenAsync(CancellationToken.None);
+        var blocks = await SqliteCommands.QueryAsync(
+            connection, "SELECT COUNT(*) FROM routine_blocks", reader => reader.GetInt64(0), CancellationToken.None);
+        blocks[0].ShouldBe(0);
+    }
+
+    [Fact]
     public async Task SampleSeed_InsertsRoutinesOnlyIntoAnEmptyTable()
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);

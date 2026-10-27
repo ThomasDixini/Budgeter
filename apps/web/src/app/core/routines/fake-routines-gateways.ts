@@ -63,6 +63,7 @@ export class FakeGoalsGateway extends GoalsGateway {
 export class FakeRoutinesGateway extends RoutinesGateway {
   failure: Error | undefined;
   readonly saved: Routine[] = [];
+  readonly deleted: string[] = [];
 
   constructor(private readonly routines: readonly Routine[] = SAMPLE_ROUTINES) {
     super();
@@ -76,6 +77,12 @@ export class FakeRoutinesGateway extends RoutinesGateway {
     if (this.failure !== undefined) return throwError(() => this.failure);
     this.saved.push(routine);
     return of(routine);
+  }
+
+  override delete(routineId: string): Observable<void> {
+    if (this.failure !== undefined) return throwError(() => this.failure);
+    this.deleted.push(routineId);
+    return of(undefined);
   }
 }
 

@@ -29,6 +29,7 @@ builder.Services.AddScoped<CreateGoal>();
 builder.Services.AddScoped<LogGoalProgress>();
 builder.Services.AddScoped<ListRoutines>();
 builder.Services.AddScoped<SaveRoutine>();
+builder.Services.AddScoped<DeleteRoutine>();
 
 var app = builder.Build();
 

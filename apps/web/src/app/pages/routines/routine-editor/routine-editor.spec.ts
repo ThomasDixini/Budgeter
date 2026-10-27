@@ -274,6 +274,58 @@ describe('RoutineEditor', () => {
     expect(tabNames(fixture)).toEqual(['Weekdays', 'Weekend', 'New routine']);
   });
 
+  it('asks before deleting and keeps the routine on Cancel', () => {
+    const fixture = createEditor();
+
+    click(fixture, '.delete-routine');
+    expect(element(fixture).querySelector('.delete-confirm')?.textContent).toContain(
+      'Delete "Weekdays" and its blocks?',
+    );
+    click(fixture, '.delete-confirm .ui-button-ghost', 1);
+
+    expect(tabNames(fixture)).toEqual(['Weekdays', 'Weekend']);
+    expect(routinesGateway.deleted).toEqual([]);
+  });
+
+  it('deletes the routine on confirm and opens the next one', async () => {
+    const fixture = createEditor();
+
+    click(fixture, '.delete-routine');
+    click(fixture, '.delete-yes');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(routinesGateway.deleted).toEqual(['weekdays']);
+    expect(tabNames(fixture)).toEqual(['Weekend']);
+    expect(selectedTab(fixture)).toBe('Weekend');
+  });
+
+  it('discards an unsaved new routine without calling the API', async () => {
+    const fixture = createEditor();
+    click(fixture, '.new-routine');
+
+    click(fixture, '.delete-routine');
+    click(fixture, '.delete-yes');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(tabNames(fixture)).toEqual(['Weekdays', 'Weekend']);
+    expect(routinesGateway.deleted).toEqual([]);
+  });
+
+  it('keeps the routine and says so when deleting fails', async () => {
+    const fixture = createEditor();
+    routinesGateway.failure = new Error('offline');
+
+    click(fixture, '.delete-routine');
+    click(fixture, '.delete-yes');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(tabNames(fixture)).toEqual(['Weekdays', 'Weekend']);
+    expect(saveMessage(fixture)).toBe("Couldn't delete the routine. Try again.");
+  });
+
   it('offers "New routine" when there are no routines yet', () => {
     routinesGateway = new FakeRoutinesGateway([]);
     TestBed.overrideProvider(RoutinesGateway, { useValue: routinesGateway });

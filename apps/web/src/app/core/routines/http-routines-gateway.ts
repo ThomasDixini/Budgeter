@@ -16,9 +16,14 @@ export class HttpRoutinesGateway extends RoutinesGateway {
   }
 
   override save(routine: Routine): Observable<Routine> {
-    return this.httpClient.put<Routine>(
-      `${ROUTINES_URL}/${encodeURIComponent(routine.id)}`,
-      routine,
-    );
+    return this.httpClient.put<Routine>(routineUrl(routine.id), routine);
   }
+
+  override delete(routineId: string): Observable<void> {
+    return this.httpClient.delete<void>(routineUrl(routineId));
+  }
+}
+
+function routineUrl(routineId: string): string {
+  return `${ROUTINES_URL}/${encodeURIComponent(routineId)}`;
 }

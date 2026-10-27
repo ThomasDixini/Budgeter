@@ -126,6 +126,33 @@
   max-width: 320px;
 }
 
+/* Deleting sits on its own row at the bottom of the settings, away from everyday controls. */
+.danger-zone {
+  flex: 1 1 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delete-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-soft);
+}
+
+.delete-routine,
+.delete-yes {
+  color: var(--color-danger);
+}
+
+.delete-yes {
+  border-color: rgba(var(--color-danger-rgb), 0.4);
+  background: rgba(var(--color-danger-rgb), 0.08);
+}
+
 .partition-card {
   padding: 28px;
   display: flex;

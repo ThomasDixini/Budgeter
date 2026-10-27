@@ -77,6 +77,19 @@ public sealed class RoutineEndpointsTests : IDisposable
         (await response.Content.ReadAsStringAsync()).ShouldContain("8am");
     }
 
+    [Fact]
+    public async Task Delete_RemovesTheRoutineAndRepeatsAsNoContent()
+    {
+        await CreateLanguagesCategoryAsync();
+        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+
+        var first = await _client.DeleteAsync("/routines/weekdays");
+        var retry = await _client.DeleteAsync("/routines/weekdays");
+
+        (first.StatusCode, retry.StatusCode).ShouldBe((HttpStatusCode.NoContent, HttpStatusCode.NoContent));
+        (await _client.GetFromJsonAsync<RoutineResponse[]>("/routines")).ShouldBeEmpty();
+    }
+
     private async Task CreateLanguagesCategoryAsync()
     {
         var response = await _client.PostAsJsonAsync("/categories",
