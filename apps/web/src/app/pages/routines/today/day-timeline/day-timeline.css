@@ -29,7 +29,7 @@
   border-top: var(--border-hairline) solid var(--color-border-subtle);
 }
 
-/* Blocks sit right of the hour labels; overlapping ones share this column side by side. */
+/* Blocks sit right of the hour labels, each on its own full-width row. */
 .blocks {
   list-style: none;
   position: absolute;
@@ -38,12 +38,15 @@
 
 .block-slot {
   position: absolute;
+  left: 0;
+  right: 0;
   padding: 3px 0;
   box-sizing: border-box;
 }
 
-.block-slot.is-shared {
-  padding: 3px 2px;
+/* An ended block may grow over the past part of an earlier one; it stays on top to be read. */
+.block-slot.is-ended {
+  z-index: 1;
 }
 
 .block {

@@ -37,19 +37,13 @@ describe('timeline geometry', () => {
     expect(now.map((item) => item.block.name)).toEqual(['C# study']);
   });
 
-  it('gives a block that overlaps nothing the full width', () => {
-    const lunch = timelineBlocks(weekdays, STUDY_TIME)[1];
-
-    expect({ left: lunch.left, width: lunch.width }).toEqual({ left: 0, width: 100 });
-  });
-
-  it('places overlapping blocks side by side', () => {
+  it('places an overlapping block at its own time, without splitting the width', () => {
     const podcast = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
     const routine = { ...weekdays, blocks: [...weekdays.blocks, podcast] };
 
     const placed = timelineBlocks(routine, STUDY_TIME).find((item) => item.block.id === 'podcast');
 
-    expect({ left: placed?.left, width: placed?.width }).toEqual({ left: 50, width: 50 });
+    expect({ top: placed?.top, height: placed?.height }).toEqual({ top: 48, height: 48 });
   });
 });
 
@@ -79,26 +73,52 @@ describe('timelineBlocks with ended blocks', () => {
   }
 
   // Regression: a block completed minutes (or seconds) after it started shrank to nothing.
-  it('keeps ended blocks one line tall by growing upward, ending where they ended', () => {
+  it('stacks ended blocks upward, one line each, the latest right above where it ended', () => {
     const { guitar, read } = placed(STUDY_TIME);
 
-    expect(guitar).toEqual({ top: 266, height: 24 }); // 13:33 – 14:03
-    expect(read).toEqual({ top: 266, height: 24 });
+    expect(read).toEqual({ top: 266, height: 24 }); // 13:33 – 14:03
+    expect(guitar).toEqual({ top: 242, height: 24 }); // 13:03 – 13:33, above Reading
+  });
+
+  it('puts the block ended last lowest when two ended at the same minute', () => {
+    const sameMinute: Routine = {
+      ...weekdays,
+      blocks: [
+        { id: 'a', name: 'A', start: '14:03', end: '14:03' },
+        { id: 'b', name: 'B', start: '14:03', end: '14:03' },
+      ],
+    };
+    const endedInOrder = new Map([
+      ['b', 0],
+      ['a', 0],
+    ]);
+
+    const [upper, lower] = timelineBlocks(sameMinute, STUDY_TIME, endedInOrder);
+
+    expect([upper.block.id, lower.block.id]).toEqual(['b', 'a']);
+  });
+
+  it('never lets two ended blocks share a row', () => {
+    const { guitar, read } = placed(STUDY_TIME);
+    const rows = [guitar, read];
+
+    expect(new Set(rows.map((row) => row.top)).size).toBe(rows.length);
   });
 
   it('never draws an ended block past the "now" line', () => {
-    const now = 14 * 60 + 1; // 14:01, the end is clamped to the line
-    const { guitar } = placed(now);
+    const now = 14 * 60 + 1; // 14:01, before both recorded ends: they are clamped to the line
+    const { guitar, read } = placed(now);
+    const bottoms = [guitar, read].map((row) => row.top + row.height);
 
-    expect(guitar.top + guitar.height).toBe(nowLineOffset(ended, now));
+    expect(Math.max(...bottoms)).toBe(nowLineOffset(ended, now));
   });
 
-  it('draws ended blocks at their planned length when the day is not running', () => {
+  it('draws ended blocks at their planned length, one after the other, when the day is over', () => {
     const evening = 20 * 60; // after the 08:00–17:00 day: no "now" line
     const { guitar, read } = placed(evening);
 
     expect(guitar).toEqual({ top: 288, height: 48 }); // 14:00 for an hour
-    expect(read).toEqual({ top: 290, height: 36 }); // 14:03 for 45 minutes
+    expect(read).toEqual({ top: 336, height: 36 }); // right below, for 45 minutes
   });
 
   it('does not keep a zero-length block that has not ended', () => {

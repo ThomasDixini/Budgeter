@@ -10,11 +10,9 @@
     @for (block of blocks(); track block.key) {
       <li
         class="block-slot"
-        [class.is-shared]="block.width < 100"
+        [class.is-ended]="block.outcome !== undefined"
         [style.top.px]="block.top"
         [style.height.px]="block.height"
-        [style.left.%]="block.left"
-        [style.width.%]="block.width"
       >
         <div
           class="block"

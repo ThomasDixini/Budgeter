@@ -21,8 +21,6 @@ interface TimelineBlockView {
   readonly summary: string;
   readonly top: number;
   readonly height: number;
-  readonly left: number;
-  readonly width: number;
   readonly isNow: boolean;
   /** Set once the block was completed or skipped today. */
   readonly outcome?: BlockOutcomeKind;

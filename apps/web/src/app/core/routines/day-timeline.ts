@@ -9,7 +9,6 @@ import {
   offsetInDay,
   routineSpan,
 } from './day-clock';
-import { SINGLE_LANE, pieceLanes } from './day-lanes';
 import { Routine, RoutineBlock } from './routine';
 
 /** Vertical pixels per hour on the Today timeline. */
@@ -37,8 +36,8 @@ export interface TimelineHour {
 }
 
 /**
- * A block (or one piece of a block wrapping around a 24-hour day) on the Today timeline:
- * `top`/`height` in pixels, `left`/`width` in percent of the column.
+ * A block (or one piece of a block wrapping around a 24-hour day) on the Today timeline, as a
+ * full-width row: `top`/`height` in pixels.
  */
 export interface TimelineBlock {
   readonly block: RoutineBlock;
@@ -46,8 +45,6 @@ export interface TimelineBlock {
   readonly key: string;
   readonly top: number;
   readonly height: number;
-  readonly left: number;
-  readonly width: number;
   readonly isNow: boolean;
 }
 
@@ -68,11 +65,11 @@ export function timelineHours(routine: Pick<Routine, 'start' | 'end'>): Timeline
 }
 
 /**
- * Blocks placed on the timeline, side by side where they overlap, flagging the ones happening now.
+ * Blocks placed on the timeline, each on its own full-width row, flagging the ones happening now.
  * Blocks completed or skipped today are keys of `endedBlocks`, mapped to their planned length:
- * - while the day is running they never reach past the "now" line, and one too short to read
- *   grows upward to a one-line height, beside the blocks it then overlaps;
- * - outside the day (no "now" line) they are drawn at their planned length.
+ * - while the day is running they stack upward from the "now" line, each at least one line tall,
+ *   so none reaches past the line and none hides another;
+ * - outside the day (no "now" line) they are drawn at their planned length, stacked downward.
  * @example timelineBlocks(weekdays, 850).find((item) => item.isNow)?.block.name // 'C# study'
  */
 export function timelineBlocks(
@@ -81,30 +78,23 @@ export function timelineBlocks(
   endedBlocks: ReadonlyMap<string, number> = new Map(),
 ): TimelineBlock[] {
   const nowOffset = offsetInDay(nowMinutes, routine);
-  const isDayRunning = nowOffset <= routineSpan(routine);
+  // In the order they were ended, which breaks ties when several end at the same minute.
+  const ended = [...endedBlocks.keys()]
+    .map((blockId) => routine.blocks.find((block) => block.id === blockId))
+    .filter((block) => block !== undefined);
   const pieces = [
     ...dayPieces(routine).filter((piece) => !endedBlocks.has(piece.block.id)),
-    ...routine.blocks
-      .filter((block) => endedBlocks.has(block.id))
-      .map((block) => {
-        // Zero means "unknown", so fall back to how long the block actually ran.
-        const plannedLength = endedBlocks.get(block.id) || blockLength(block);
-        return endedPiece(block, routine, isDayRunning ? nowOffset : undefined, plannedLength);
-      }),
+    ...(nowOffset <= routineSpan(routine)
+      ? stackUpFrom(nowOffset, ended, routine)
+      : stackDown(ended, routine, endedBlocks)),
   ].sort((first, second) => first.start - second.start);
-  const lanes = pieceLanes(pieces);
-  return pieces.map((piece) => {
-    const { lane, lanes: laneCount } = lanes.get(piece.key) ?? SINGLE_LANE;
-    return {
-      block: piece.block,
-      key: piece.key,
-      top: toPixels(piece.start),
-      height: toPixels(piece.end - piece.start),
-      left: (lane / laneCount) * 100,
-      width: 100 / laneCount,
-      isNow: isHappening(piece.block, nowMinutes),
-    };
-  });
+  return pieces.map((piece) => ({
+    block: piece.block,
+    key: piece.key,
+    top: toPixels(piece.start),
+    height: toPixels(piece.end - piece.start),
+    isNow: isHappening(piece.block, nowMinutes),
+  }));
 }
 
 /**
@@ -165,23 +155,51 @@ export function minutesLeft(
 }
 
 /**
- * Where an ended block is drawn: up to the "now" line at most, at least one line tall by
- * growing upward; or, with no "now" line, from its start for its planned length.
+ * Ended blocks from the latest to the earliest, each ending where it ended (never past `limit`,
+ * the "now" line, nor past the top of the one below it) and at least one line tall.
  */
-function endedPiece(
-  block: RoutineBlock,
+function stackUpFrom(limit: number, blocks: readonly RoutineBlock[], routine: Routine): DayPiece[] {
+  let ceiling = limit;
+  return (
+    [...blocks]
+      .map((block, order) => ({ block, order, ...actualSpan(block, routine) }))
+      // Latest end first; on a tie the one that started, or was ended, later sits lowest.
+      .sort(
+        (first, second) =>
+          second.end - first.end || second.start - first.start || second.order - first.order,
+      )
+      .map(({ block, start, end }) => {
+        const bottom = Math.min(end, ceiling);
+        const top = Math.max(0, Math.min(start, bottom - MIN_ENDED_BLOCK_MINUTES));
+        ceiling = top;
+        return { block, key: `${block.id}#0`, start: top, end: bottom };
+      })
+  );
+}
+
+/** Ended blocks at their planned length, each starting no earlier than the one above ends. */
+function stackDown(
+  blocks: readonly RoutineBlock[],
   routine: Routine,
-  nowOffset: number | undefined,
-  plannedLength: number,
-): DayPiece {
+  plannedLengths: ReadonlyMap<string, number>,
+): DayPiece[] {
   const span = routineSpan(routine);
+  let floor = 0;
+  return [...blocks]
+    .map((block) => ({ block, ...actualSpan(block, routine) }))
+    .sort((first, second) => first.start - second.start)
+    .map(({ block, start, end }) => {
+      // Zero means "unknown", so fall back to how long the block actually ran.
+      const length = plannedLengths.get(block.id) || end - start;
+      const top = Math.min(span, Math.max(start, floor));
+      floor = Math.min(span, top + length);
+      return { block, key: `${block.id}#0`, start: top, end: floor };
+    });
+}
+
+function actualSpan(block: RoutineBlock, routine: Routine): { start: number; end: number } {
   const start = offsetInDay(toMinutes(block.start), routine);
-  const key = `${block.id}#0`;
-  if (nowOffset === undefined) {
-    return { block, key, start, end: Math.min(span, start + plannedLength) };
-  }
-  const end = Math.min(nowOffset, start + blockLength(block));
-  return { block, key, start: Math.max(0, Math.min(start, end - MIN_ENDED_BLOCK_MINUTES)), end };
+  return { start, end: start + blockLength(block) };
 }
 
 function toPixels(minutes: number): number {
