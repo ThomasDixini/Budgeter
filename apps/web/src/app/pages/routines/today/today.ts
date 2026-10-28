@@ -63,6 +63,9 @@ export class Today {
   protected readonly outcomes = computed(
     () => this.plan()?.outcomes ?? new Map<string, BlockOutcomeKind>(),
   );
+  protected readonly plannedLengths = computed(
+    () => this.plan()?.plannedLengths ?? new Map<string, number>(),
+  );
   /** The block ended most recently today, offered for a quick undo on the Now card. */
   protected readonly lastEnded = computed((): EndedBlock | undefined => {
     const routine = this.routine();

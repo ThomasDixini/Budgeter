@@ -51,6 +51,12 @@ describe('planDay', () => {
     expect(times(routine).slice(2)).toEqual(['guitar 20:40-20:50', 'read 20:50-21:35']);
   });
 
+  it('keeps the planned length of the blocks that ended', () => {
+    const { plannedLengths } = planDay(EVENING, [outcome('project', '20:40')]);
+
+    expect([...plannedLengths]).toEqual([['project', 90]]);
+  });
+
   it('remembers how each block ended', () => {
     const { outcomes } = planDay(EVENING, [outcome('project', '20:40', 'skipped')]);
 

@@ -56,8 +56,21 @@ export class DayTimeline {
   readonly nowMinutes = input.required<number>();
   /** How today's blocks ended so far, by block id. */
   readonly outcomes = input<ReadonlyMap<string, BlockOutcomeKind>>(new Map());
+  /** Planned length in minutes of each ended block, used when the day is not running. */
+  readonly plannedLengths = input<ReadonlyMap<string, number>>(new Map());
   /** Emits the id of an ended block the user wants back as it was planned. */
   readonly undo = output<string>();
+
+  /** Ended blocks with their planned length, falling back to how long they lasted. */
+  private readonly endedBlocks = computed(
+    () =>
+      new Map(
+        [...this.outcomes().keys()].map((blockId) => [
+          blockId,
+          this.plannedLengths().get(blockId) ?? 0,
+        ]),
+      ),
+  );
 
   protected readonly height = computed(() => timelineHeight(this.routine()));
   protected readonly hours = computed(() => timelineHours(this.routine()));
@@ -65,8 +78,8 @@ export class DayTimeline {
   protected readonly nowLabel = computed(() => formatClock(this.nowMinutes()));
   protected readonly outcomeLabels = OUTCOME_LABELS;
   protected readonly blocks = computed(() =>
-    timelineBlocks(this.routine(), this.nowMinutes(), new Set(this.outcomes().keys())).map(
-      (entry) => this.toView(entry),
+    timelineBlocks(this.routine(), this.nowMinutes(), this.endedBlocks()).map((entry) =>
+      this.toView(entry),
     ),
   );
 

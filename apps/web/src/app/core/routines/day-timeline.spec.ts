@@ -63,19 +63,42 @@ describe('timelineBlocks with ended blocks', () => {
     ],
   };
 
-  // Regression: a block completed minutes (or seconds) after it started shrank to nothing.
-  it('keeps ended blocks visible at one line tall, even with no time left', () => {
-    const placed = timelineBlocks(ended, STUDY_TIME, new Set(['guitar', 'read']));
+  /** Guitar was planned for an hour and Reading for 45 minutes before they ended early. */
+  const PLANNED = new Map([
+    ['guitar', 60],
+    ['read', 45],
+  ]);
 
-    const heights = Object.fromEntries(placed.map((item) => [item.block.id, item.height]));
-    expect(heights).toEqual({ guitar: 24, read: 24, next: 46 });
+  function placed(nowMinutes: number): Record<string, { top: number; height: number }> {
+    return Object.fromEntries(
+      timelineBlocks(ended, nowMinutes, PLANNED).map((item) => [
+        item.block.id,
+        { top: item.top, height: item.height },
+      ]),
+    );
+  }
+
+  // Regression: a block completed minutes (or seconds) after it started shrank to nothing.
+  it('keeps ended blocks one line tall by growing upward, ending where they ended', () => {
+    const { guitar, read } = placed(STUDY_TIME);
+
+    expect(guitar).toEqual({ top: 266, height: 24 }); // 13:33 – 14:03
+    expect(read).toEqual({ top: 266, height: 24 });
   });
 
-  it('puts an ended block beside the block that moved up into its time', () => {
-    const placed = timelineBlocks(ended, STUDY_TIME, new Set(['guitar']));
+  it('never draws an ended block past the "now" line', () => {
+    const now = 14 * 60 + 1; // 14:01, the end is clamped to the line
+    const { guitar } = placed(now);
 
-    const guitar = placed.find((item) => item.block.id === 'guitar');
-    expect(guitar?.width).toBe(50);
+    expect(guitar.top + guitar.height).toBe(nowLineOffset(ended, now));
+  });
+
+  it('draws ended blocks at their planned length when the day is not running', () => {
+    const evening = 20 * 60; // after the 08:00–17:00 day: no "now" line
+    const { guitar, read } = placed(evening);
+
+    expect(guitar).toEqual({ top: 288, height: 48 }); // 14:00 for an hour
+    expect(read).toEqual({ top: 290, height: 36 }); // 14:03 for 45 minutes
   });
 
   it('does not keep a zero-length block that has not ended', () => {

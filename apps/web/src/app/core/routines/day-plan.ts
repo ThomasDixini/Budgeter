@@ -16,6 +16,8 @@ export interface BlockOutcome {
 export interface DayPlan {
   readonly routine: Routine;
   readonly outcomes: ReadonlyMap<string, BlockOutcomeKind>;
+  /** Planned length in minutes of each block that ended today, before it was cut short. */
+  readonly plannedLengths: ReadonlyMap<string, number>;
 }
 
 /** A block placed in minutes from the start of the routine day. */
@@ -46,6 +48,11 @@ export function planDay(routine: Routine, outcomes: readonly BlockOutcome[]): Da
   return {
     routine: { ...routine, blocks: spans.map((span) => toBlock(span, routine)) },
     outcomes: new Map(own.map((outcome) => [outcome.blockId, outcome.outcome])),
+    plannedLengths: new Map(
+      initial
+        .filter((span) => own.some((outcome) => outcome.blockId === span.block.id))
+        .map((span) => [span.block.id, span.end - span.start]),
+    ),
   };
 }
 

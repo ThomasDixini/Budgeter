@@ -173,16 +173,23 @@
   overflow: hidden;
 }
 
-.block.is-compact .block-name {
-  font-size: 13px;
+.block.is-compact .block-name,
+.block.is-compact .block-range {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.block.is-compact .block-name {
+  font-size: 13px;
+  flex: 0 1 auto;
+}
+
+/* In a narrow lane the time gives way long before the name does. */
 .block.is-compact .block-range {
   font-size: 11px;
-  white-space: nowrap;
+  flex: 0 100 auto;
 }
 
 .block.is-compact .block-badges {
