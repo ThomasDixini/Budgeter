@@ -3,6 +3,7 @@ import { HomePage } from './pages/home.page';
 import { RoutinesPage } from './pages/routines.page';
 import {
   createCategory,
+  createCategorizedTask,
   createDailyTask,
   createRoutine,
   createWeeklyGoal,
@@ -245,7 +246,8 @@ test.describe('categories & goals', () => {
     await page.getByLabel('Goal name').fill(title);
     // The card appears before the API answers; reloading earlier would abort the request.
     const saved = page.waitForResponse(
-      (response) => response.url().endsWith('/api/goals') && response.request().method() === 'POST',
+      (response) =>
+        new URL(response.url()).pathname === '/api/goals' && response.request().method() === 'POST',
     );
     await page.getByRole('button', { name: 'Create goal' }).click();
 
@@ -268,5 +270,76 @@ test.describe('categories & goals', () => {
     await logged;
     await page.reload();
     await expect(card.getByText('1 of 3 times')).toBeVisible();
+  });
+
+  test('−1 takes a repetition back and keeps it after a reload', async ({ page, request }) => {
+    const goal = await createWeeklyGoal(request, 'exercise', 3);
+    await routines.goto('/routines/categories/exercise');
+    const card = page.getByRole('article').filter({ hasText: goal.title });
+    const logged = page.waitForResponse((response) => response.url().endsWith('/progress'));
+    await page.getByRole('button', { name: `Log progress on ${goal.title}` }).click();
+    await logged;
+    const takenBack = page.waitForResponse((response) => response.url().endsWith('/progress'));
+
+    await page.getByRole('button', { name: `Take back progress on ${goal.title}` }).click();
+    await takenBack;
+    await page.reload();
+
+    await expect(card.getByText('0 of 3 times')).toBeVisible();
+  });
+
+  test('an edited goal keeps its new name and target after a reload', async ({ page, request }) => {
+    const goal = await createWeeklyGoal(request, 'exercise', 3);
+    const renamed = uniqueTitle('Lift weights');
+    await routines.goto('/routines/categories/exercise');
+    const saved = page.waitForResponse(
+      (response) => response.request().method() === 'PUT' && response.url().includes('/api/goals/'),
+    );
+
+    await page.getByRole('button', { name: `Edit ${goal.title}` }).click();
+    const form = page.getByRole('form', { name: 'Edit goal' });
+    await form.getByLabel('Goal name').fill(renamed);
+    await form.getByLabel('How many times').fill('4');
+    await form.getByLabel('How many times').blur();
+    await form.getByRole('button', { name: 'Save goal' }).click();
+    await saved;
+    await page.reload();
+
+    const card = page.getByRole('article').filter({ hasText: renamed });
+    await expect(card.getByText('0 of 4 times')).toBeVisible();
+  });
+
+  test('a deleted goal stays gone after a reload', async ({ page, request }) => {
+    const goal = await createWeeklyGoal(request, 'exercise', 3);
+    await routines.goto('/routines/categories/exercise');
+    const deleted = page.waitForResponse((response) => response.request().method() === 'DELETE');
+
+    await page.getByRole('button', { name: `Delete ${goal.title}` }).click();
+    await page
+      .getByRole('group', { name: 'Confirm deletion' })
+      .getByRole('button', { name: 'Delete' })
+      .click();
+    await deleted;
+    await page.reload();
+
+    await expect(page.getByRole('heading', { name: goal.title })).toHaveCount(0);
+  });
+
+  test('checking a task off counts toward a goal tracked from tasks', async ({ page, request }) => {
+    // Its own category: every task of a category counts toward the goals tracked from tasks there,
+    // so sharing one with other tests (they run in parallel) would credit them by accident.
+    const category = await createCategory(request, 'Mobility');
+    const goal = await createWeeklyGoal(request, category.id, 3, 'tasks');
+    const task = await createCategorizedTask(request, category.id);
+    await routines.goto();
+    const marked = page.waitForResponse((response) => response.url().includes('/completions/'));
+
+    await page.getByRole('checkbox', { name: task.title }).check();
+    await marked;
+    await routines.goto(`/routines/categories/${category.id}`);
+
+    const card = page.getByRole('article').filter({ hasText: goal.title });
+    await expect(card.getByText('1 of 3 times')).toBeVisible();
+    await expect(card.getByText('Counts completed tasks')).toBeVisible();
   });
 });

@@ -19,6 +19,7 @@ const weeklyGoal: Goal = {
   title: 'Study C# 5x a week',
   type: 'frequency',
   period: 'weekly',
+  tracking: 'manual',
   done: 3,
   target: 5,
 };

@@ -10,6 +10,7 @@ internal static class GoalRules
     public static GoalDefinition Normalize(GoalDefinition definition)
     {
         RequireTarget(definition.Target);
+        RequireTrackingFits(definition.Type, definition.Tracking);
         return definition with
         {
             Id = EntityId.Require(definition.Id, "goal id"),
@@ -26,6 +27,15 @@ internal static class GoalRules
         {
             throw new DomainRuleException(
                 $"Expected the goal target to be between 1 and {Goal.MaxTarget}, received {target}");
+        }
+    }
+
+    private static void RequireTrackingFits(GoalType type, GoalTracking tracking)
+    {
+        if (tracking != GoalTracking.Manual && type != GoalType.Frequency)
+        {
+            throw new DomainRuleException(
+                $"Expected only frequency goals to be tracked from {tracking}, received a {type} goal");
         }
     }
 

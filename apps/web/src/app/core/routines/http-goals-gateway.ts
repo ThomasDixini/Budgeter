@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Goal } from './goal';
-import { GoalsGateway } from './goals-gateway';
+import { Goal, GoalChanges } from './goal';
+import { GoalsGateway, ProgressEntry } from './goals-gateway';
 
 const GOALS_URL = '/api/goals';
 
@@ -11,15 +11,31 @@ const GOALS_URL = '/api/goals';
 export class HttpGoalsGateway extends GoalsGateway {
   private readonly httpClient = inject(HttpClient);
 
-  override list(): Observable<readonly Goal[]> {
-    return this.httpClient.get<readonly Goal[]>(GOALS_URL);
+  override list(isoDay: string): Observable<readonly Goal[]> {
+    return this.httpClient.get<readonly Goal[]>(GOALS_URL, { params: { date: isoDay } });
   }
 
-  override create(goal: Goal): Observable<Goal> {
-    return this.httpClient.post<Goal>(GOALS_URL, goal);
+  override create(goal: Goal, isoDay: string): Observable<Goal> {
+    return this.httpClient.post<Goal>(GOALS_URL, goal, { params: { date: isoDay } });
   }
 
-  override logProgress(goalId: string): Observable<Goal> {
-    return this.httpClient.post<Goal>(`${GOALS_URL}/${encodeURIComponent(goalId)}/progress`, null);
+  override update(goalId: string, changes: GoalChanges, isoDay: string): Observable<Goal> {
+    return this.httpClient.put<Goal>(goalUrl(goalId), changes, { params: { date: isoDay } });
   }
+
+  override delete(goalId: string): Observable<void> {
+    return this.httpClient.delete<void>(goalUrl(goalId));
+  }
+
+  override logProgress(goalId: string, entry: ProgressEntry): Observable<Goal> {
+    return this.httpClient.post<Goal>(`${goalUrl(goalId)}/progress`, {
+      eventId: entry.eventId,
+      date: entry.isoDay,
+      amount: entry.amount,
+    });
+  }
+}
+
+function goalUrl(goalId: string): string {
+  return `${GOALS_URL}/${encodeURIComponent(goalId)}`;
 }

@@ -9,4 +9,5 @@ public sealed record GoalDefinition(
     GoalPeriod Period,
     int Target,
     string? Unit,
-    DateOnly? Deadline);
+    DateOnly? Deadline,
+    GoalTracking Tracking = GoalTracking.Manual);

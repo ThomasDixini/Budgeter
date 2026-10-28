@@ -1,7 +1,10 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { NEVER, Observable, of } from 'rxjs';
+import { Clock } from '../calendar/clock';
+import { FixedClock } from '../calendar/fixed-clock';
 import { Category } from './category';
+import { Goal } from './goal';
 import {
   FakeCategoriesGateway,
   FakeGoalsGateway,
@@ -16,6 +19,24 @@ class RecordingErrorHandler extends ErrorHandler {
 
   override handleError(error: unknown): void {
     this.errors.push(error);
+  }
+}
+
+/** A clock a test can move, like a page left open while the day changes. */
+class MovableClock extends Clock {
+  constructor(public moment: Date) {
+    super();
+  }
+
+  override now(): Date {
+    return new Date(this.moment);
+  }
+}
+
+/** Creating a goal never answers, as while the API is slow. */
+class SlowCreateGoalsGateway extends FakeGoalsGateway {
+  override create(): Observable<Goal> {
+    return NEVER;
   }
 }
 
@@ -38,11 +59,13 @@ function createStore(
   categories = new FakeCategoriesGateway(),
   goals = new FakeGoalsGateway(),
   routines = new FakeRoutinesGateway(),
+  clock: Clock = new FixedClock(new Date(2026, 9, 26, 9, 0)),
 ): StoreSetup {
   const errors = new RecordingErrorHandler();
   TestBed.configureTestingModule({
     providers: [
       ...provideFakeRoutinesGateways(categories, goals, routines),
+      { provide: Clock, useValue: clock },
       { provide: ErrorHandler, useValue: errors },
     ],
   });
@@ -99,6 +122,136 @@ describe('RoutinesStore', () => {
     expect(errors.errors).toEqual([goals.failure]);
   });
 
+  it('loads the goals for the period around today', () => {
+    const { goals } = createStore();
+
+    expect(goals.listedDays).toEqual(['2026-10-26']);
+  });
+
+  it('logs +1 as an entry with its own id, for today', () => {
+    const { store, goals } = createStore();
+
+    store.incrementGoal('g1');
+
+    expect(goals.entries).toEqual([{ eventId: 'id-1', isoDay: '2026-10-26', amount: 1 }]);
+    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(4);
+  });
+
+  it('takes one back with a -1 entry', () => {
+    const { store, goals } = createStore();
+
+    store.decrementGoal('g1');
+
+    expect(goals.entries[0].amount).toBe(-1);
+    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(2);
+  });
+
+  it('never shows progress below zero when taking back', () => {
+    const { store } = createStore();
+
+    store.decrementGoal('g5');
+
+    expect(store.goals().find((goal) => goal.id === 'g5')?.done).toBe(0);
+  });
+
+  it('restores the progress when taking one back fails', () => {
+    const { store, goals, errors } = createStore();
+    goals.failure = new Error('offline');
+
+    store.decrementGoal('g1');
+
+    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(3);
+    expect(errors.errors).toEqual([goals.failure]);
+  });
+
+  it('edits a goal and keeps its type and category', () => {
+    const { store, goals } = createStore();
+    const changes = {
+      title: 'Study C# 2x',
+      period: 'monthly',
+      target: 2,
+      tracking: 'blocks',
+    } as const;
+
+    store.updateGoal('g1', changes);
+
+    expect(store.goals().find((goal) => goal.id === 'g1')).toMatchObject({
+      ...changes,
+      type: 'frequency',
+      categoryId: 'study',
+      done: 2,
+    });
+    expect(goals.updated).toEqual([{ goalId: 'g1', changes }]);
+  });
+
+  it('puts the goal back as it was when editing it fails', () => {
+    const { store, goals } = createStore();
+    goals.failure = new Error('offline');
+
+    store.updateGoal('g1', { title: 'Renamed', period: 'weekly', target: 5, tracking: 'manual' });
+
+    expect(store.goals().find((goal) => goal.id === 'g1')?.title).toBe('Study C# 5x a week');
+  });
+
+  it('deletes a goal and puts it back in place when that fails', () => {
+    const { store, goals } = createStore();
+
+    store.deleteGoal('g3');
+    expect(store.goals().map((goal) => goal.id)).not.toContain('g3');
+    goals.failure = new Error('offline');
+    store.deleteGoal('g4');
+
+    expect(store.goals().map((goal) => goal.id)).toContain('g4');
+    expect(goals.deleted).toEqual(['g3', 'g4']);
+  });
+
+  it('follows the day when a page is left open: +1 and reloads use the new day', () => {
+    const sunday = new MovableClock(new Date(2026, 10, 1, 23, 50));
+    const { store, goals } = createStore(undefined, undefined, undefined, sunday);
+    store.incrementGoal('g1');
+
+    sunday.moment = new Date(2026, 10, 2, 0, 10);
+    store.incrementGoal('g1');
+    store.refreshGoals();
+
+    expect(goals.entries.map((entry) => entry.isoDay)).toEqual(['2026-11-01', '2026-11-02']);
+    expect(goals.listedDays).toEqual(['2026-11-01', '2026-11-02']);
+  });
+
+  it('keeps a goal that is still being created when the reload answers without it', () => {
+    const { store } = createStore(undefined, new SlowCreateGoalsGateway());
+    const goal = store.addGoal({
+      categoryId: 'study',
+      title: 'Read the docs',
+      type: 'frequency',
+      period: 'weekly',
+      target: 2,
+      tracking: 'manual',
+    });
+
+    store.refreshGoals();
+
+    expect(store.goals().map((current) => current.id)).toContain(goal.id);
+  });
+
+  it('updates the progress of the goals it already has from a reload', () => {
+    const { store, goals } = createStore();
+    goals.logProgress('g1', { eventId: 'outside', isoDay: '2026-10-26', amount: 1 }).subscribe();
+
+    store.refreshGoals();
+
+    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(4);
+  });
+
+  it('reloads the goals when asked, for after a block or a task counted', () => {
+    const { store, goals } = createStore();
+
+    store.refreshGoals();
+
+    expect(goals.listedDays).toEqual(['2026-10-26', '2026-10-26']);
+    expect(store.goals()).toHaveLength(7);
+  });
+
   it('adds a goal with no progress and saves it', () => {
     const { store, goals } = createStore();
 
@@ -108,6 +261,7 @@ describe('RoutinesStore', () => {
       type: 'frequency',
       period: 'weekly',
       target: 2,
+      tracking: 'manual',
     });
 
     expect(store.goals().at(-1)).toEqual({ ...goal, done: 0 });
@@ -124,6 +278,7 @@ describe('RoutinesStore', () => {
       type: 'frequency',
       period: 'daily',
       target: 1,
+      tracking: 'manual',
     });
 
     expect(store.goals()).toHaveLength(7);

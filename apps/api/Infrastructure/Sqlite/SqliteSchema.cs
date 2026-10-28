@@ -20,9 +20,21 @@ internal static class SqliteSchema
             target INTEGER NOT NULL,
             done INTEGER NOT NULL DEFAULT 0,
             unit TEXT NULL,
-            deadline TEXT NULL
+            deadline TEXT NULL,
+            tracking TEXT NOT NULL DEFAULT 'manual'
         );
         CREATE INDEX IF NOT EXISTS ix_goals_category_id ON goals (category_id);
+        CREATE TABLE IF NOT EXISTS goal_progress (
+            event_id TEXT PRIMARY KEY,
+            goal_id TEXT NOT NULL REFERENCES goals (id) ON DELETE CASCADE,
+            date TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            source TEXT NOT NULL,
+            source_ref TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS ix_goal_progress_goal_date ON goal_progress (goal_id, date);
+        CREATE INDEX IF NOT EXISTS ix_goal_progress_source ON goal_progress (source, source_ref, date);
         CREATE TABLE IF NOT EXISTS routines (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -67,11 +79,12 @@ internal static class SqliteSchema
         """;
 
     /// <summary>
-    /// Creates any missing table or index.
+    /// Creates any missing table or index, then brings an older database up to the current version.
     /// </summary>
     /// <example><code>await SqliteSchema.EnsureCreatedAsync(connection, ct);</code></example>
-    public static Task EnsureCreatedAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    public static async Task EnsureCreatedAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
-        return SqliteCommands.ExecuteAsync(connection, CreateTables, cancellationToken);
+        await SqliteCommands.ExecuteAsync(connection, CreateTables, cancellationToken);
+        await SqliteMigrations.ApplyAsync(connection, cancellationToken);
     }
 }

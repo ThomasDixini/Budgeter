@@ -8,7 +8,9 @@ public sealed class Goal
     public const int MaxTarget = 100_000;
 
     public GoalDefinition Definition { get; }
-    public int Done { get; private set; }
+
+    /// <summary>Progress inside the current period, never above the target.</summary>
+    public int Done { get; }
 
     public string Id => Definition.Id;
     public string CategoryId => Definition.CategoryId;
@@ -29,22 +31,31 @@ public sealed class Goal
     }
 
     /// <summary>
-    /// Rebuilds a stored goal with its recorded progress.
+    /// Rebuilds a stored goal with the progress of its current period.
     /// </summary>
     /// <example><code>Goal.Restore(definition, done: 3).Done; // 3</code></example>
     public static Goal Restore(GoalDefinition definition, int done)
     {
-        var goal = Create(definition);
-        goal.Done = Math.Clamp(done, 0, goal.Definition.Target);
-        return goal;
+        var normalized = GoalRules.Normalize(definition);
+        return new Goal(normalized, Math.Clamp(done, 0, normalized.Target));
     }
 
     /// <summary>
-    /// Logs one more repetition or unit of progress, stopping at the target.
+    /// Whether a completed block or task of a category should count toward this goal: only a
+    /// frequency goal of that category that is tracked from that kind of source.
     /// </summary>
-    /// <example><code>goal.LogProgress(); // Done goes from 3 to 4</code></example>
-    public void LogProgress()
+    /// <example><code>goal.Accepts(GoalSource.Block, "study"); // true for a study goal tracked from blocks</code></example>
+    public bool Accepts(GoalSource source, string categoryId)
     {
-        Done = Math.Min(Definition.Target, Done + 1);
+        var wanted = source switch
+        {
+            GoalSource.Block => GoalTracking.Blocks,
+            GoalSource.Task => GoalTracking.Tasks,
+            _ => GoalTracking.Manual,
+        };
+        return Definition.Type == GoalType.Frequency
+            && Definition.Tracking == wanted
+            && wanted != GoalTracking.Manual
+            && CategoryId == categoryId;
     }
 }

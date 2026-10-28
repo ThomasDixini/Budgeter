@@ -2,6 +2,8 @@ import { formatDate } from '@angular/common';
 
 export type GoalType = 'frequency' | 'objective';
 export type GoalPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+/** What feeds a goal's progress: the user by hand, completed blocks or completed tasks. */
+export type GoalTracking = 'manual' | 'blocks' | 'tasks';
 
 /** Something to repeat (frequency) or reach (objective) within a period. */
 export interface Goal {
@@ -10,12 +12,49 @@ export interface Goal {
   readonly title: string;
   readonly type: GoalType;
   readonly period: GoalPeriod;
+  /** Progress in the current period only; a new week or month starts at zero. */
   readonly done: number;
   readonly target: number;
   /** What an objective counts, e.g. "books". */
   readonly unit?: string;
   /** ISO date (`YYYY-MM-DD`) closing a custom period. */
   readonly deadline?: string;
+  /** Only frequency goals can be fed by blocks or tasks. */
+  readonly tracking: GoalTracking;
+}
+
+/** What can be edited on a goal: everything except its type and category. */
+export type GoalChanges = Pick<
+  Goal,
+  'title' | 'period' | 'target' | 'unit' | 'deadline' | 'tracking'
+>;
+
+export const GOAL_TRACKING_OPTIONS: readonly {
+  readonly value: GoalTracking;
+  readonly label: string;
+  readonly hint: string;
+}[] = [
+  { value: 'manual', label: 'By hand', hint: 'You log each repetition with +1.' },
+  {
+    value: 'blocks',
+    label: 'Completed blocks',
+    hint: 'Each routine block of this category you complete counts once.',
+  },
+  {
+    value: 'tasks',
+    label: 'Completed tasks',
+    hint: 'Each task of this category you check off counts once.',
+  },
+];
+
+/**
+ * Short note on a goal that counts by itself, or nothing for a goal logged by hand.
+ * @example goalTrackingNote({ tracking: 'blocks' }) // 'Counts completed blocks'
+ */
+export function goalTrackingNote(goal: Pick<Goal, 'tracking'>): string {
+  if (goal.tracking === 'blocks') return 'Counts completed blocks';
+  if (goal.tracking === 'tasks') return 'Counts completed tasks';
+  return '';
 }
 
 export interface GoalPeriodInfo {

@@ -5,7 +5,7 @@ import { map } from 'rxjs';
 import { Clock } from '../../../core/calendar/clock';
 import { formatDuration } from '../../../core/calendar/time-of-day';
 import { countLabel, withAlpha } from '../../../core/routines/category';
-import { averageProgress } from '../../../core/routines/goal';
+import { GoalChanges, averageProgress } from '../../../core/routines/goal';
 import { GoalDraft, RoutinesStore } from '../../../core/routines/routines-store';
 import { GoalCard } from './goal-card/goal-card';
 import { GoalForm } from './goal-form/goal-form';
@@ -37,6 +37,8 @@ export class CategoryDetail {
   protected readonly periodFilter = signal<PeriodFilter>('all');
   protected readonly typeFilter = signal<TypeFilter>('all');
   protected readonly isAdding = signal(this.route.snapshot.queryParamMap.get('newGoal') === 'true');
+  /** Id of the goal whose form is open for editing. */
+  protected readonly editingGoalId = signal<string | undefined>(undefined);
   protected readonly isLoaded = this.store.isLoaded;
 
   protected readonly category = computed(() =>
@@ -44,6 +46,13 @@ export class CategoryDetail {
   );
   protected readonly goals = computed(() =>
     this.store.goals().filter((goal) => goal.categoryId === this.categoryId()),
+  );
+  /**
+   * The goal being edited, as a list of at most one: the template tracks it by id, so opening
+   * another goal's form rebuilds it instead of reusing the one filled in for the previous goal.
+   */
+  protected readonly editingGoals = computed(() =>
+    this.goals().filter((goal) => goal.id === this.editingGoalId()),
   );
   protected readonly blocks = computed(() => this.store.categoryBlocks(this.categoryId()));
   protected readonly stats = computed(() => ({
@@ -70,6 +79,24 @@ export class CategoryDetail {
 
   protected incrementGoal(goalId: string): void {
     this.store.incrementGoal(goalId);
+  }
+
+  protected decrementGoal(goalId: string): void {
+    this.store.decrementGoal(goalId);
+  }
+
+  protected startEditing(goalId: string): void {
+    this.isAdding.set(false);
+    this.editingGoalId.set(goalId);
+  }
+
+  protected saveGoal(goalId: string, changes: GoalChanges): void {
+    this.store.updateGoal(goalId, changes);
+    this.editingGoalId.set(undefined);
+  }
+
+  protected deleteGoal(goalId: string): void {
+    this.store.deleteGoal(goalId);
   }
 
   protected addGoal(draft: GoalDraft): void {

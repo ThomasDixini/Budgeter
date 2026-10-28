@@ -1,10 +1,14 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, input, output, signal } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { withAlpha } from '../../../../core/routines/category';
 import {
   GOAL_PERIODS,
+  GOAL_TRACKING_OPTIONS,
   GOAL_TYPE_LABELS,
+  Goal,
+  GoalChanges,
   GoalPeriod,
+  GoalTracking,
   GoalType,
   goalPeriodInfo,
   parseIsoDate,
@@ -37,11 +41,14 @@ const GOAL_TYPE_OPTIONS: readonly {
   templateUrl: './goal-form.html',
   styleUrl: './goal-form.css',
 })
-export class GoalForm {
+export class GoalForm implements OnInit {
   readonly categoryId = input.required<string>();
   readonly color = input.required<string>();
   readonly today = input.required<Date>();
+  /** The goal being edited; leave unset to set a new one. */
+  readonly goal = input<Goal | undefined>(undefined);
   readonly create = output<GoalDraft>();
+  readonly save = output<GoalChanges>();
   readonly dismiss = output();
 
   protected readonly typeOptions = GOAL_TYPE_OPTIONS;
@@ -54,6 +61,12 @@ export class GoalForm {
   protected readonly unit = signal('');
   protected readonly from = signal('');
   protected readonly to = signal('');
+  protected readonly tracking = signal<GoalTracking>('manual');
+  protected readonly trackingOptions = GOAL_TRACKING_OPTIONS;
+  protected readonly isEditing = computed(() => this.goal() !== undefined);
+  protected readonly trackingHint = computed(
+    () => GOAL_TRACKING_OPTIONS.find((option) => option.value === this.tracking())?.hint ?? '',
+  );
 
   protected readonly ring = computed(() => withAlpha(this.color(), 0.4));
   protected readonly selectedTint = computed(() => withAlpha(this.color(), 0.08));
@@ -85,11 +98,37 @@ export class GoalForm {
     () => this.to() || this.isoDate(DEFAULT_CUSTOM_PERIOD_DAYS),
   );
 
+  /** Fills the fields from the goal being edited; a new goal keeps the defaults. */
+  ngOnInit(): void {
+    const goal = this.goal();
+    if (goal === undefined) return;
+    this.name.set(goal.title);
+    this.type.set(goal.type);
+    this.period.set(goal.period);
+    this.tracking.set(goal.tracking);
+    if (goal.type === 'frequency') this.times.set(goal.target);
+    else this.target.set(goal.target);
+    this.unit.set(goal.unit ?? '');
+    this.to.set(goal.deadline ?? '');
+  }
+
   protected submit(event: SubmitEvent): void {
     event.preventDefault();
     const title = this.name().trim();
     if (title === '') return;
-    this.create.emit(this.toDraft(title));
+    const draft = this.toDraft(title);
+    if (!this.isEditing()) {
+      this.create.emit(draft);
+      return;
+    }
+    this.save.emit({
+      title: draft.title,
+      period: draft.period,
+      target: draft.target,
+      unit: draft.unit,
+      deadline: draft.deadline,
+      tracking: draft.tracking,
+    });
   }
 
   protected textOf(event: Event): string {
@@ -111,6 +150,7 @@ export class GoalForm {
       target: isFrequency ? this.times() : this.target(),
       unit: isFrequency ? undefined : this.unit().trim() || undefined,
       deadline: this.period() === 'custom' ? this.customTo() : undefined,
+      tracking: isFrequency ? this.tracking() : 'manual',
     };
   }
 

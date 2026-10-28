@@ -4,6 +4,7 @@ import { isoDate } from '../calendar/date-label';
 import { formatClock } from '../calendar/time-of-day';
 import { BlockOutcomesGateway } from './block-outcomes-gateway';
 import { BlockOutcome, BlockOutcomeKind } from './day-plan';
+import { RoutinesStore } from './routines-store';
 
 /**
  * Routine blocks completed or skipped today. Recording applies locally first and rolls back if
@@ -13,6 +14,7 @@ import { BlockOutcome, BlockOutcomeKind } from './day-plan';
 export class BlockOutcomesStore {
   private readonly gateway = inject(BlockOutcomesGateway);
   private readonly errorHandler = inject(ErrorHandler);
+  private readonly goals = inject(RoutinesStore);
   private readonly today = isoDate(inject(Clock).now());
   private readonly outcomeList = signal<readonly BlockOutcome[]>([]);
 
@@ -40,6 +42,8 @@ export class BlockOutcomesStore {
     const before = this.outcomeList();
     this.outcomeList.set([...before.filter((current) => !isSameBlock(current, outcome)), outcome]);
     this.gateway.record(this.today, outcome).subscribe({
+      // The API counts (or takes back) the block for goals tracked from blocks, so reload them.
+      complete: () => this.goals.refreshGoals(),
       error: (error: unknown) => this.rejected(error, before),
     });
   }
@@ -53,6 +57,7 @@ export class BlockOutcomesStore {
     const target = { routineId, blockId };
     this.outcomeList.set(before.filter((current) => !isSameBlock(current, target)));
     this.gateway.undo(this.today, routineId, blockId).subscribe({
+      complete: () => this.goals.refreshGoals(),
       error: (error: unknown) => this.rejected(error, before),
     });
   }

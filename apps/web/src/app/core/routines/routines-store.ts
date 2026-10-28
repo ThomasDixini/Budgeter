@@ -1,8 +1,10 @@
 import { ErrorHandler, Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Clock } from '../calendar/clock';
+import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
 import { CategoriesGateway } from './categories-gateway';
 import { Category } from './category';
-import { Goal } from './goal';
+import { Goal, GoalChanges } from './goal';
 import { GoalsGateway } from './goals-gateway';
 import { Routine, blockMinutesWithin, weekdaysLabel, weeklyMinutesByCategory } from './routine';
 import { RoutinesGateway } from './routines-gateway';
@@ -31,6 +33,7 @@ export class RoutinesStore {
   private readonly routinesGateway = inject(RoutinesGateway);
   private readonly ids = inject(IdGenerator);
   private readonly errorHandler = inject(ErrorHandler);
+  private readonly clock = inject(Clock);
   private readonly categoryList = signal<readonly Category[]>([]);
   private readonly routineList = signal<readonly Routine[]>([]);
   private readonly goalList = signal<readonly Goal[]>([]);
@@ -51,7 +54,7 @@ export class RoutinesStore {
       next: (categories) => this.loaded(this.categoryList, this.categoriesLoaded, categories),
       error: (error: unknown) => this.errorHandler.handleError(error),
     });
-    this.goalsGateway.list().subscribe({
+    this.goalsGateway.list(this.today()).subscribe({
       next: (goals) => this.loaded(this.goalList, this.goalsLoaded, goals),
       error: (error: unknown) => this.errorHandler.handleError(error),
     });
@@ -62,27 +65,73 @@ export class RoutinesStore {
   }
 
   /**
-   * Logs one more repetition or unit of progress, stopping at the target.
+   * Logs one more repetition or unit of progress in the current period, stopping at the target.
    * @example store.incrementGoal('g1')
    */
   incrementGoal(goalId: string): void {
+    this.logProgress(goalId, 1);
+  }
+
+  /**
+   * Takes back one manual repetition in the current period. Progress that comes from completed
+   * blocks or tasks is not touched: the API ignores the take-back when no manual progress is left,
+   * and the card then snaps back to the real number.
+   * @example store.decrementGoal('g1')
+   */
+  decrementGoal(goalId: string): void {
+    this.logProgress(goalId, -1);
+  }
+
+  /**
+   * Edits a goal (not its type or category); the card shows the change right away.
+   * @example store.updateGoal('g1', { title: 'Study C# 4x', period: 'weekly', target: 4, tracking: 'manual' })
+   */
+  updateGoal(goalId: string, changes: GoalChanges): void {
     const previous = this.goalList().find((goal) => goal.id === goalId);
     if (previous === undefined) return;
-    replaceById(this.goalList, { ...previous, done: Math.min(previous.target, previous.done + 1) });
-    this.goalsGateway.logProgress(goalId).subscribe({
+    replaceById(this.goalList, {
+      ...previous,
+      ...changes,
+      done: Math.min(previous.done, changes.target),
+    });
+    this.goalsGateway.update(goalId, changes, this.today()).subscribe({
       next: (saved) => replaceById(this.goalList, saved),
       error: (error: unknown) => this.rejected(error, () => replaceById(this.goalList, previous)),
     });
   }
 
   /**
+   * Deletes a goal and its progress; puts it back in place if the gateway rejects it.
+   * @example store.deleteGoal('g1')
+   */
+  deleteGoal(goalId: string): void {
+    const before = this.goalList();
+    removeById(this.goalList, goalId);
+    this.goalsGateway.delete(goalId).subscribe({
+      error: (error: unknown) => this.rejected(error, () => this.goalList.set(before)),
+    });
+  }
+
+  /**
+   * Reloads every goal's progress, for after something outside the goals changed it (a block or a
+   * task was completed or taken back).
+   * @example store.refreshGoals()
+   */
+  refreshGoals(): void {
+    this.goalsGateway.list(this.today()).subscribe({
+      next: (fresh) => this.goalList.update((current) => withFreshProgress(current, fresh)),
+      error: (error: unknown) => this.errorHandler.handleError(error),
+    });
+  }
+
+  /**
    * Adds a goal with no progress yet.
-   * @example store.addGoal({ categoryId: 'study', title: 'Read docs', type: 'frequency', period: 'weekly', target: 3 })
+   * @example store.addGoal({ categoryId: 'study', title: 'Read docs', type: 'frequency', period: 'weekly', target: 3, tracking: 'manual' })
    */
   addGoal(draft: GoalDraft): Goal {
     const goal: Goal = { ...draft, id: this.ids.next(), done: 0 };
     this.goalList.update((goals) => [...goals, goal]);
-    this.goalsGateway.create(goal).subscribe({
+    this.goalsGateway.create(goal, this.today()).subscribe({
       next: (saved) => replaceById(this.goalList, saved),
       error: (error: unknown) => this.rejected(error, () => removeById(this.goalList, goal.id)),
     });
@@ -152,6 +201,27 @@ export class RoutinesStore {
     );
   }
 
+  /**
+   * The local day goals are read for; their periods are the ones around it. Read on every call, not
+   * once, so a page left open past midnight (or past Sunday) moves on to the new period.
+   */
+  private today(): string {
+    return isoDate(this.clock.now());
+  }
+
+  /** Applies +1 or -1 locally, then lets the API answer with the real progress. */
+  private logProgress(goalId: string, amount: number): void {
+    const previous = this.goalList().find((goal) => goal.id === goalId);
+    if (previous === undefined) return;
+    const done = Math.max(0, Math.min(previous.target, previous.done + amount));
+    replaceById(this.goalList, { ...previous, done });
+    const entry = { eventId: this.ids.next(), isoDay: this.today(), amount };
+    this.goalsGateway.logProgress(goalId, entry).subscribe({
+      next: (saved) => replaceById(this.goalList, saved),
+      error: (error: unknown) => this.rejected(error, () => replaceById(this.goalList, previous)),
+    });
+  }
+
   private loaded<TRecord>(
     list: WritableSignal<readonly TRecord[]>,
     flag: WritableSignal<boolean>,
@@ -195,6 +265,15 @@ export class RoutinesStore {
     rollback();
     this.errorHandler.handleError(error);
   }
+}
+
+/**
+ * The local goals with the progress the API just reported. Goals are matched by id and nothing is
+ * added or dropped, so a goal still being created or deleted here is not undone by a slow answer.
+ */
+function withFreshProgress(current: readonly Goal[], fresh: readonly Goal[]): Goal[] {
+  const byId = new Map(fresh.map((goal) => [goal.id, goal]));
+  return current.map((goal) => byId.get(goal.id) ?? goal);
 }
 
 function replaceById<TRecord extends Identified>(

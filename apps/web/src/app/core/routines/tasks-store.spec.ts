@@ -4,6 +4,7 @@ import { Clock } from '../calendar/clock';
 import { FixedClock } from '../calendar/fixed-clock';
 import { IdGenerator } from '../ids/id-generator';
 import { SequentialIdGenerator } from '../ids/sequential-id-generator';
+import { FakeGoalsGateway, provideFakeRoutinesGateways } from './fake-routines-gateways';
 import { FakeTasksGateway } from './fake-tasks-gateway';
 import { TasksGateway } from './tasks-gateway';
 import { TasksStore } from './tasks-store';
@@ -20,21 +21,26 @@ class RecordingErrorHandler extends ErrorHandler {
   }
 }
 
-function createStore(gateway = new FakeTasksGateway()): {
+function createStore(
+  gateway = new FakeTasksGateway(),
+  goals = new FakeGoalsGateway(),
+): {
   store: TasksStore;
   gateway: FakeTasksGateway;
+  goals: FakeGoalsGateway;
   errors: RecordingErrorHandler;
 } {
   const errors = new RecordingErrorHandler();
   TestBed.configureTestingModule({
     providers: [
+      ...provideFakeRoutinesGateways(undefined, goals),
       { provide: TasksGateway, useValue: gateway },
       { provide: Clock, useValue: new FixedClock(MONDAY) },
       { provide: IdGenerator, useValue: new SequentialIdGenerator() },
       { provide: ErrorHandler, useValue: errors },
     ],
   });
-  return { store: TestBed.inject(TasksStore), gateway, errors };
+  return { store: TestBed.inject(TasksStore), gateway, goals, errors };
 }
 
 function todayIds(store: TasksStore): string[] {
@@ -59,6 +65,23 @@ describe('TasksStore', () => {
 
     expect(store.todayTasks()[0].isDone).toBe(true);
     expect(gateway.doneChanges).toEqual([{ taskId: 't1', isoDay: '2026-10-26', isDone: true }]);
+  });
+
+  it('reloads the goals after a task is checked, since tasks can count toward them', () => {
+    const { store, goals } = createStore();
+
+    store.toggleDone('t1');
+
+    expect(goals.listedDays).toHaveLength(2);
+  });
+
+  it('does not reload the goals when checking the task failed', () => {
+    const { store, gateway, goals } = createStore();
+    gateway.failure = new Error('offline');
+
+    store.toggleDone('t1');
+
+    expect(goals.listedDays).toHaveLength(1);
   });
 
   it('unchecks a task done today', () => {

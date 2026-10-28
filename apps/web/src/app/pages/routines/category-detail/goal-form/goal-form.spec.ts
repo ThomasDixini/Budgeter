@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Goal, GoalChanges } from '../../../../core/routines/goal';
 import { GoalDraft } from '../../../../core/routines/routines-store';
 import { GoalForm } from './goal-form';
 
@@ -40,10 +41,44 @@ function submit(fixture: ComponentFixture<GoalForm>): GoalDraft[] {
   return drafts;
 }
 
+function clickTracking(fixture: ComponentFixture<GoalForm>, label: string): void {
+  const chips = [...element(fixture).querySelectorAll<HTMLButtonElement>('.ui-chip')];
+  chips.find((chip) => chip.textContent?.trim() === label)!.click();
+  fixture.detectChanges();
+}
+
 function preview(fixture: ComponentFixture<GoalForm>): string {
   return (
     element(fixture).querySelector('.preview-card')?.textContent?.replace(/\s+/g, ' ').trim() ?? ''
   );
+}
+
+const STUDY_GOAL: Goal = {
+  id: 'g1',
+  categoryId: 'study',
+  title: 'Study C# 5x a week',
+  type: 'frequency',
+  period: 'weekly',
+  tracking: 'tasks',
+  done: 2,
+  target: 5,
+};
+
+function editForm(goal: Goal): ComponentFixture<GoalForm> {
+  const fixture = TestBed.createComponent(GoalForm);
+  fixture.componentRef.setInput('categoryId', goal.categoryId);
+  fixture.componentRef.setInput('color', '#7DD3FC');
+  fixture.componentRef.setInput('today', new Date(2026, 9, 26));
+  fixture.componentRef.setInput('goal', goal);
+  fixture.detectChanges();
+  return fixture;
+}
+
+function submitEdit(fixture: ComponentFixture<GoalForm>): GoalChanges[] {
+  const saved: GoalChanges[] = [];
+  fixture.componentInstance.save.subscribe((changes) => saved.push(changes));
+  element(fixture).querySelector('form')?.dispatchEvent(new Event('submit'));
+  return saved;
 }
 
 describe('GoalForm', () => {
@@ -76,8 +111,30 @@ describe('GoalForm', () => {
         target: 1,
         unit: undefined,
         deadline: undefined,
+        tracking: 'manual',
       },
     ]);
+  });
+
+  it('can count a frequency goal from completed blocks', () => {
+    const fixture = createForm();
+    setField(fixture, '.name-input', 'Study blocks');
+    clickTracking(fixture, 'Completed blocks');
+
+    expect(submit(fixture)[0].tracking).toBe('blocks');
+    expect(element(fixture).querySelector('.tracking-hint')?.textContent).toContain(
+      'routine block',
+    );
+  });
+
+  it('offers no automatic counting for an objective', () => {
+    const fixture = createForm();
+    clickTracking(fixture, 'Completed tasks');
+    click(fixture, '.type', 1);
+    setField(fixture, '.name-input', 'Finish the book');
+
+    expect(element(fixture).textContent).not.toContain('Count progress from');
+    expect(submit(fixture)[0].tracking).toBe('manual');
   });
 
   it('emits an objective with a custom deadline', () => {
@@ -111,5 +168,48 @@ describe('GoalForm', () => {
     click(fixture, '.form-actions .ui-button-ghost');
 
     expect(dismissed).toBe(true);
+  });
+
+  it('opens with the goal to edit already filled in', () => {
+    const fixture = editForm(STUDY_GOAL);
+
+    expect(element(fixture).querySelector<HTMLInputElement>('.name-input')?.value).toBe(
+      'Study C# 5x a week',
+    );
+    expect(element(fixture).querySelector('.form-title')?.textContent).toBe('Edit goal');
+    expect(element(fixture).querySelector('.number-input')).toHaveProperty('value', '5');
+    expect(element(fixture).querySelector('[aria-pressed="true"].ui-chip')).not.toBeNull();
+  });
+
+  it('saves the edited fields, not the type or category', () => {
+    const fixture = editForm(STUDY_GOAL);
+    setField(fixture, '.name-input', 'Study C# 3x a week');
+    setField(fixture, '.number-input', '3', 'change');
+    clickTracking(fixture, 'By hand');
+
+    expect(submitEdit(fixture)).toEqual([
+      {
+        title: 'Study C# 3x a week',
+        period: 'weekly',
+        target: 3,
+        unit: undefined,
+        deadline: undefined,
+        tracking: 'manual',
+      },
+    ]);
+  });
+
+  it('does not let the type change while editing', () => {
+    const fixture = editForm(STUDY_GOAL);
+
+    const types = element(fixture).querySelectorAll<HTMLButtonElement>('.type');
+
+    expect([types[0].disabled, types[1].disabled]).toEqual([false, true]);
+  });
+
+  it('does not emit a new goal while editing', () => {
+    const fixture = editForm(STUDY_GOAL);
+
+    expect(submit(fixture)).toEqual([]);
   });
 });

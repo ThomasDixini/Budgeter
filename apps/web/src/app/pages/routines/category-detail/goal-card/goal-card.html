@@ -34,15 +34,84 @@
       }
       {{ tag() }}
     </span>
-    <button
-      class="ui-button-ghost increment ui-tabular"
-      type="button"
-      [attr.aria-label]="'Log progress on ' + goal().title"
-      (click)="increment.emit(goal().id)"
-    >
-      +1
-    </button>
+    <div class="actions">
+      <button
+        class="icon-action"
+        type="button"
+        [attr.aria-label]="'Edit ' + goal().title"
+        title="Edit"
+        (click)="edit.emit(goal().id)"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 20h4L19 9l-4-4L4 16v4z"></path>
+        </svg>
+      </button>
+      <button
+        class="icon-action danger"
+        type="button"
+        [attr.aria-label]="'Delete ' + goal().title"
+        title="Delete"
+        (click)="isConfirmingDelete.set(true)"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path>
+        </svg>
+      </button>
+      @if (!isAutomatic()) {
+        <button
+          class="ui-button-ghost step"
+          type="button"
+          [disabled]="goal().done === 0"
+          [attr.aria-label]="'Take back progress on ' + goal().title"
+          title="Take back one"
+          (click)="decrement.emit(goal().id)"
+        >
+          −1
+        </button>
+      }
+      <button
+        class="ui-button-ghost increment ui-tabular"
+        type="button"
+        [disabled]="isAutomatic() || isComplete()"
+        [attr.aria-label]="'Log progress on ' + goal().title"
+        [attr.title]="isAutomatic() ? trackingNote() : null"
+        (click)="increment.emit(goal().id)"
+      >
+        +1
+      </button>
+    </div>
   </div>
+  @if (isConfirmingDelete()) {
+    <div class="confirm" role="group" aria-label="Confirm deletion">
+      <span>Delete this goal and its progress?</span>
+      <button class="ui-button-ghost step danger-text" type="button" (click)="confirmDelete()">
+        Delete
+      </button>
+      <button class="ui-button-ghost step" type="button" (click)="isConfirmingDelete.set(false)">
+        Cancel
+      </button>
+    </div>
+  }
   <h3 class="title">{{ goal().title }}</h3>
   @if (showsDots()) {
     <div class="dots" aria-hidden="true">
@@ -61,6 +130,6 @@
   }
   <div class="bottom">
     <span class="value ui-tabular">{{ value() }}</span>
-    <span class="footer">{{ footer() }}</span>
+    <span class="footer">{{ trackingNote() || footer() }}</span>
   </div>
 </article>

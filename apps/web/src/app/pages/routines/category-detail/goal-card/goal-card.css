@@ -73,3 +73,58 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.step {
+  height: 36px;
+  padding: 0 12px;
+  font-size: var(--font-size-sm);
+}
+
+.goal button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.icon-action {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.icon-action:hover,
+.icon-action:focus-visible {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.icon-action.danger:hover {
+  color: var(--color-danger);
+  background: rgba(var(--color-danger-rgb), 0.08);
+}
+
+.confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-soft);
+}
+
+.danger-text {
+  color: var(--color-danger);
+}

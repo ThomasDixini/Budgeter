@@ -3,6 +3,7 @@ import { Clock } from '../calendar/clock';
 import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
 import { Task, TaskDraft, occursOn } from './task';
+import { RoutinesStore } from './routines-store';
 import { TasksGateway } from './tasks-gateway';
 
 /** A task on today's list and whether it is done today. */
@@ -20,6 +21,7 @@ export class TasksStore {
   private readonly gateway = inject(TasksGateway);
   private readonly ids = inject(IdGenerator);
   private readonly errorHandler = inject(ErrorHandler);
+  private readonly goals = inject(RoutinesStore);
   private readonly now = inject(Clock).now();
   private readonly today = isoDate(this.now);
   private readonly taskList = signal<readonly Task[]>([]);
@@ -79,6 +81,8 @@ export class TasksStore {
     const isDone = !this.doneToday().has(taskId);
     this.markDone(taskId, isDone);
     this.gateway.setDone(taskId, this.today, isDone).subscribe({
+      // The API counts (or takes back) the task for goals tracked from tasks, so reload them.
+      complete: () => this.goals.refreshGoals(),
       error: (error: unknown) => this.rejected(error, () => this.markDone(taskId, !isDone)),
     });
   }

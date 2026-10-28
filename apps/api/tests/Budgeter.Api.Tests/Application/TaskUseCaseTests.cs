@@ -1,4 +1,5 @@
 using Budgeter.Api.Application;
+using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Tasks;
 using Budgeter.Api.Domain.Categories;
 using Budgeter.Api.Domain.Tasks;
@@ -12,6 +13,7 @@ public class TaskUseCaseTests
     private static readonly DateOnly Today = new(2026, 10, 27);
     private readonly InMemoryCategoryRepository _categories = new(Category.Create("reading", "Reading", "#FBBF24"));
     private readonly InMemoryTaskRepository _tasks = new();
+    private readonly InMemoryGoalRepository _goals = new();
 
     private static SaveTaskCommand ReadDaily(string? categoryId = "reading") =>
         new("t1", "Read 20 pages", categoryId, TaskRepeat.Daily, [], null);
@@ -46,7 +48,7 @@ public class TaskUseCaseTests
     public async Task Completions_MarkAndUnmarkADay()
     {
         await new SaveTask(_tasks, _categories).ExecuteAsync(ReadDaily(), CancellationToken.None);
-        var completions = new TaskCompletions(_tasks);
+        var completions = new TaskCompletions(_tasks, new GoalCredits(_goals, _goals));
 
         await completions.SetAsync("t1", Today, isDone: true, CancellationToken.None);
         var done = await completions.ListAsync(Today, CancellationToken.None);
@@ -60,7 +62,7 @@ public class TaskUseCaseTests
     public async Task Completions_RejectAnUnknownTask()
     {
         await Should.ThrowAsync<ResourceNotFoundException>(() =>
-            new TaskCompletions(_tasks).SetAsync("missing", Today, isDone: true, CancellationToken.None));
+            new TaskCompletions(_tasks, new GoalCredits(_goals, _goals)).SetAsync("missing", Today, isDone: true, CancellationToken.None));
     }
 
     [Fact]

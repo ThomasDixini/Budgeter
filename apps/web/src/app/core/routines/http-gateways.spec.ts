@@ -25,6 +25,7 @@ const WEEKLY_GOAL: Goal = {
   title: 'Study C# 5x a week',
   type: 'frequency',
   period: 'weekly',
+  tracking: 'manual',
   done: 0,
   target: 5,
 };
@@ -151,32 +152,58 @@ describe('HttpGoalsGateway', () => {
     let received: readonly Goal[] = [];
 
     TestBed.inject(HttpGoalsGateway)
-      .list()
+      .list('2026-10-28')
       .subscribe((goals) => (received = goals));
-    httpTesting.expectOne({ method: 'GET', url: '/api/goals' }).flush([WEEKLY_GOAL]);
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/goals?date=2026-10-28' })
+      .flush([WEEKLY_GOAL]);
 
     expect(received).toEqual([WEEKLY_GOAL]);
   });
 
   it('posts a new goal', () => {
-    TestBed.inject(HttpGoalsGateway).create(WEEKLY_GOAL).subscribe();
+    TestBed.inject(HttpGoalsGateway).create(WEEKLY_GOAL, '2026-10-28').subscribe();
 
-    const request = httpTesting.expectOne({ method: 'POST', url: '/api/goals' });
+    const request = httpTesting.expectOne({ method: 'POST', url: '/api/goals?date=2026-10-28' });
 
     expect(request.request.body).toEqual(WEEKLY_GOAL);
     request.flush(WEEKLY_GOAL);
   });
 
-  it('logs progress on the goal, escaping its id', () => {
+  it('logs progress as an entry with its id, day and amount, escaping the goal id', () => {
     let received: Goal | undefined;
 
     TestBed.inject(HttpGoalsGateway)
-      .logProgress('g 1')
+      .logProgress('g 1', { eventId: 'e1', isoDay: '2026-10-28', amount: -1 })
       .subscribe((goal) => (received = goal));
-    httpTesting
-      .expectOne({ method: 'POST', url: '/api/goals/g%201/progress' })
-      .flush({ ...WEEKLY_GOAL, done: 1 });
+    const request = httpTesting.expectOne({ method: 'POST', url: '/api/goals/g%201/progress' });
+    request.flush({ ...WEEKLY_GOAL, done: 1 });
 
+    expect(request.request.body).toEqual({ eventId: 'e1', date: '2026-10-28', amount: -1 });
     expect(received?.done).toBe(1);
+  });
+
+  it('puts the editable fields of a goal at its id for the day', () => {
+    const changes = {
+      title: 'Study C# 3x',
+      period: 'weekly',
+      target: 3,
+      tracking: 'blocks',
+    } as const;
+
+    TestBed.inject(HttpGoalsGateway).update('g 1', changes, '2026-10-28').subscribe();
+
+    const request = httpTesting.expectOne({
+      method: 'PUT',
+      url: '/api/goals/g%201?date=2026-10-28',
+    });
+    expect(request.request.body).toEqual(changes);
+    request.flush(WEEKLY_GOAL);
+  });
+
+  it('deletes a goal at its escaped id', () => {
+    TestBed.inject(HttpGoalsGateway).delete('g 1').subscribe();
+
+    httpTesting.expectOne({ method: 'DELETE', url: '/api/goals/g%201' }).flush(null);
   });
 });

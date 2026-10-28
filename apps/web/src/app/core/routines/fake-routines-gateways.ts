@@ -4,8 +4,8 @@ import { IdGenerator } from '../ids/id-generator';
 import { SequentialIdGenerator } from '../ids/sequential-id-generator';
 import { CategoriesGateway } from './categories-gateway';
 import { Category } from './category';
-import { Goal } from './goal';
-import { GoalsGateway } from './goals-gateway';
+import { Goal, GoalChanges } from './goal';
+import { GoalsGateway, ProgressEntry } from './goals-gateway';
 import { Routine } from './routine';
 import { RoutinesGateway } from './routines-gateway';
 import { BlockOutcomesGateway } from './block-outcomes-gateway';
@@ -38,13 +38,23 @@ export class FakeCategoriesGateway extends CategoriesGateway {
 export class FakeGoalsGateway extends GoalsGateway {
   failure: Error | undefined;
   readonly saved: Goal[] = [];
+  readonly updated: { readonly goalId: string; readonly changes: GoalChanges }[] = [];
+  readonly deleted: string[] = [];
+  /** Entries sent to `logProgress`, in order. */
+  readonly entries: ProgressEntry[] = [];
+  /** Days `list` was asked for, in order. */
+  readonly listedDays: string[] = [];
+  /** Entry ids already counted, so repeating one does nothing, like the API. */
+  private readonly counted = new Set<string>();
+  private readonly progress = new Map<string, number>();
 
   constructor(private readonly goals: readonly Goal[] = SAMPLE_GOALS) {
     super();
   }
 
-  override list(): Observable<readonly Goal[]> {
-    return this.failure === undefined ? of(this.goals) : throwError(() => this.failure);
+  override list(isoDay: string): Observable<readonly Goal[]> {
+    this.listedDays.push(isoDay);
+    return this.failure === undefined ? of(this.known()) : throwError(() => this.failure);
   }
 
   override create(goal: Goal): Observable<Goal> {
@@ -53,14 +63,48 @@ export class FakeGoalsGateway extends GoalsGateway {
     return of(goal);
   }
 
-  override logProgress(goalId: string): Observable<Goal> {
+  override update(goalId: string, changes: GoalChanges): Observable<Goal> {
+    this.updated.push({ goalId, changes });
+    const goal = this.find(goalId);
     if (this.failure !== undefined) return throwError(() => this.failure);
-    const goal = [...this.goals, ...this.saved].find((candidate) => candidate.id === goalId);
-    if (goal === undefined) {
-      return throwError(() => new Error(`Expected a known goal id, received "${goalId}"`));
-    }
-    return of({ ...goal, done: Math.min(goal.target, goal.done + 1) });
+    if (goal === undefined) return throwError(() => unknownGoal(goalId));
+    return of({ ...goal, ...changes, done: Math.min(goal.done, changes.target) });
   }
+
+  override delete(goalId: string): Observable<void> {
+    this.deleted.push(goalId);
+    return this.failure === undefined ? of(undefined) : throwError(() => this.failure);
+  }
+
+  override logProgress(goalId: string, entry: ProgressEntry): Observable<Goal> {
+    this.entries.push(entry);
+    if (this.failure !== undefined) return throwError(() => this.failure);
+    const goal = this.find(goalId);
+    if (goal === undefined) return throwError(() => unknownGoal(goalId));
+    if (!this.counted.has(entry.eventId)) {
+      this.counted.add(entry.eventId);
+      this.progress.set(
+        goalId,
+        Math.max(0, (this.progress.get(goalId) ?? goal.done) + entry.amount),
+      );
+    }
+    return of({ ...goal, done: Math.min(goal.target, this.progress.get(goalId) ?? goal.done) });
+  }
+
+  private known(): Goal[] {
+    return [...this.goals, ...this.saved].map((goal) => ({
+      ...goal,
+      done: Math.min(goal.target, this.progress.get(goal.id) ?? goal.done),
+    }));
+  }
+
+  private find(goalId: string): Goal | undefined {
+    return this.known().find((candidate) => candidate.id === goalId);
+  }
+}
+
+function unknownGoal(goalId: string): Error {
+  return new Error(`Expected a known goal id, received "${goalId}"`);
 }
 
 /** Test double answering synchronously from memory; set `failure` to make the next calls fail. */

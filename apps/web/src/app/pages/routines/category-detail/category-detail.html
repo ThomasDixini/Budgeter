@@ -78,7 +78,11 @@
       <div class="goals-header">
         <h2 id="goals-title" class="goals-title">{{ category.name }} goals</h2>
         @if (!isAdding()) {
-          <button class="ui-button-primary" type="button" (click)="isAdding.set(true)">
+          <button
+            class="ui-button-primary"
+            type="button"
+            (click)="editingGoalId.set(undefined); isAdding.set(true)"
+          >
             <svg
               width="16"
               height="16"
@@ -103,6 +107,17 @@
           [today]="today"
           (create)="addGoal($event)"
           (dismiss)="isAdding.set(false)"
+        />
+      }
+
+      @for (goal of editingGoals(); track goal.id) {
+        <app-goal-form
+          [categoryId]="category.id"
+          [color]="category.color"
+          [today]="today"
+          [goal]="goal"
+          (save)="saveGoal(goal.id, $event)"
+          (dismiss)="editingGoalId.set(undefined)"
         />
       }
 
@@ -141,6 +156,9 @@
             [color]="category.color"
             [today]="today"
             (increment)="incrementGoal($event)"
+            (decrement)="decrementGoal($event)"
+            (edit)="startEditing($event)"
+            (remove)="deleteGoal($event)"
           />
         }
       </div>

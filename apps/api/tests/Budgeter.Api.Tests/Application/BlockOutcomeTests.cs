@@ -1,4 +1,5 @@
 using Budgeter.Api.Application;
+using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Routines;
 using Budgeter.Api.Domain;
 using Budgeter.Api.Domain.Routines;
@@ -13,7 +14,10 @@ public class BlockOutcomeTests
     private readonly InMemoryBlockOutcomeRepository _outcomes = new();
     private readonly InMemoryRoutineRepository _routines = new(Routines.Weekdays());
 
-    private RecordBlockOutcome Record() => new(_outcomes, _routines);
+    private readonly InMemoryGoalRepository _goals = new();
+    private GoalCredits Credits => new(_goals, _goals);
+
+    private RecordBlockOutcome Record() => new(_outcomes, _routines, Credits);
 
     [Fact]
     public async Task Record_StoresTheOutcomeForTheDay()
@@ -50,7 +54,7 @@ public class BlockOutcomeTests
     public async Task Undo_RemovesTheOutcomeAndIgnoresOneAlreadyGone()
     {
         await Record().ExecuteAsync(new("weekdays", "work", Today, BlockOutcomeKind.Done, "11:20"), CancellationToken.None);
-        var undo = new UndoBlockOutcome(_outcomes);
+        var undo = new UndoBlockOutcome(_outcomes, Credits);
 
         await undo.ExecuteAsync("weekdays", "work", Today, CancellationToken.None);
         await undo.ExecuteAsync("weekdays", "work", Today, CancellationToken.None);

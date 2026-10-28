@@ -73,18 +73,46 @@ export async function createDailyTask(
 }
 
 /**
+ * The local calendar day as the web app reads it (`YYYY-MM-DD`); goals are read for the period around it.
+ * @example localToday() // '2026-10-28'
+ */
+export function localToday(): string {
+  const now = new Date();
+  const pad = (value: number): string => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/**
  * Creates a weekly frequency goal straight through the API, for tests that start from an existing goal.
+ * It counts from completed tasks or blocks when `tracking` says so.
  * @example const goal = await createWeeklyGoal(request, 'exercise', 3);
  */
 export async function createWeeklyGoal(
   request: APIRequestContext,
   categoryId: string,
   target: number,
+  tracking: 'manual' | 'blocks' | 'tasks' = 'manual',
 ): Promise<SeededGoal> {
   const goal: SeededGoal = { id: randomUUID(), categoryId, title: uniqueTitle('Work out'), target };
-  const response = await request.post('/api/goals', {
-    data: { ...goal, type: 'frequency', period: 'weekly' },
+  const response = await request.post(`/api/goals?date=${localToday()}`, {
+    data: { ...goal, type: 'frequency', period: 'weekly', tracking },
   });
   expect(response.status()).toBe(201);
   return goal;
+}
+
+/**
+ * Creates a daily task of a category straight through the API.
+ * @example const task = await createCategorizedTask(request, 'exercise');
+ */
+export async function createCategorizedTask(
+  request: APIRequestContext,
+  categoryId: string,
+): Promise<{ readonly id: string; readonly title: string }> {
+  const task = { id: randomUUID(), title: uniqueTitle('Stretch') };
+  const response = await request.put(`/api/tasks/${task.id}`, {
+    data: { title: task.title, repeat: 'daily', categoryId },
+  });
+  expect(response.status()).toBe(200);
+  return task;
 }

@@ -1,11 +1,11 @@
 <form
   class="goal-form ui-enter"
-  aria-label="Set a new goal"
+  [attr.aria-label]="isEditing() ? 'Edit goal' : 'Set a new goal'"
   [style.border-color]="ring()"
   (submit)="submit($event)"
 >
   <div class="fields">
-    <h3 class="form-title">Set goal</h3>
+    <h3 class="form-title">{{ isEditing() ? 'Edit goal' : 'Set goal' }}</h3>
     <label class="ui-field">
       Goal name
       <input
@@ -26,6 +26,7 @@
             class="type"
             type="button"
             [attr.aria-pressed]="selected"
+            [disabled]="isEditing() && !selected"
             [style.background]="selected ? selectedTint() : null"
             [style.border-color]="selected ? selectedBorder() : null"
             (click)="type.set(option.value)"
@@ -121,8 +122,29 @@
       </div>
     }
 
+    @if (type() === 'frequency') {
+      <fieldset class="ui-fieldset">
+        <legend class="ui-legend">Count progress from</legend>
+        <div class="periods">
+          @for (option of trackingOptions; track option.value) {
+            <button
+              class="ui-chip"
+              type="button"
+              [attr.aria-pressed]="option.value === tracking()"
+              (click)="tracking.set(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+        <p class="ui-muted tracking-hint">{{ trackingHint() }}</p>
+      </fieldset>
+    }
+
     <div class="form-actions">
-      <button class="ui-button-primary tall" type="submit">Create goal</button>
+      <button class="ui-button-primary tall" type="submit">
+        {{ isEditing() ? 'Save goal' : 'Create goal' }}
+      </button>
       <button class="ui-button-ghost tall transparent" type="button" (click)="dismiss.emit()">
         Cancel
       </button>
