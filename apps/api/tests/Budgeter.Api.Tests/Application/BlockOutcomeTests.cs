@@ -47,6 +47,18 @@ public class BlockOutcomeTests
     }
 
     [Fact]
+    public async Task Undo_RemovesTheOutcomeAndIgnoresOneAlreadyGone()
+    {
+        await Record().ExecuteAsync(new("weekdays", "work", Today, BlockOutcomeKind.Done, "11:20"), CancellationToken.None);
+        var undo = new UndoBlockOutcome(_outcomes);
+
+        await undo.ExecuteAsync("weekdays", "work", Today, CancellationToken.None);
+        await undo.ExecuteAsync("weekdays", "work", Today, CancellationToken.None);
+
+        (await _outcomes.ListAsync(Today, CancellationToken.None)).ShouldBeEmpty();
+    }
+
+    [Fact]
     public void Create_RejectsATimeNotShapedLikeAClock()
     {
         Should.Throw<DomainRuleException>(() =>

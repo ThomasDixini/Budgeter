@@ -106,6 +106,21 @@ public sealed class RoutineEndpointsTests : IDisposable
     }
 
     [Fact]
+    public async Task BlockOutcome_UndoRemovesItAndRepeatsAsNoContent()
+    {
+        await CreateLanguagesCategoryAsync();
+        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+        const string path = "/routines/weekdays/days/2026-10-27/blocks/csharp";
+        await _client.PutAsJsonAsync(path, new { outcome = "done", at = "14:10" });
+
+        var first = await _client.DeleteAsync(path);
+        var retry = await _client.DeleteAsync(path);
+
+        (first.StatusCode, retry.StatusCode).ShouldBe((HttpStatusCode.NoContent, HttpStatusCode.NoContent));
+        (await _client.GetStringAsync("/block-outcomes?date=2026-10-27")).ShouldBe("[]");
+    }
+
+    [Fact]
     public async Task BlockOutcome_ForAnUnknownBlockIsNotFound()
     {
         await CreateLanguagesCategoryAsync();

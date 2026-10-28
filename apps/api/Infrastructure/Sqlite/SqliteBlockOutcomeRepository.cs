@@ -38,6 +38,16 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
             ("$kind", outcome.Kind.ToString().ToLowerInvariant()), ("$at", outcome.At));
     }
 
+    public async Task DeleteAsync(string routineId, string blockId, DateOnly date, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await SqliteCommands.ExecuteAsync(
+            connection,
+            "DELETE FROM block_outcomes WHERE routine_id = $routineId AND block_id = $blockId AND date = $date",
+            cancellationToken,
+            ("$routineId", routineId), ("$blockId", blockId), ("$date", ToText(date)));
+    }
+
     private static BlockOutcome ToOutcome(SqliteDataReader reader)
     {
         return BlockOutcome.Create(

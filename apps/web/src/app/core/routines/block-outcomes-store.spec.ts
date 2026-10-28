@@ -63,6 +63,26 @@ describe('BlockOutcomesStore', () => {
     expect(store.outcomes()).toEqual([{ ...GYM_DONE, outcome: 'skipped' }]);
   });
 
+  it('undoes an outcome through the gateway', () => {
+    const { store, gateway } = createStore();
+
+    store.undo('weekdays', 'gym');
+
+    expect(store.outcomes()).toEqual([]);
+    expect(gateway.undone).toEqual([
+      { isoDay: '2026-10-27', routineId: 'weekdays', blockId: 'gym' },
+    ]);
+  });
+
+  it('keeps the outcome when undoing it fails', () => {
+    const { store, gateway } = createStore();
+    gateway.failure = new Error('offline');
+
+    store.undo('weekdays', 'gym');
+
+    expect(store.outcomes()).toEqual([GYM_DONE]);
+  });
+
   it('drops the outcome when the gateway rejects it', () => {
     const { store, gateway, errors } = createStore();
     gateway.failure = new Error('offline');

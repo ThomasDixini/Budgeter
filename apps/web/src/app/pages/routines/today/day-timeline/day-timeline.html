@@ -44,6 +44,21 @@
                 >
                   <path d="M5 12.5l4.5 4.5L19 7.5"></path>
                 </svg>
+              } @else if (block.outcome === 'skipped') {
+                <svg
+                  class="skip-mark"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 5l9 7-9 7V5zM19 5v14"></path>
+                </svg>
               }
               {{ block.name }}
             </span>
@@ -72,6 +87,30 @@
                   {{ category.name }}
                 </span>
               }
+            }
+            @if (block.outcome) {
+              <button
+                class="undo"
+                type="button"
+                [attr.aria-label]="'Undo ' + block.name"
+                title="Undo"
+                (click)="undo.emit(block.blockId)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 14L4 9l5-5"></path>
+                  <path d="M4 9h10.5a5.5 5.5 0 010 11H11"></path>
+                </svg>
+              </button>
             }
           </div>
         </div>

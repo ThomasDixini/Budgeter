@@ -1,6 +1,8 @@
 import { toMinutes } from '../calendar/time-of-day';
 import {
+  DayPiece,
   blockLength,
+  blockPieces,
   clockDistance,
   dayPieces,
   hourMarks,
@@ -18,6 +20,8 @@ export const TIMELINE_HOUR_HEIGHT = 48;
  * drawn on one compact line (about 80 minutes at 48px per hour).
  */
 const COMPACT_BLOCK_MAX_HEIGHT = 64;
+/** Shortest time an ended block is drawn with, so one finished in a minute still shows (24px). */
+const MIN_ENDED_BLOCK_MINUTES = 30;
 
 /**
  * Whether a timeline block is too short for the two-line layout.
@@ -66,10 +70,21 @@ export function timelineHours(routine: Pick<Routine, 'start' | 'end'>): Timeline
 
 /**
  * Blocks placed on the timeline, side by side where they overlap, flagging the ones happening now.
+ * Blocks in `endedIds` (completed or skipped today) stay visible even when they ended right after
+ * starting: they get at least a one-line height, beside the block that moved up into their time.
  * @example timelineBlocks(weekdays, 850).find((item) => item.isNow)?.block.name // 'C# study'
  */
-export function timelineBlocks(routine: Routine, nowMinutes: number): TimelineBlock[] {
-  const pieces = dayPieces(routine);
+export function timelineBlocks(
+  routine: Routine,
+  nowMinutes: number,
+  endedIds: ReadonlySet<string> = new Set(),
+): TimelineBlock[] {
+  const pieces = [
+    ...dayPieces(routine).filter((piece) => !endedIds.has(piece.block.id)),
+    ...routine.blocks
+      .filter((block) => endedIds.has(block.id))
+      .flatMap((block) => endedPieces(block, routine)),
+  ].sort((first, second) => first.start - second.start);
   const lanes = pieceLanes(pieces);
   return pieces.map((piece) => {
     const { lane, lanes: laneCount } = lanes.get(piece.key) ?? SINGLE_LANE;
@@ -140,6 +155,15 @@ export function minutesLeft(
   nowMinutes: number,
 ): number {
   return Math.max(0, blockLength(block) - clockDistance(toMinutes(block.start), nowMinutes));
+}
+
+/** Pieces of an ended block, stretched to the shortest height that still shows one line. */
+function endedPieces(block: RoutineBlock, routine: Routine): DayPiece[] {
+  const pieces = blockPieces(block, routine);
+  if (blockLength(block) >= MIN_ENDED_BLOCK_MINUTES) return pieces;
+  const start = offsetInDay(toMinutes(block.start), routine);
+  const end = Math.min(routineSpan(routine), start + MIN_ENDED_BLOCK_MINUTES);
+  return end > start ? [{ block, key: `${block.id}#0`, start, end }] : [];
 }
 
 function toPixels(minutes: number): number {

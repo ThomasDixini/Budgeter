@@ -10,4 +10,7 @@ public interface IBlockOutcomeRepository
 
     /// <summary>Stores the outcome, replacing one recorded for the same block on the same day.</summary>
     Task SaveAsync(BlockOutcome outcome, CancellationToken cancellationToken);
+
+    /// <summary>Removes the outcome of a block on a day; one that is not there is ignored.</summary>
+    Task DeleteAsync(string routineId, string blockId, DateOnly date, CancellationToken cancellationToken);
 }

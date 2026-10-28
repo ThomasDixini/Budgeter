@@ -41,4 +41,12 @@
       </p>
     </div>
   }
+  @if (lastEnded(); as ended) {
+    <p class="last-ended" role="status">
+      <span>{{ lastEndedMessage() }}</span>
+      <button class="ui-link undo-last" type="button" (click)="undo.emit(ended.blockId)">
+        Undo
+      </button>
+    </p>
+  }
 </section>

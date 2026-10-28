@@ -11,4 +11,7 @@ export abstract class BlockOutcomesGateway {
 
   /** Records an outcome on an ISO date; recording the same block again replaces it. */
   abstract record(isoDay: string, outcome: BlockOutcome): Observable<BlockOutcome>;
+
+  /** Removes a block's outcome on an ISO date; removing one that is not there succeeds. */
+  abstract undo(isoDay: string, routineId: string, blockId: string): Observable<void>;
 }

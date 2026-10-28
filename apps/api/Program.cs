@@ -33,6 +33,7 @@ builder.Services.AddScoped<SaveRoutine>();
 builder.Services.AddScoped<DeleteRoutine>();
 builder.Services.AddScoped<ListBlockOutcomes>();
 builder.Services.AddScoped<RecordBlockOutcome>();
+builder.Services.AddScoped<UndoBlockOutcome>();
 builder.Services.AddScoped<ListTasks>();
 builder.Services.AddScoped<SaveTask>();
 builder.Services.AddScoped<DeleteTask>();

@@ -14,7 +14,7 @@ import { TasksStore } from '../../../core/routines/tasks-store';
 import { BlockOutcomesStore } from '../../../core/routines/block-outcomes-store';
 import { BlockOutcomeKind, planDay } from '../../../core/routines/day-plan';
 import { DayTimeline } from './day-timeline/day-timeline';
-import { NowCard } from './now-card/now-card';
+import { EndedBlock, NowCard } from './now-card/now-card';
 import { TaskForm } from './task-form/task-form';
 
 /** Goals shown in the "Goals in focus" card. */
@@ -63,6 +63,18 @@ export class Today {
   protected readonly outcomes = computed(
     () => this.plan()?.outcomes ?? new Map<string, BlockOutcomeKind>(),
   );
+  /** The block ended most recently today, offered for a quick undo on the Now card. */
+  protected readonly lastEnded = computed((): EndedBlock | undefined => {
+    const routine = this.routine();
+    const last = this.outcomesStore
+      .outcomes()
+      .filter((outcome) => outcome.routineId === routine?.id)
+      .at(-1);
+    const block = routine?.blocks.find((candidate) => candidate.id === last?.blockId);
+    return last && block
+      ? { blockId: block.id, name: block.name, outcome: last.outcome }
+      : undefined;
+  });
   protected readonly dayPercent = computed(() => {
     const routine = this.routine();
     return routine === undefined ? 0 : dayProgress(routine, this.nowMinutes());
@@ -96,6 +108,15 @@ export class Today {
     const now = minutesOfDay(this.clock.now());
     this.nowMinutes.set(now);
     this.outcomesStore.record(routine.id, blockId, kind, now);
+  }
+
+  /**
+   * Takes back a block completed or skipped by mistake; it and the blocks after it return to plan.
+   * @example this.undoBlock('project')
+   */
+  protected undoBlock(blockId: string): void {
+    const routine = this.routine();
+    if (routine !== undefined) this.outcomesStore.undo(routine.id, blockId);
   }
 
   protected toggleTask(taskId: string): void {

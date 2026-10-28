@@ -1,8 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { formatClock } from '../../../../core/calendar/time-of-day';
 import { Category, findCategory, withAlpha } from '../../../../core/routines/category';
 import { BlockOutcomeKind } from '../../../../core/routines/day-plan';
 import {
+  TimelineBlock,
   isCompactBlock,
   nowLineOffset,
   timelineBlocks,
@@ -13,6 +14,7 @@ import { Routine } from '../../../../core/routines/routine';
 
 interface TimelineBlockView {
   readonly key: string;
+  readonly blockId: string;
   readonly name: string;
   readonly range: string;
   /** Name, time and category in one line, for the tooltip of blocks too short to show them all. */
@@ -39,6 +41,8 @@ const OUTCOME_LABELS: Readonly<Record<BlockOutcomeKind, string>> = {
 const NEUTRAL_BACKGROUND = 'rgba(255, 255, 255, 0.035)';
 const NEUTRAL_BORDER = 'rgba(255, 255, 255, 0.10)';
 const NOW_BORDER = 'rgba(46, 242, 166, 0.6)';
+const DONE_BACKGROUND = 'rgba(46, 242, 166, 0.08)';
+const DONE_BORDER = 'rgba(46, 242, 166, 0.35)';
 
 /** Vertical hour grid of today's routine with its blocks and a live "now" line. */
 @Component({
@@ -52,6 +56,8 @@ export class DayTimeline {
   readonly nowMinutes = input.required<number>();
   /** How today's blocks ended so far, by block id. */
   readonly outcomes = input<ReadonlyMap<string, BlockOutcomeKind>>(new Map());
+  /** Emits the id of an ended block the user wants back as it was planned. */
+  readonly undo = output<string>();
 
   protected readonly height = computed(() => timelineHeight(this.routine()));
   protected readonly hours = computed(() => timelineHours(this.routine()));
@@ -59,32 +65,42 @@ export class DayTimeline {
   protected readonly nowLabel = computed(() => formatClock(this.nowMinutes()));
   protected readonly outcomeLabels = OUTCOME_LABELS;
   protected readonly blocks = computed(() =>
-    timelineBlocks(this.routine(), this.nowMinutes()).map(({ block, isNow, ...placement }) => {
-      const category = findCategory(this.categories(), block.categoryId);
-      const range = `${block.start} – ${block.end}`;
-      const outcome = this.outcomes().get(block.id);
-      return {
-        name: block.name,
-        range,
-        summary: [block.name, range, category?.name, outcome && OUTCOME_LABELS[outcome]]
-          .filter(Boolean)
-          .join(' · '),
-        ...placement,
-        isNow: isNow && outcome === undefined,
-        outcome,
-        isCompact: isCompactBlock(placement.height),
-        category,
-        ...this.blockColors(category, isNow),
-      } satisfies TimelineBlockView;
-    }),
+    timelineBlocks(this.routine(), this.nowMinutes(), new Set(this.outcomes().keys())).map(
+      (entry) => this.toView(entry),
+    ),
   );
 
-  private blockColors(
-    category: Category | undefined,
-    isNow: boolean,
-  ): Pick<TimelineBlockView, 'background' | 'border'> {
-    const background = category ? withAlpha(category.color, 0.07) : NEUTRAL_BACKGROUND;
-    if (isNow) return { background, border: NOW_BORDER };
-    return { background, border: category ? withAlpha(category.color, 0.28) : NEUTRAL_BORDER };
+  private toView({ block, isNow, ...placement }: TimelineBlock): TimelineBlockView {
+    const category = findCategory(this.categories(), block.categoryId);
+    const range = `${block.start} – ${block.end}`;
+    const outcome = this.outcomes().get(block.id);
+    const isRunning = isNow && outcome === undefined;
+    return {
+      ...placement,
+      blockId: block.id,
+      name: block.name,
+      range,
+      summary: [block.name, range, category?.name, outcome && OUTCOME_LABELS[outcome]]
+        .filter(Boolean)
+        .join(' · '),
+      isNow: isRunning,
+      outcome,
+      isCompact: isCompactBlock(placement.height),
+      category,
+      ...blockColors(category, isRunning, outcome),
+    };
   }
+}
+
+/** Done blocks turn mint, skipped ones go neutral, so the two read apart at a glance. */
+function blockColors(
+  category: Category | undefined,
+  isNow: boolean,
+  outcome: BlockOutcomeKind | undefined,
+): Pick<TimelineBlockView, 'background' | 'border'> {
+  if (outcome === 'done') return { background: DONE_BACKGROUND, border: DONE_BORDER };
+  if (outcome === 'skipped') return { background: NEUTRAL_BACKGROUND, border: NEUTRAL_BORDER };
+  const background = category ? withAlpha(category.color, 0.07) : NEUTRAL_BACKGROUND;
+  if (isNow) return { background, border: NOW_BORDER };
+  return { background, border: category ? withAlpha(category.color, 0.28) : NEUTRAL_BORDER };
 }

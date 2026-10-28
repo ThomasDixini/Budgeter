@@ -9,6 +9,7 @@ import {
   timelineHeight,
   timelineHours,
 } from './day-timeline';
+import { Routine } from './routine';
 import { SAMPLE_ROUTINES } from './sample-routines';
 
 const weekdays = SAMPLE_ROUTINES[0];
@@ -49,6 +50,36 @@ describe('timeline geometry', () => {
     const placed = timelineBlocks(routine, STUDY_TIME).find((item) => item.block.id === 'podcast');
 
     expect({ left: placed?.left, width: placed?.width }).toEqual({ left: 50, width: 50 });
+  });
+});
+
+describe('timelineBlocks with ended blocks', () => {
+  const ended: Routine = {
+    ...weekdays,
+    blocks: [
+      { id: 'guitar', name: 'Guitar', start: '14:00', end: '14:03' },
+      { id: 'read', name: 'Reading', start: '14:03', end: '14:03' },
+      { id: 'next', name: 'Next', start: '14:03', end: '15:00' },
+    ],
+  };
+
+  // Regression: a block completed minutes (or seconds) after it started shrank to nothing.
+  it('keeps ended blocks visible at one line tall, even with no time left', () => {
+    const placed = timelineBlocks(ended, STUDY_TIME, new Set(['guitar', 'read']));
+
+    const heights = Object.fromEntries(placed.map((item) => [item.block.id, item.height]));
+    expect(heights).toEqual({ guitar: 24, read: 24, next: 46 });
+  });
+
+  it('puts an ended block beside the block that moved up into its time', () => {
+    const placed = timelineBlocks(ended, STUDY_TIME, new Set(['guitar']));
+
+    const guitar = placed.find((item) => item.block.id === 'guitar');
+    expect(guitar?.width).toBe(50);
+  });
+
+  it('does not keep a zero-length block that has not ended', () => {
+    expect(timelineBlocks(ended, STUDY_TIME).map((item) => item.block.id)).not.toContain('read');
   });
 });
 

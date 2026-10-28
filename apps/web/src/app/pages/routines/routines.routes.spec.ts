@@ -114,6 +114,30 @@ describe('Today page', () => {
     expect(study?.textContent).toContain('13:30 – 14:10');
   });
 
+  it('undoes a completed block from the Now card, back to plan', async () => {
+    const element = await openPage('/routines');
+    clickButton(element, 'Complete block');
+    expect(text(element, '.last-ended span')).toBe('C# study completed');
+
+    clickButton(element, 'Undo');
+
+    expect(text(element, '.now-card .title')).toBe('C# study');
+    expect(text(element, '.now-card .meta .ui-tabular')).toBe('13:30 – 15:00');
+    expect(element.querySelector('.block.is-done')).toBeNull();
+    expect(element.querySelector('.last-ended')).toBeNull();
+  });
+
+  it('undoes a skipped block from its button on the timeline', async () => {
+    const element = await openPage('/routines');
+    clickButton(element, 'Skip');
+
+    element.querySelector<HTMLButtonElement>('[aria-label="Undo C# study"]')!.click();
+    TestBed.tick();
+
+    expect(element.querySelector('.block.is-skipped')).toBeNull();
+    expect(text(element, '.now-card .title')).toBe('C# study');
+  });
+
   it('skips the running block and crosses it out', async () => {
     const element = await openPage('/routines');
 

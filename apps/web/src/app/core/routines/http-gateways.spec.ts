@@ -136,6 +136,14 @@ describe('HttpBlockOutcomesGateway', () => {
     expect(request.request.body).toEqual({ outcome: 'skipped', at: '19:10' });
     request.flush(outcome);
   });
+
+  it('deletes the outcome to undo it', () => {
+    TestBed.inject(HttpBlockOutcomesGateway).undo('2026-10-27', 'week days', 'gym').subscribe();
+
+    httpTesting
+      .expectOne({ method: 'DELETE', url: '/api/routines/week%20days/days/2026-10-27/blocks/gym' })
+      .flush(null);
+  });
 });
 
 describe('HttpGoalsGateway', () => {

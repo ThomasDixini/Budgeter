@@ -16,14 +16,23 @@ public sealed record BlockOutcomeResponse(string RoutineId, string BlockId, Bloc
 public static class BlockOutcomeEndpoints
 {
     /// <summary>
-    /// Maps <c>GET /block-outcomes?date=</c> and <c>PUT /routines/{routineId}/days/{date}/blocks/{blockId}</c>.
+    /// Maps <c>GET /block-outcomes?date=</c> and <c>PUT</c>/<c>DELETE /routines/{routineId}/days/{date}/blocks/{blockId}</c>.
     /// </summary>
     /// <example><code>app.MapBlockOutcomeEndpoints();</code></example>
     public static IEndpointRouteBuilder MapBlockOutcomeEndpoints(this IEndpointRouteBuilder routes)
     {
         routes.MapGet("/block-outcomes", ListAsync);
         routes.MapPut("/routines/{routineId}/days/{date}/blocks/{blockId}", RecordAsync);
+        routes.MapDelete("/routines/{routineId}/days/{date}/blocks/{blockId}", UndoAsync);
         return routes;
+    }
+
+    private static async Task<IResult> UndoAsync(
+        string routineId, DateOnly date, string blockId, UndoBlockOutcome undoBlockOutcome,
+        CancellationToken cancellationToken)
+    {
+        await undoBlockOutcome.ExecuteAsync(routineId, blockId, date, cancellationToken);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> ListAsync(

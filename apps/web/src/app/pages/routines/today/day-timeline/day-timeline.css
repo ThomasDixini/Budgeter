@@ -87,27 +87,60 @@
   gap: 6px;
 }
 
-/* Completed today: a check before the name and a calmer card. */
-.block.is-done {
-  opacity: 0.7;
-}
-
-.done-check {
-  display: inline-block;
-  vertical-align: -2px;
-  margin-right: 4px;
+/* Completed today: mint card with a check. */
+.block.is-done .block-name {
   color: var(--color-mint);
 }
 
-/* Skipped today: crossed out and faded; it does not count as done. */
+.done-check,
+.skip-mark {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+
+.done-check {
+  color: var(--color-mint);
+}
+
+/* Skipped today: grey, dashed and crossed out; it does not count as done. */
 .block.is-skipped {
-  opacity: 0.45;
   border-style: dashed;
 }
 
 .block.is-skipped .block-name,
 .block.is-skipped .block-range {
+  color: var(--color-text-faint);
   text-decoration: line-through;
+}
+
+.skip-mark {
+  color: var(--color-text-faint);
+}
+
+.undo {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.undo:hover,
+.undo:focus-visible {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.block.is-compact .undo {
+  width: 20px;
+  height: 20px;
 }
 
 .outcome-label {

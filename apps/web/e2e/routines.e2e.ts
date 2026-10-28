@@ -122,6 +122,25 @@ test.describe('today', () => {
     await expect(study).toContainText('13:30 – 14:10');
   });
 
+  test('a skipped block can be undone and stays back on plan after a reload', async ({ page }) => {
+    const monday = new Date(2030, 0, 7 + 7 * Math.floor(Math.random() * 2000), 14, 10);
+    await page.clock.setFixedTime(monday);
+    await routines.goto();
+    const skipped = page.waitForResponse((response) => response.url().includes('/days/'));
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await skipped;
+    const undone = page.waitForResponse(
+      (response) => response.url().includes('/days/') && response.request().method() === 'DELETE',
+    );
+
+    await page.getByRole('button', { name: 'Undo C# study' }).click();
+    await undone;
+    await page.reload();
+
+    await expect(page.getByRole('heading', { level: 2, name: 'C# study' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Undo C# study' })).toHaveCount(0);
+  });
+
   test('checking a task off is kept after a reload', async ({ page, request }) => {
     const task = await createDailyTask(request);
     await routines.goto();

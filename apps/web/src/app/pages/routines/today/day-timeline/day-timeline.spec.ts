@@ -71,11 +71,23 @@ describe('DayTimeline', () => {
     expect(run.getAttribute('aria-current')).toBeNull();
   });
 
-  it('crosses out a skipped block', () => {
+  it('crosses out a skipped block with its own mark, unlike a done one', () => {
     const study = blockNamed(createTimeline(new Map([['study', 'skipped']])), 'C# study');
 
     expect(study.classList).toContain('is-skipped');
     expect(study.querySelector('.done-check')).toBeNull();
+    expect(study.querySelector('.skip-mark')).not.toBeNull();
     expect(study.querySelector('.outcome-label')?.textContent?.trim()).toBe('Skipped');
+  });
+
+  it('offers to undo an ended block', () => {
+    const fixture = createTimeline(new Map([['run', 'done']]));
+    const undone: string[] = [];
+    fixture.componentInstance.undo.subscribe((blockId) => undone.push(blockId));
+
+    blockNamed(fixture, 'Morning run').querySelector<HTMLButtonElement>('.undo')!.click();
+
+    expect(undone).toEqual(['run']);
+    expect(blockNamed(fixture, 'C# study').querySelector('.undo')).toBeNull();
   });
 });

@@ -49,6 +49,17 @@ public sealed class SqliteBlockOutcomeRepositoryTests : IAsyncLifetime, IDisposa
             .ShouldBe([("work", BlockOutcomeKind.Skipped, "11:25"), ("csharp", BlockOutcomeKind.Skipped, "13:40")]);
     }
 
+    [Fact]
+    public async Task Delete_RemovesOnlyThatBlockOnThatDay()
+    {
+        await _outcomes.SaveAsync(Outcome("work", BlockOutcomeKind.Done, "11:20"), CancellationToken.None);
+        await _outcomes.SaveAsync(Outcome("csharp", BlockOutcomeKind.Done, "14:00"), CancellationToken.None);
+
+        await _outcomes.DeleteAsync("weekdays", "work", Today, CancellationToken.None);
+
+        (await _outcomes.ListAsync(Today, CancellationToken.None)).Single().BlockId.ShouldBe("csharp");
+    }
+
     // Saving a routine rewrites its block rows; the day's history must survive that.
     [Fact]
     public async Task Outcomes_SurviveSavingTheRoutineAgain()

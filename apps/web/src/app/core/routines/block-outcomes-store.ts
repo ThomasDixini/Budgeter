@@ -40,14 +40,32 @@ export class BlockOutcomesStore {
     const before = this.outcomeList();
     this.outcomeList.set([...before.filter((current) => !isSameBlock(current, outcome)), outcome]);
     this.gateway.record(this.today, outcome).subscribe({
-      error: (error: unknown) => {
-        this.outcomeList.set(before);
-        this.errorHandler.handleError(error);
-      },
+      error: (error: unknown) => this.rejected(error, before),
     });
+  }
+
+  /**
+   * Takes back a completed or skipped block, so it and the blocks after it return to plan.
+   * @example store.undo('weekdays', 'project')
+   */
+  undo(routineId: string, blockId: string): void {
+    const before = this.outcomeList();
+    const target = { routineId, blockId };
+    this.outcomeList.set(before.filter((current) => !isSameBlock(current, target)));
+    this.gateway.undo(this.today, routineId, blockId).subscribe({
+      error: (error: unknown) => this.rejected(error, before),
+    });
+  }
+
+  private rejected(error: unknown, before: readonly BlockOutcome[]): void {
+    this.outcomeList.set(before);
+    this.errorHandler.handleError(error);
   }
 }
 
-function isSameBlock(first: BlockOutcome, second: BlockOutcome): boolean {
+function isSameBlock(
+  first: Pick<BlockOutcome, 'routineId' | 'blockId'>,
+  second: Pick<BlockOutcome, 'routineId' | 'blockId'>,
+): boolean {
   return first.routineId === second.routineId && first.blockId === second.blockId;
 }

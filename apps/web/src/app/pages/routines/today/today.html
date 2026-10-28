@@ -41,6 +41,7 @@
           [categories]="categories()"
           [nowMinutes]="nowMinutes()"
           [outcomes]="outcomes()"
+          (undo)="undoBlock($event)"
         />
       } @else {
         <p class="ui-muted no-routine">
@@ -55,8 +56,10 @@
         [categories]="categories()"
         [nowMinutes]="nowMinutes()"
         [outcomes]="outcomes()"
+        [lastEnded]="lastEnded()"
         (complete)="endBlock($event, 'done')"
         (skip)="endBlock($event, 'skipped')"
+        (undo)="undoBlock($event)"
       />
 
       <section class="ui-card side-card" aria-labelledby="tasks-title">

@@ -5,6 +5,13 @@ import { Category, findCategory } from '../../../../core/routines/category';
 import { blockElapsed, currentBlock, minutesLeft } from '../../../../core/routines/day-timeline';
 import { Routine, RoutineBlock, sortBlocks } from '../../../../core/routines/routine';
 
+/** A block completed or skipped today, as the Now card names it for undo. */
+export interface EndedBlock {
+  readonly blockId: string;
+  readonly name: string;
+  readonly outcome: BlockOutcomeKind;
+}
+
 interface CurrentBlockView {
   readonly block: RoutineBlock;
   readonly category?: Category;
@@ -28,6 +35,15 @@ export class NowCard {
   readonly complete = output<string>();
   /** Emits the id of the running block when it is skipped. */
   readonly skip = output<string>();
+  /** The block ended most recently, offered for a quick undo. */
+  readonly lastEnded = input<EndedBlock | undefined>(undefined);
+  /** Emits the id of the ended block to put back as planned. */
+  readonly undo = output<string>();
+
+  protected readonly lastEndedMessage = computed(() => {
+    const ended = this.lastEnded();
+    return ended && `${ended.name} ${ended.outcome === 'done' ? 'completed' : 'skipped'}`;
+  });
 
   protected readonly current = computed(() => {
     const block = currentBlock(this.pendingRoutine(), this.nowMinutes());

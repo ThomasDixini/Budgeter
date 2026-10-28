@@ -7,6 +7,12 @@ export class FakeBlockOutcomesGateway extends BlockOutcomesGateway {
   failure: Error | undefined;
   /** Calls to `record`, in order. */
   readonly recorded: { readonly isoDay: string; readonly outcome: BlockOutcome }[] = [];
+  /** Calls to `undo`, in order. */
+  readonly undone: {
+    readonly isoDay: string;
+    readonly routineId: string;
+    readonly blockId: string;
+  }[] = [];
 
   constructor(private readonly outcomes: readonly BlockOutcome[] = []) {
     super();
@@ -19,5 +25,10 @@ export class FakeBlockOutcomesGateway extends BlockOutcomesGateway {
   override record(isoDay: string, outcome: BlockOutcome): Observable<BlockOutcome> {
     this.recorded.push({ isoDay, outcome });
     return this.failure === undefined ? of(outcome) : throwError(() => this.failure);
+  }
+
+  override undo(isoDay: string, routineId: string, blockId: string): Observable<void> {
+    this.undone.push({ isoDay, routineId, blockId });
+    return this.failure === undefined ? of(undefined) : throwError(() => this.failure);
   }
 }

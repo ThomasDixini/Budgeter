@@ -15,9 +15,19 @@ internal sealed class InMemoryBlockOutcomeRepository : IBlockOutcomeRepository
 
     public Task SaveAsync(BlockOutcome outcome, CancellationToken cancellationToken)
     {
-        _outcomes.RemoveAll(stored =>
-            stored.RoutineId == outcome.RoutineId && stored.BlockId == outcome.BlockId && stored.Date == outcome.Date);
+        Remove(outcome.RoutineId, outcome.BlockId, outcome.Date);
         _outcomes.Add(outcome);
         return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(string routineId, string blockId, DateOnly date, CancellationToken cancellationToken)
+    {
+        Remove(routineId, blockId, date);
+        return Task.CompletedTask;
+    }
+
+    private void Remove(string routineId, string blockId, DateOnly date)
+    {
+        _outcomes.RemoveAll(stored => stored.RoutineId == routineId && stored.BlockId == blockId && stored.Date == date);
     }
 }
