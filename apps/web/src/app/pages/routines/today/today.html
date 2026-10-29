@@ -42,6 +42,8 @@
           [nowMinutes]="nowMinutes()"
           [outcomes]="outcomes()"
           [plannedLengths]="plannedLengths()"
+          [selectedBlockId]="selectedBlockId()"
+          (pick)="toggleBlockSelection($event)"
           (complete)="endBlock($event, 'done')"
           (skip)="endBlock($event, 'skipped')"
           (undo)="undoBlock($event)"
@@ -111,6 +113,14 @@
             (dismiss)="closeTaskForm()"
           />
         }
+        @if (selectedBlock(); as block) {
+          <p class="block-filter" role="status">
+            <span>Tasks for {{ block.name }}</span>
+            <button class="ui-link" type="button" (click)="selectedBlockId.set(undefined)">
+              Show all
+            </button>
+          </p>
+        }
         <ul class="tasks">
           @for (item of tasks(); track item.task.id) {
             <li class="task-row">
@@ -172,7 +182,13 @@
               </button>
             </li>
           } @empty {
-            <li class="ui-muted no-tasks">Nothing for today. Add a task with +.</li>
+            <li class="ui-muted no-tasks">
+              @if (selectedBlock()) {
+                No tasks for this block today.
+              } @else {
+                Nothing for today. Add a task with +.
+              }
+            </li>
           }
         </ul>
         @if (notToday().length > 0) {

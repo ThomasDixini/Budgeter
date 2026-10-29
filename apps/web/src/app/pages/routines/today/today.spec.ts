@@ -163,3 +163,64 @@ describe('Today completing any block', () => {
     expect(element.querySelector('[aria-label="Undo Work"]')).not.toBeNull();
   });
 });
+
+describe('Today filtering tasks by block', () => {
+  const STUDY_TIME = new Date(2026, 9, 26, 14, 10);
+
+  function taskTitles(element: HTMLElement): string[] {
+    return [...element.querySelectorAll('.tasks:not(.not-today) .task-title')].map(
+      (title) => title.textContent?.trim() ?? '',
+    );
+  }
+
+  it('shows every task of the day when no block is picked', async () => {
+    const element = await openToday(new FixedClock(STUDY_TIME));
+
+    expect(taskTitles(element).length).toBeGreaterThan(2);
+    expect(element.querySelector('.block-filter')).toBeNull();
+  });
+
+  it('keeps only the tasks sharing the category of the picked block', async () => {
+    const element = await openToday(new FixedClock(STUDY_TIME));
+    const all = taskTitles(element);
+
+    press(element, 'Show tasks for Networking');
+
+    const shown = taskTitles(element);
+    expect(shown.length).toBeGreaterThan(0);
+    expect(shown.length).toBeLessThan(all.length);
+    const categories = [...element.querySelectorAll('.tasks:not(.not-today) .task-category')];
+    expect(categories.every((category) => category.textContent?.includes('Networking'))).toBe(true);
+    expect(text(element, '.block-filter span')).toBe('Tasks for Networking');
+  });
+
+  it('shows every task again when the picked block is clicked once more', async () => {
+    const element = await openToday(new FixedClock(STUDY_TIME));
+    const all = taskTitles(element);
+    press(element, 'Show tasks for Networking');
+
+    press(element, 'Show tasks for Networking');
+
+    expect(taskTitles(element)).toEqual(all);
+  });
+
+  it('shows every task again from the "Show all" link', async () => {
+    const element = await openToday(new FixedClock(STUDY_TIME));
+    const all = taskTitles(element);
+    press(element, 'Show tasks for Networking');
+
+    element.querySelector<HTMLButtonElement>('.block-filter button')!.click();
+    TestBed.tick();
+
+    expect(taskTitles(element)).toEqual(all);
+  });
+
+  it('shows only uncategorized tasks for a block with no category', async () => {
+    const element = await openToday(new FixedClock(STUDY_TIME));
+
+    press(element, 'Show tasks for Lunch');
+
+    expect(taskTitles(element)).toContain('Reply to pending emails');
+    expect(element.querySelector('.tasks:not(.not-today) .task-category')).toBeNull();
+  });
+});

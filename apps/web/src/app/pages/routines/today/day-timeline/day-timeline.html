@@ -17,6 +17,7 @@
         <div
           class="block"
           [class.is-now]="block.isNow"
+          [class.is-selected]="block.isSelected"
           [class.is-compact]="block.isCompact"
           [class.is-done]="block.outcome === 'done'"
           [class.is-skipped]="block.outcome === 'skipped'"
@@ -25,7 +26,13 @@
           [attr.aria-current]="block.isNow ? 'time' : null"
           [attr.title]="block.isCompact ? block.summary : null"
         >
-          <div class="block-text">
+          <button
+            class="block-text block-select"
+            type="button"
+            [attr.aria-pressed]="block.isSelected"
+            [attr.aria-label]="'Show tasks for ' + block.name"
+            (click)="pick.emit(block.blockId)"
+          >
             <span class="block-name">
               @if (block.outcome === 'done') {
                 <svg
@@ -61,7 +68,7 @@
               {{ block.name }}
             </span>
             <span class="block-range ui-tabular">{{ block.range }}</span>
-          </div>
+          </button>
           <div class="block-badges">
             @if (block.isNow && !block.isCompact) {
               <span class="ui-badge-now">Now</span>

@@ -22,6 +22,7 @@ interface TimelineBlockView {
   readonly top: number;
   readonly height: number;
   readonly isNow: boolean;
+  readonly isSelected: boolean;
   /** Set once the block was completed or skipped today. */
   readonly outcome?: BlockOutcomeKind;
   /** Drawn on a single line because the block is short. */
@@ -58,6 +59,10 @@ export class DayTimeline {
   readonly plannedLengths = input<ReadonlyMap<string, number>>(new Map());
   /** Emits the id of an ended block the user wants back as it was planned. */
   readonly undo = output<string>();
+  /** The block picked to filter the day's tasks, if any. */
+  readonly selectedBlockId = input<string | undefined>(undefined);
+  /** Emits the id of the block the user clicked to filter tasks by. */
+  readonly pick = output<string>();
   /** Emits the id of a pending block the user marks as done. */
   readonly complete = output<string>();
   /** Emits the id of a pending block the user skips. */
@@ -99,6 +104,7 @@ export class DayTimeline {
         .filter(Boolean)
         .join(' · '),
       isNow: isRunning,
+      isSelected: block.id === this.selectedBlockId(),
       outcome,
       isCompact: isCompactBlock(placement.height),
       category,

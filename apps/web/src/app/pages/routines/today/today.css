@@ -270,3 +270,21 @@
   background: rgba(var(--color-mint-rgb), 0.1);
   box-shadow: inset 0 0 0 1px rgba(var(--color-mint-rgb), 0.35);
 }
+
+.block-filter {
+  margin: 0;
+  padding: 6px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--color-mint);
+}
+
+.block-filter .ui-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}

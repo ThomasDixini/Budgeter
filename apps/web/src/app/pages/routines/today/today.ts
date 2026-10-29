@@ -143,13 +143,21 @@ export class Today {
       repeat: repeatLabel(task, this.todayIso),
     })),
   );
+  /** The block picked on the timeline to filter today's tasks by; none shows every task. */
+  protected readonly selectedBlockId = signal<string | undefined>(undefined);
+  protected readonly selectedBlock = computed(() =>
+    this.routine()?.blocks.find((block) => block.id === this.selectedBlockId()),
+  );
   protected readonly tasks = computed(() =>
-    this.tasksStore.todayTasks().map(({ task, isDone }): TaskView => ({
-      task,
-      isDone,
-      category: this.categoryOf(task),
-      repeat: repeatLabel(task, this.todayIso),
-    })),
+    this.tasksStore
+      .todayTasks()
+      .filter(({ task }) => this.isRelatedToSelectedBlock(task))
+      .map(({ task, isDone }): TaskView => ({
+        task,
+        isDone,
+        category: this.categoryOf(task),
+        repeat: repeatLabel(task, this.todayIso),
+      })),
   );
   protected readonly doneCount = computed(() => this.tasks().filter((item) => item.isDone).length);
   protected readonly focusGoals = computed(() =>
@@ -195,6 +203,17 @@ export class Today {
   protected undoBlock(blockId: string): void {
     const routine = this.routine();
     if (routine !== undefined) this.outcomesStore.undo(routine.id, blockId);
+  }
+
+  /** Picks a block to filter the tasks by; clicking the picked one again shows every task. */
+  protected toggleBlockSelection(blockId: string): void {
+    this.selectedBlockId.set(this.selectedBlockId() === blockId ? undefined : blockId);
+  }
+
+  /** Tasks relate to a block through the category they share; with no block picked all of them do. */
+  private isRelatedToSelectedBlock(task: Task): boolean {
+    const block = this.selectedBlock();
+    return block === undefined || task.categoryId === block.categoryId;
   }
 
   protected toggleTask(taskId: string): void {
