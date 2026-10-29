@@ -95,70 +95,54 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task PostProgress_AddsOneAndRepeatingTheEntryCountsOnce()
+    public async Task PutAchievement_MarksAnObjectiveAchievedOnTheDay()
     {
-        await PostGoalAsync(WeeklyGoal("g1"));
-        var entry = new { eventId = "e1", date = "2026-10-28", amount = 1 };
+        await PostGoalAsync(CourseObjective());
 
-        await _client.PostAsJsonAsync("/goals/g1/progress", entry);
-        var response = await _client.PostAsJsonAsync("/goals/g1/progress", entry);
+        var response = await _client.PutAsJsonAsync("/goals/g2/achievement", new { date = "2026-10-28", achieved = true });
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await response.Content.ReadFromJsonAsync<JsonObject>())!["done"]!.GetValue<int>().ShouldBe(1);
+        var goal = (await response.Content.ReadFromJsonAsync<JsonObject>())!;
+        (goal["achievedOn"]!.GetValue<string>(), goal["done"]!.GetValue<int>()).ShouldBe(("2026-10-28", 12));
     }
 
     [Fact]
-    public async Task PostProgress_TakesOneBackWithANegativeAmount()
+    public async Task PutAchievement_TakesTheMarkBack()
+    {
+        await PostGoalAsync(CourseObjective());
+        await _client.PutAsJsonAsync("/goals/g2/achievement", new { date = "2026-10-28", achieved = true });
+
+        var response = await _client.PutAsJsonAsync("/goals/g2/achievement", new { date = "2026-10-28", achieved = false });
+
+        var goal = (await response.Content.ReadFromJsonAsync<JsonObject>())!;
+        (goal.ContainsKey("achievedOn"), goal["done"]!.GetValue<int>()).ShouldBe((false, 0));
+    }
+
+    [Fact]
+    public async Task PutAchievement_OnAFrequencyGoalIsBadRequest()
     {
         await PostGoalAsync(WeeklyGoal("g1"));
-        await _client.PostAsJsonAsync("/goals/g1/progress", new { eventId = "e1", date = "2026-10-28", amount = 1 });
 
-        var response = await _client.PostAsJsonAsync(
-            "/goals/g1/progress", new { eventId = "e2", date = "2026-10-28", amount = -1 });
+        var response = await _client.PutAsJsonAsync("/goals/g1/achievement", new { date = "2026-10-28", achieved = true });
 
-        (await response.Content.ReadFromJsonAsync<JsonObject>())!["done"]!.GetValue<int>().ShouldBe(0);
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task Goals_StartTheNextWeekAtZero()
+    public async Task PutAchievement_UnknownGoalIsNotFound()
+    {
+        var response = await _client.PutAsJsonAsync("/goals/missing/achievement", new { date = "2026-10-28", achieved = true });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task PostProgress_IsGone()
     {
         await PostGoalAsync(WeeklyGoal("g1"));
-        await _client.PostAsJsonAsync("/goals/g1/progress", new { eventId = "e1", date = "2026-10-28", amount = 1 });
-
-        var thisWeek = (await _client.GetFromJsonAsync<JsonArray>("/goals?date=2026-11-01"))!.Single()!;
-        var nextWeek = (await _client.GetFromJsonAsync<JsonArray>("/goals?date=2026-11-02"))!.Single()!;
-
-        (thisWeek["done"]!.GetValue<int>(), nextWeek["done"]!.GetValue<int>()).ShouldBe((1, 0));
-    }
-
-    [Fact]
-    public async Task PostProgress_PastTheTargetIsIgnored()
-    {
-        await PostGoalAsync(new
-        {
-            id = "g1",
-            categoryId = "study",
-            title = "Study once",
-            type = "frequency",
-            period = "weekly",
-            target = 1,
-        });
-        await _client.PostAsJsonAsync("/goals/g1/progress", new { eventId = "e1", date = "2026-10-28", amount = 1 });
 
         var response = await _client.PostAsJsonAsync(
-            "/goals/g1/progress", new { eventId = "e2", date = "2026-10-28", amount = 1 });
-        var back = await _client.PostAsJsonAsync(
-            "/goals/g1/progress", new { eventId = "e3", date = "2026-10-28", amount = -1 });
-
-        (await response.Content.ReadFromJsonAsync<JsonObject>())!["done"]!.GetValue<int>().ShouldBe(1);
-        (await back.Content.ReadFromJsonAsync<JsonObject>())!["done"]!.GetValue<int>().ShouldBe(0);
-    }
-
-    [Fact]
-    public async Task PostProgress_UnknownGoalIsNotFound()
-    {
-        var response = await _client.PostAsJsonAsync(
-            "/goals/missing/progress", new { eventId = "e1", date = "2026-10-28", amount = 1 });
+            "/goals/g1/progress", new { eventId = "e1", date = "2026-10-28", amount = 1 });
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -197,7 +181,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     }
 
     [Theory]
-    [InlineData("tracking", 7)]
+    [InlineData("type", 7)]
     [InlineData("period", 9)]
     public async Task Post_RejectsANumberWhereAnEnumNameIsExpected(string field, int number)
     {
@@ -239,5 +223,17 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
         type = "frequency",
         period = "weekly",
         target = 5,
+    };
+
+    private static object CourseObjective() => new
+    {
+        id = "g2",
+        categoryId = "study",
+        title = "Finish the C# course",
+        type = "objective",
+        period = "custom",
+        target = 12,
+        unit = "modules",
+        deadline = "2026-12-15",
     };
 }

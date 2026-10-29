@@ -97,48 +97,9 @@
         </label>
         <span class="cadence">{{ cadence() }}</span>
       </div>
-    } @else {
-      <div class="inline-fields">
-        <label class="ui-field">
-          Target value
-          <input
-            class="ui-input number-input"
-            type="number"
-            min="1"
-            [value]="target()"
-            (change)="target.set(countOf($event))"
-          />
-        </label>
-        <label class="ui-field">
-          Unit
-          <input
-            class="ui-input unit-input"
-            type="text"
-            placeholder="E.g. modules, books, km"
-            [value]="unit()"
-            (input)="unit.set(textOf($event))"
-          />
-        </label>
-      </div>
-    }
-
-    @if (type() === 'frequency') {
-      <fieldset class="ui-fieldset">
-        <legend class="ui-legend">Count progress from</legend>
-        <div class="periods">
-          @for (option of trackingOptions; track option.value) {
-            <button
-              class="ui-chip"
-              type="button"
-              [attr.aria-pressed]="option.value === tracking()"
-              (click)="tracking.set(option.value)"
-            >
-              {{ option.label }}
-            </button>
-          }
-        </div>
-        <p class="ui-muted tracking-hint">{{ trackingHint() }}</p>
-      </fieldset>
+      <p class="ui-muted counting-hint">
+        Each block of this category you complete counts once. Going past the target is counted too.
+      </p>
     }
 
     <div class="form-actions">

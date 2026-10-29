@@ -60,7 +60,7 @@ describe('CategoryDetail', () => {
       (value) => value.textContent,
     );
 
-    expect(values).toEqual(['3', '64%', '7h30']);
+    expect(values).toEqual(['3', '53%', '7h30']);
   });
 
   it('edits the category name and color', async () => {
@@ -120,12 +120,16 @@ describe('CategoryDetail', () => {
     expect(page.element.querySelector('.no-goals')).not.toBeNull();
   });
 
-  it('logs progress with +1', async () => {
+  it('marks an objective achieved from its card', async () => {
     const page = await openCategory('/routines/categories/study');
 
-    click(page, '.increment', 0);
+    click(page, '.achieve', 0);
 
-    expect(TestBed.inject(RoutinesStore).goals()[0].done).toBe(4);
+    expect(
+      TestBed.inject(RoutinesStore)
+        .goals()
+        .find((goal) => goal.id === 'g2')?.achievedOn,
+    ).toBe('2026-10-26');
   });
 
   it('opens the goal form when arriving from a new category', async () => {

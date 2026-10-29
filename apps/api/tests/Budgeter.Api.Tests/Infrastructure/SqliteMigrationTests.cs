@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace Budgeter.Api.Tests.Infrastructure;
 
-/// <summary>A database created before goal progress became a log is brought up to date once.</summary>
+/// <summary>A database created before the current schema is brought up to date, each step once.</summary>
 public sealed class SqliteMigrationTests : IDisposable
 {
     private readonly TemporarySqliteDatabase _database = new();
@@ -53,7 +53,7 @@ public sealed class SqliteMigrationTests : IDisposable
     }
 
     [Fact]
-    public async Task OldGoals_GainTrackingAndKeepTheirProgressAsOneManualEntry()
+    public async Task OldGoals_KeepTheirProgressAsOneManualEntry_AndCountBlocksFromNowOn()
     {
         await CreateOldDatabaseAsync();
 
@@ -62,7 +62,7 @@ public sealed class SqliteMigrationTests : IDisposable
         var goals = new SqliteGoalRepository(_connections);
         var today = DateOnly.FromDateTime(DateTime.Now);
         var goal = (await goals.FindAsync("g1", today, CancellationToken.None))!;
-        (goal.Definition.Tracking, goal.Done).ShouldBe((GoalTracking.Manual, 3));
+        (goal.Definition.Tracking, goal.Done).ShouldBe((GoalTracking.Blocks, 3));
         (await CountAsync("SELECT COUNT(*) FROM goal_progress")).ShouldBe(1);
     }
 
@@ -72,7 +72,6 @@ public sealed class SqliteMigrationTests : IDisposable
         await CreateOldDatabaseAsync();
         await MigrateAsync();
         var goals = new SqliteGoalRepository(_connections);
-        await new SqliteGoalProgressLedger(_connections).RemoveAutomaticAsync("g1", CancellationToken.None);
         await using (var connection = await _connections.OpenAsync(CancellationToken.None))
         {
             await SqliteCommands.ExecuteAsync(connection, "DELETE FROM goal_progress", CancellationToken.None);
@@ -81,7 +80,7 @@ public sealed class SqliteMigrationTests : IDisposable
         await MigrateAsync();
 
         (await CountAsync("SELECT COUNT(*) FROM goal_progress")).ShouldBe(0);
-        (await CountAsync("PRAGMA user_version")).ShouldBe(1);
+        (await CountAsync("PRAGMA user_version")).ShouldBe(2);
         (await goals.ListAsync(DateOnly.FromDateTime(DateTime.Now), CancellationToken.None))
             .Select(goal => goal.Done).ShouldBe([0, 0]);
     }
@@ -91,7 +90,31 @@ public sealed class SqliteMigrationTests : IDisposable
     {
         await MigrateAsync();
 
-        (await CountAsync("PRAGMA user_version")).ShouldBe(1);
+        (await CountAsync("PRAGMA user_version")).ShouldBe(2);
         (await CountAsync("SELECT COUNT(*) FROM pragma_table_info('goals') WHERE name = 'tracking'")).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task StoredGoals_GetTheTrackingTheirTypeImplies()
+    {
+        await CreateOldDatabaseAsync();
+        await MigrateAsync();
+        await using (var connection = await _connections.OpenAsync(CancellationToken.None))
+        {
+            await SqliteCommands.ExecuteAsync(
+                connection,
+                """
+                INSERT INTO goals (id, category_id, title, type, period, target, unit, deadline, tracking)
+                    VALUES ('g3', 'study', 'Course', 'objective', 'custom', 12, 'modules', '2026-12-15', 'blocks');
+                UPDATE goals SET tracking = 'tasks' WHERE id = 'g2';
+                PRAGMA user_version = 1;
+                """,
+                CancellationToken.None);
+        }
+
+        await MigrateAsync();
+
+        (await CountAsync("SELECT COUNT(*) FROM goals WHERE id = 'g2' AND tracking = 'blocks'")).ShouldBe(1);
+        (await CountAsync("SELECT COUNT(*) FROM goals WHERE id = 'g3' AND tracking = 'manual'")).ShouldBe(1);
     }
 }

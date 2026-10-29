@@ -81,21 +81,12 @@ describe('TasksStore', () => {
     expect(gateway.doneChanges).toEqual([{ taskId: 't1', isoDay: '2026-10-26', isDone: true }]);
   });
 
-  it('reloads the goals after a task is checked, since tasks can count toward them', () => {
+  it('leaves the goals alone when a task is checked: only completed blocks count toward them', () => {
     const { store, goals } = createStore();
 
     store.toggleDone('t1');
 
-    expect(goals.listedDays).toHaveLength(2);
-  });
-
-  it('does not reload the goals when checking the task failed', () => {
-    const { store, gateway, goals } = createStore();
-    gateway.failure = new Error('offline');
-
-    store.toggleDone('t1');
-
-    expect(goals.listedDays).toHaveLength(1);
+    expect(goals.listedDays).toEqual([]);
   });
 
   it('unchecks a task done today', () => {

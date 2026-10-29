@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Goal, GoalChanges } from './goal';
-import { GoalsGateway, ProgressEntry } from './goals-gateway';
+import { GoalsGateway } from './goals-gateway';
 
 const GOALS_URL = '/api/goals';
 
@@ -27,11 +27,10 @@ export class HttpGoalsGateway extends GoalsGateway {
     return this.httpClient.delete<void>(goalUrl(goalId));
   }
 
-  override logProgress(goalId: string, entry: ProgressEntry): Observable<Goal> {
-    return this.httpClient.post<Goal>(`${goalUrl(goalId)}/progress`, {
-      eventId: entry.eventId,
-      date: entry.isoDay,
-      amount: entry.amount,
+  override setAchievement(goalId: string, isoDay: string, isAchieved: boolean): Observable<Goal> {
+    return this.httpClient.put<Goal>(`${goalUrl(goalId)}/achievement`, {
+      date: isoDay,
+      achieved: isAchieved,
     });
   }
 }

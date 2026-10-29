@@ -17,6 +17,25 @@ internal static class SqliteMigrations
         var versions = await SqliteCommands.QueryAsync(
             connection, "PRAGMA user_version", reader => reader.GetInt32(0), cancellationToken);
         if (versions[0] < 1) await GoalProgressLogAsync(connection, cancellationToken);
+        if (versions[0] < 2) await TrackingFromTypeAsync(connection, cancellationToken);
+    }
+
+    /// <summary>
+    /// Version 2: what feeds a goal follows from its type (frequency goals count blocks, objectives are
+    /// marked achieved), so stored goals get the tracking their type implies. Progress entries are kept.
+    /// </summary>
+    private static async Task TrackingFromTypeAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var transaction = connection.BeginTransaction(deferred: false);
+        var versions = await SqliteCommands.QueryAsync(
+            connection, "PRAGMA user_version", reader => reader.GetInt32(0), cancellationToken);
+        if (versions[0] >= 2) return;
+        await SqliteCommands.ExecuteAsync(
+            connection,
+            "UPDATE goals SET tracking = CASE type WHEN 'frequency' THEN 'blocks' ELSE 'manual' END",
+            cancellationToken);
+        await SqliteCommands.ExecuteAsync(connection, "PRAGMA user_version = 2", cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     /// <summary>

@@ -77,43 +77,68 @@ public class GoalTests
         Should.Throw<DomainRuleException>(() => Goal.Create(definition));
     }
 
-    [Fact]
-    public void Create_RejectsTrackingAnObjectiveFromBlocks()
-    {
-        var definition = GoalDefinitions.CourseObjective() with { Tracking = GoalTracking.Blocks };
-
-        Should.Throw<DomainRuleException>(() => Goal.Create(definition)).Message.ShouldContain("Blocks");
-    }
-
     [Theory]
-    [InlineData(GoalTracking.Blocks, GoalSource.Block, "study", true)]
-    [InlineData(GoalTracking.Tasks, GoalSource.Task, "study", true)]
-    [InlineData(GoalTracking.Blocks, GoalSource.Task, "study", false)]
-    [InlineData(GoalTracking.Manual, GoalSource.Block, "study", false)]
-    [InlineData(GoalTracking.Blocks, GoalSource.Block, "reading", false)]
-    public void Accepts_OnlyTheMatchingSourceAndCategory(
-        GoalTracking tracking, GoalSource source, string categoryId, bool expected)
+    [InlineData(GoalTracking.Manual)]
+    [InlineData(GoalTracking.Tasks)]
+    public void Create_FeedsAFrequencyGoalFromBlocksWhateverTrackingIsSent(GoalTracking sent)
     {
-        var goal = Goal.Create(GoalDefinitions.WeeklyStudy() with { Tracking = tracking });
+        var goal = Goal.Create(GoalDefinitions.WeeklyStudy() with { Tracking = sent });
 
-        goal.Accepts(source, categoryId).ShouldBe(expected);
-    }
-
-    [Theory]
-    [InlineData(5, 3, 0, 3)]
-    [InlineData(5, -2, 1, 1)]
-    [InlineData(5, 4, 3, 5)]
-    public void Progress_FloorsManualEntriesAtZeroAndCapsTheTotalAtTheTarget(
-        int target, int manual, int automatic, int expected)
-    {
-        GoalProgress.Compute(target, manual, automatic).ShouldBe(expected);
+        goal.Definition.Tracking.ShouldBe(GoalTracking.Blocks);
     }
 
     [Fact]
-    public void Restore_ClampsStoredProgressToTarget()
+    public void Create_MarksAnObjectiveByHand()
+    {
+        var goal = Goal.Create(GoalDefinitions.CourseObjective() with { Tracking = GoalTracking.Blocks });
+
+        goal.Definition.Tracking.ShouldBe(GoalTracking.Manual);
+    }
+
+    [Theory]
+    [InlineData("study", true)]
+    [InlineData("reading", false)]
+    public void AcceptsBlockOf_OnlyItsOwnCategory(string categoryId, bool expected)
+    {
+        Goal.Create(GoalDefinitions.WeeklyStudy()).AcceptsBlockOf(categoryId).ShouldBe(expected);
+    }
+
+    [Fact]
+    public void AcceptsBlockOf_NeverForAnObjective()
+    {
+        Goal.Create(GoalDefinitions.CourseObjective()).AcceptsBlockOf("study").ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(3, 0, 3)]
+    [InlineData(-2, 1, 1)]
+    [InlineData(4, 3, 7)]
+    public void Progress_FloorsManualEntriesAtZeroAndNeverCapsTheTotal(int manual, int automatic, int expected)
+    {
+        GoalProgress.Compute(manual, automatic).ShouldBe(expected);
+    }
+
+    [Fact]
+    public void Restore_KeepsProgressBeyondTheTarget()
     {
         var goal = Goal.Restore(GoalDefinitions.WeeklyStudy(), done: 9);
 
-        goal.Done.ShouldBe(5);
+        goal.Done.ShouldBe(9);
+    }
+
+    [Fact]
+    public void RestoreObjective_ShowsTheTargetDoneOnceAchieved()
+    {
+        var goal = Goal.RestoreObjective(GoalDefinitions.CourseObjective(), TestDays.Today);
+
+        (goal.Done, goal.AchievedOn).ShouldBe((12, TestDays.Today));
+    }
+
+    [Fact]
+    public void RestoreObjective_ShowsNothingDoneWhilePending()
+    {
+        var goal = Goal.RestoreObjective(GoalDefinitions.CourseObjective(), achievedOn: null);
+
+        (goal.Done, goal.AchievedOn).ShouldBe((0, (DateOnly?)null));
     }
 }

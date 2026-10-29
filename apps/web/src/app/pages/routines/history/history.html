@@ -1,0 +1,156 @@
+<div class="page ui-enter">
+  <app-page-heading
+    eyebrow="Routines & Goals"
+    eyebrowIcon="routines"
+    [heading]="dayLabel()"
+    description="Pick a day to see the blocks you completed and the goals you met."
+  >
+    <div class="day-picker" role="group" aria-label="Day">
+      <button
+        class="ui-icon-button"
+        type="button"
+        aria-label="Previous day"
+        (click)="previousDay()"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 5l-7 7 7 7"></path>
+        </svg>
+      </button>
+      <input
+        class="ui-input day-input"
+        type="date"
+        aria-label="Day to show"
+        [max]="todayIso"
+        [value]="day()"
+        (change)="pick(valueOf($event))"
+      />
+      <button
+        class="ui-icon-button"
+        type="button"
+        aria-label="Next day"
+        [disabled]="isToday()"
+        (click)="nextDay()"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 5l7 7-7 7"></path>
+        </svg>
+      </button>
+    </div>
+  </app-page-heading>
+
+  @if (isLoading()) {
+    <p class="ui-muted">Loading…</p>
+  } @else {
+    <div class="columns">
+      <section class="ui-card" aria-labelledby="blocks-title">
+        <div class="card-header">
+          <h2 id="blocks-title" class="ui-card-title">Blocks completed</h2>
+          <span class="ui-muted ui-tabular">{{ completed().length }}</span>
+        </div>
+        <ul class="rows">
+          @for (block of completed(); track block.key) {
+            <li class="row block-row">
+              <span class="at ui-tabular">{{ block.at }}</span>
+              <span class="row-text">
+                <span class="row-title">{{ block.name }}</span>
+                <span class="row-meta">{{ block.routineName }}</span>
+              </span>
+              @if (block.category; as category) {
+                <span class="category" [style.color]="category.color">
+                  <span class="ui-dot" [style.background]="category.color"></span>
+                  {{ category.name }}
+                </span>
+              }
+            </li>
+          } @empty {
+            <li class="ui-muted empty">No block was completed this day.</li>
+          }
+        </ul>
+        @if (skipped().length > 0) {
+          <h3 class="subheading">Skipped</h3>
+          <ul class="rows">
+            @for (block of skipped(); track block.key) {
+              <li class="row block-row is-skipped">
+                <span class="at ui-tabular">{{ block.at }}</span>
+                <span class="row-text">
+                  <span class="row-title">{{ block.name }}</span>
+                  <span class="row-meta">{{ block.routineName }}</span>
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="ui-card" aria-labelledby="goals-title">
+        <div class="card-header">
+          <h2 id="goals-title" class="ui-card-title">Goals met</h2>
+          <span class="ui-muted ui-tabular">{{ goalsMet().length }}</span>
+        </div>
+        <ul class="rows">
+          @for (item of goalsMet(); track item.goal.id) {
+            <li class="row goal-row is-met">
+              <svg
+                class="met-check"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+              </svg>
+              <span class="row-text">
+                <span class="row-title">{{ item.goal.title }}</span>
+                <span class="row-meta">{{ item.meta }}</span>
+              </span>
+              <span class="value ui-tabular" [style.color]="item.category?.color">{{
+                item.value
+              }}</span>
+            </li>
+          } @empty {
+            <li class="ui-muted empty">No goal was met by this day.</li>
+          }
+        </ul>
+        @if (goalsShort().length > 0) {
+          <h3 class="subheading">Not met yet</h3>
+          <ul class="rows">
+            @for (item of goalsShort(); track item.goal.id) {
+              <li class="row goal-row">
+                <span class="row-text">
+                  <span class="row-title">{{ item.goal.title }}</span>
+                  <span class="row-meta">{{ item.meta }}</span>
+                </span>
+                <span class="value ui-tabular">{{ item.value }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+</div>

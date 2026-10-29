@@ -20,10 +20,13 @@ export class FakeBlockOutcomesGateway extends BlockOutcomesGateway {
 
   /** Days `list` was asked for, in order. */
   readonly listedDays: string[] = [];
+  /** Outcomes recorded on given days, answered by `list` for those days instead of the default ones. */
+  readonly outcomesOnDay = new Map<string, readonly BlockOutcome[]>();
 
   override list(isoDay: string): Observable<readonly BlockOutcome[]> {
     this.listedDays.push(isoDay);
-    return this.failure === undefined ? of(this.outcomes) : throwError(() => this.failure);
+    if (this.failure !== undefined) return throwError(() => this.failure);
+    return of(this.outcomesOnDay.get(isoDay) ?? this.outcomes);
   }
 
   override record(isoDay: string, outcome: BlockOutcome): Observable<BlockOutcome> {

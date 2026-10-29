@@ -3,7 +3,6 @@ import { Clock } from '../calendar/clock';
 import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
 import { NotTodayTask, Task, TaskDraft, occursOn, tasksNotToday } from './task';
-import { RoutinesStore } from './routines-store';
 import { TasksGateway } from './tasks-gateway';
 
 /** A task on today's list and whether it is done today. */
@@ -21,7 +20,6 @@ export class TasksStore {
   private readonly gateway = inject(TasksGateway);
   private readonly ids = inject(IdGenerator);
   private readonly errorHandler = inject(ErrorHandler);
-  private readonly goals = inject(RoutinesStore);
   /**
    * The day the list, the done marks and the checkboxes are all about, fixed when the store starts so
    * they cannot disagree with each other. A page left open past midnight keeps showing that day until it
@@ -133,8 +131,6 @@ export class TasksStore {
     const isDone = !this.doneToday().has(taskId);
     this.markDone(taskId, isDone);
     this.gateway.setDone(taskId, this.today, isDone).subscribe({
-      // The API counts (or takes back) the task for goals tracked from tasks, so reload them.
-      complete: () => this.goals.refreshGoals(),
       error: (error: unknown) => this.rejected(error, () => this.markDone(taskId, !isDone)),
     });
   }

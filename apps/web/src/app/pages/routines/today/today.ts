@@ -18,7 +18,14 @@ import { minutesOfDay, toMinutes, weekdayIndex } from '../../../core/calendar/ti
 import { Category, findCategory } from '../../../core/routines/category';
 import { isHappening } from '../../../core/routines/day-clock';
 import { dayProgress } from '../../../core/routines/day-timeline';
-import { GOAL_TYPE_LABELS, Goal, goalPeriodInfo, goalProgress } from '../../../core/routines/goal';
+import {
+  GOAL_TYPE_LABELS,
+  Goal,
+  goalPeriodInfo,
+  goalProgress,
+  goalValueLabel,
+  isGoalMet,
+} from '../../../core/routines/goal';
 import { activeRoutine } from '../../../core/routines/routine';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { NotTodayGroup, Task, TaskDraft, occursOn, repeatLabel } from '../../../core/routines/task';
@@ -163,7 +170,7 @@ export class Today {
   protected readonly focusGoals = computed(() =>
     this.store
       .goals()
-      .filter((goal) => goal.done < goal.target)
+      .filter((goal) => !isGoalMet(goal))
       .slice(0, FOCUS_GOAL_COUNT)
       .map((goal) => this.toFocusGoal(goal)),
   );
@@ -288,13 +295,13 @@ export class Today {
 
   private toFocusGoal(goal: Goal): FocusGoalView {
     const category = this.categoryOf(goal);
-    const unit = goal.type === 'objective' && goal.unit ? ` ${goal.unit}` : '';
     return {
       goal,
       meta: [GOAL_TYPE_LABELS[goal.type], goalPeriodInfo(goal.period).label, category?.name]
         .filter((part) => part !== undefined)
         .join(' · '),
-      value: `${goal.done}/${goal.target}${unit}`,
+      // Objectives in focus are never achieved, so they read "Not achieved yet".
+      value: goal.type === 'objective' ? goalValueLabel(goal) : `${goal.done}/${goal.target}`,
       percent: goalProgress(goal),
       color: category?.color ?? 'var(--color-mint)',
     };

@@ -11,10 +11,9 @@ public sealed record CreateGoalRequest(
     GoalPeriod Period,
     int Target,
     string? Unit = null,
-    DateOnly? Deadline = null,
-    GoalTracking Tracking = GoalTracking.Manual)
+    DateOnly? Deadline = null)
 {
-    public GoalDefinition ToDefinition() => new(Id, CategoryId, Title, Type, Period, Target, Unit, Deadline, Tracking);
+    public GoalDefinition ToDefinition() => new(Id, CategoryId, Title, Type, Period, Target, Unit, Deadline);
 }
 
 /// <summary>Body of <c>PUT /goals/{goalId}</c>; the id comes from the route, type and category cannot change.</summary>
@@ -23,18 +22,15 @@ public sealed record UpdateGoalRequest(
     GoalPeriod Period,
     int Target,
     string? Unit = null,
-    DateOnly? Deadline = null,
-    GoalTracking Tracking = GoalTracking.Manual)
+    DateOnly? Deadline = null)
 {
     public UpdateGoalCommand ToCommand(string goalId, DateOnly day) =>
-        new(goalId, Title, Period, Target, Unit, Deadline, Tracking, day);
+        new(goalId, Title, Period, Target, Unit, Deadline, day);
 }
 
-/// <summary>Body of <c>POST /goals/{goalId}/progress</c>: one manual entry of the progress log.</summary>
-/// <param name="EventId">Chosen by the client; sending the same one again counts once.</param>
-/// <param name="Date">The client's local day the entry counts for.</param>
-/// <param name="Amount">1 to log a repetition, -1 to take one back.</param>
-public sealed record LogGoalProgressRequest(string EventId, DateOnly Date, int Amount = 1);
+/// <summary>Body of <c>PUT /goals/{goalId}/achievement</c>: whether the objective is achieved.</summary>
+/// <param name="Date">The client's local day it was achieved on.</param>
+public sealed record SetGoalAchievementRequest(DateOnly Date, bool Achieved);
 
 public sealed record GoalResponse(
     string Id,
@@ -46,14 +42,15 @@ public sealed record GoalResponse(
     int Done,
     string? Unit,
     DateOnly? Deadline,
-    GoalTracking Tracking)
+    GoalTracking Tracking,
+    DateOnly? AchievedOn = null)
 {
     public static GoalResponse From(Goal goal)
     {
         var definition = goal.Definition;
         return new GoalResponse(
             definition.Id, definition.CategoryId, definition.Title, definition.Type, definition.Period,
-            definition.Target, goal.Done, definition.Unit, definition.Deadline, definition.Tracking);
+            definition.Target, goal.Done, definition.Unit, definition.Deadline, definition.Tracking, goal.AchievedOn);
     }
 }
 
@@ -65,7 +62,7 @@ public static class GoalEndpoints
 {
     /// <summary>
     /// Maps <c>GET /goals?date=</c>, <c>POST /goals?date=</c>, <c>PUT /goals/{goalId}?date=</c>,
-    /// <c>DELETE /goals/{goalId}</c> and <c>POST /goals/{goalId}/progress</c>.
+    /// <c>DELETE /goals/{goalId}</c> and <c>PUT /goals/{goalId}/achievement</c>.
     /// </summary>
     /// <example><code>app.MapGoalEndpoints();</code></example>
     public static IEndpointRouteBuilder MapGoalEndpoints(this IEndpointRouteBuilder routes)
@@ -74,7 +71,7 @@ public static class GoalEndpoints
         routes.MapPost("/goals", CreateAsync);
         routes.MapPut("/goals/{goalId}", UpdateAsync);
         routes.MapDelete("/goals/{goalId}", DeleteAsync);
-        routes.MapPost("/goals/{goalId}/progress", LogProgressAsync);
+        routes.MapPut("/goals/{goalId}/achievement", SetAchievementAsync);
         return routes;
     }
 
@@ -107,12 +104,12 @@ public static class GoalEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> LogProgressAsync(
-        string goalId, LogGoalProgressRequest request, LogGoalProgress logGoalProgress,
+    private static async Task<IResult> SetAchievementAsync(
+        string goalId, SetGoalAchievementRequest request, SetGoalAchievement setGoalAchievement,
         CancellationToken cancellationToken)
     {
-        var goal = await logGoalProgress.ExecuteAsync(
-            new LogGoalProgressCommand(goalId, request.EventId, request.Date, request.Amount), cancellationToken);
+        var goal = await setGoalAchievement.ExecuteAsync(
+            new SetGoalAchievementCommand(goalId, request.Date, request.Achieved), cancellationToken);
         return Results.Ok(GoalResponse.From(goal));
     }
 }

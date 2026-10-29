@@ -222,8 +222,7 @@
             [goal]="goal"
             [color]="category.color"
             [today]="today"
-            (increment)="incrementGoal($event)"
-            (decrement)="decrementGoal($event)"
+            (toggleAchieved)="toggleAchieved(goal)"
             (edit)="startEditing($event)"
             (remove)="deleteGoal($event)"
           />

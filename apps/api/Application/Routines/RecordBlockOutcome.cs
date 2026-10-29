@@ -1,5 +1,4 @@
 using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Domain.Goals;
 using Budgeter.Api.Domain.Routines;
 
 namespace Budgeter.Api.Application.Routines;
@@ -9,8 +8,8 @@ public sealed record RecordBlockOutcomeCommand(
 
 /// <summary>
 /// Records that a block was completed or skipped on a day; recording it again replaces the
-/// previous outcome, so a retried request is harmless. Completing a block counts toward the goals
-/// of its category that are tracked from blocks; skipping it takes that back.
+/// previous outcome, so a retried request is harmless. Completing a block counts toward the frequency
+/// goals of its category; skipping it takes that back.
 /// </summary>
 public sealed class RecordBlockOutcome(
     IBlockOutcomeRepository outcomes, IRoutineRepository routines, GoalCredits goalCredits)
@@ -33,10 +32,10 @@ public sealed class RecordBlockOutcome(
         var sourceRef = BlockSourceRef.For(outcome.RoutineId, outcome.BlockId);
         if (outcome.Kind == BlockOutcomeKind.Done)
         {
-            await goalCredits.CreditAsync(GoalSource.Block, sourceRef, block.CategoryId, outcome.Date, cancellationToken);
+            await goalCredits.CreditBlockAsync(sourceRef, block.CategoryId, outcome.Date, cancellationToken);
             return;
         }
-        await goalCredits.RevokeAsync(GoalSource.Block, sourceRef, outcome.Date, cancellationToken);
+        await goalCredits.RevokeBlockAsync(sourceRef, outcome.Date, cancellationToken);
     }
 
     private async Task<RoutineBlock> RequireBlockAsync(BlockOutcome outcome, CancellationToken cancellationToken)

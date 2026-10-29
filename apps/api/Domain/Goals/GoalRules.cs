@@ -10,9 +10,9 @@ internal static class GoalRules
     public static GoalDefinition Normalize(GoalDefinition definition)
     {
         RequireTarget(definition.Target);
-        RequireTrackingFits(definition.Type, definition.Tracking);
         return definition with
         {
+            Tracking = TrackingFor(definition.Type),
             Id = EntityId.Require(definition.Id, "goal id"),
             CategoryId = EntityId.Require(definition.CategoryId, "category id"),
             Title = RequiredText.Require(definition.Title, Goal.MaxTitleLength, "goal title"),
@@ -30,14 +30,9 @@ internal static class GoalRules
         }
     }
 
-    private static void RequireTrackingFits(GoalType type, GoalTracking tracking)
-    {
-        if (tracking != GoalTracking.Manual && type != GoalType.Frequency)
-        {
-            throw new DomainRuleException(
-                $"Expected only frequency goals to be tracked from {tracking}, received a {type} goal");
-        }
-    }
+    // Frequency goals count completed blocks; objectives are marked achieved by hand.
+    private static GoalTracking TrackingFor(GoalType type) =>
+        type == GoalType.Frequency ? GoalTracking.Blocks : GoalTracking.Manual;
 
     private static string? NormalizeUnit(GoalType type, string? unit)
     {

@@ -31,7 +31,7 @@ builder.Services.AddScoped<UpdateCategory>();
 builder.Services.AddScoped<DeleteCategory>();
 builder.Services.AddScoped<ListGoals>();
 builder.Services.AddScoped<CreateGoal>();
-builder.Services.AddScoped<LogGoalProgress>();
+builder.Services.AddScoped<SetGoalAchievement>();
 builder.Services.AddScoped<UpdateGoal>();
 builder.Services.AddScoped<DeleteGoal>();
 builder.Services.AddScoped<GoalCredits>();

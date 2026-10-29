@@ -2,11 +2,15 @@ import { Page, expect, test } from '@playwright/test';
 import { HomePage } from './pages/home.page';
 import { RoutinesPage } from './pages/routines.page';
 import {
+  completeBlock,
   createCategory,
   createCategorizedTask,
   createDailyTask,
+  createObjective,
   createRoutine,
   createWeeklyGoal,
+  localDay,
+  localToday,
   SeededRoutine,
   uniqueTitle,
 } from './support/routines-api';
@@ -128,7 +132,8 @@ test.describe('today', () => {
     await page.clock.setFixedTime(monday);
     await routines.goto();
     const skipped = page.waitForResponse((response) => response.url().includes('/days/'));
-    await page.getByRole('button', { name: 'Skip' }).click();
+    // Exact: every timeline block also has a "Skip <block name>" button.
+    await page.getByRole('button', { name: 'Skip', exact: true }).click();
     await skipped;
     const undone = page.waitForResponse(
       (response) => response.url().includes('/days/') && response.request().method() === 'DELETE',
@@ -311,35 +316,33 @@ test.describe('categories & goals', () => {
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
   });
 
-  test('+1 logs progress on a goal and keeps it', async ({ page, request }) => {
-    const goal = await createWeeklyGoal(request, 'exercise', 3);
-    await routines.goto('/routines/categories/exercise');
+  test('a completed block of the category counts toward its goal', async ({ page, request }) => {
+    // Its own category: a completed block counts toward every frequency goal of its category, so
+    // sharing one with other tests (they run in parallel) would credit them by accident.
+    const category = await createCategory(request, 'Strength');
+    const goal = await createWeeklyGoal(request, category.id, 3);
+    const routine = await createRoutine(request, category.id);
+
+    await completeBlock(request, routine, localToday());
+    await routines.goto(`/routines/categories/${category.id}`);
+
     const card = page.getByRole('article').filter({ hasText: goal.title });
-    // Progress shows before the API answers; reloading earlier would abort the request.
-    const logged = page.waitForResponse((response) => response.url().endsWith('/progress'));
-
-    await page.getByRole('button', { name: `Log progress on ${goal.title}` }).click();
-
     await expect(card.getByText('1 of 3 times')).toBeVisible();
-    await logged;
-    await page.reload();
-    await expect(card.getByText('1 of 3 times')).toBeVisible();
+    await expect(card.getByRole('button', { name: '+1' })).toHaveCount(0);
   });
 
-  test('−1 takes a repetition back and keeps it after a reload', async ({ page, request }) => {
-    const goal = await createWeeklyGoal(request, 'exercise', 3);
+  test('an objective marked achieved stays achieved after a reload', async ({ page, request }) => {
+    const goal = await createObjective(request, 'exercise');
     await routines.goto('/routines/categories/exercise');
     const card = page.getByRole('article').filter({ hasText: goal.title });
-    const logged = page.waitForResponse((response) => response.url().endsWith('/progress'));
-    await page.getByRole('button', { name: `Log progress on ${goal.title}` }).click();
-    await logged;
-    const takenBack = page.waitForResponse((response) => response.url().endsWith('/progress'));
+    // The mark shows before the API answers; reloading earlier would abort the request.
+    const marked = page.waitForResponse((response) => response.url().endsWith('/achievement'));
 
-    await page.getByRole('button', { name: `Take back progress on ${goal.title}` }).click();
-    await takenBack;
+    await card.getByRole('button', { name: 'Mark achieved' }).click();
+    await marked;
     await page.reload();
 
-    await expect(card.getByText('0 of 3 times')).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Achieved', exact: true })).toBeVisible();
   });
 
   test('an edited goal keeps its new name and target after a reload', async ({ page, request }) => {
@@ -379,11 +382,9 @@ test.describe('categories & goals', () => {
     await expect(page.getByRole('heading', { name: goal.title })).toHaveCount(0);
   });
 
-  test('checking a task off counts toward a goal tracked from tasks', async ({ page, request }) => {
-    // Its own category: every task of a category counts toward the goals tracked from tasks there,
-    // so sharing one with other tests (they run in parallel) would credit them by accident.
+  test('checking a task off does not count toward goals', async ({ page, request }) => {
     const category = await createCategory(request, 'Mobility');
-    const goal = await createWeeklyGoal(request, category.id, 3, 'tasks');
+    const goal = await createWeeklyGoal(request, category.id, 3);
     const task = await createCategorizedTask(request, category.id);
     await routines.goto();
     const marked = page.waitForResponse((response) => response.url().includes('/completions/'));
@@ -393,7 +394,24 @@ test.describe('categories & goals', () => {
     await routines.goto(`/routines/categories/${category.id}`);
 
     const card = page.getByRole('article').filter({ hasText: goal.title });
-    await expect(card.getByText('1 of 3 times')).toBeVisible();
-    await expect(card.getByText('Counts completed tasks')).toBeVisible();
+    await expect(card.getByText('0 of 3 times')).toBeVisible();
+  });
+});
+
+test.describe('history', () => {
+  test('shows a block completed on a past day and the goal it met', async ({ page, request }) => {
+    const category = await createCategory(request, 'Focus');
+    const goal = await createWeeklyGoal(request, category.id, 1);
+    const routine = await createRoutine(request, category.id);
+    const yesterday = localDay(-1);
+    await completeBlock(request, routine, yesterday);
+
+    await routines.goto('/routines/history');
+    await page.getByLabel('Day to show').fill(yesterday);
+
+    const blocks = page.getByRole('region', { name: 'Blocks completed' });
+    await expect(blocks.getByText(routine.name)).toBeVisible();
+    const goals = page.getByRole('region', { name: 'Goals met' });
+    await expect(goals.getByText(goal.title)).toBeVisible();
   });
 });

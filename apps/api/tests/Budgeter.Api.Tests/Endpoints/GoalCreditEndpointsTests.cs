@@ -5,7 +5,7 @@ using Shouldly;
 
 namespace Budgeter.Api.Tests.Endpoints;
 
-/// <summary>Completing a block or a task over HTTP moves the goal that is tracked from it.</summary>
+/// <summary>Completing blocks over HTTP moves the frequency goals of their category; tasks do not.</summary>
 public sealed class GoalCreditEndpointsTests : IAsyncLifetime, IDisposable
 {
     private const string Day = "2026-10-28";
@@ -21,13 +21,25 @@ public sealed class GoalCreditEndpointsTests : IAsyncLifetime, IDisposable
     {
         (await _client.PostAsJsonAsync("/categories", new CreateCategoryRequest("study", "Study", "#7DD3FC")))
             .EnsureSuccessStatusCode();
+        (await _client.PutAsJsonAsync("/routines/weekdays", new
+        {
+            name = "Weekdays",
+            days = new[] { 2 },
+            start = "08:00",
+            end = "17:00",
+            blocks = new[]
+            {
+                new { id = "csharp", name = "C# study", start = "13:00", end = "14:00", categoryId = "study" },
+                new { id = "linq", name = "LINQ", start = "14:00", end = "15:00", categoryId = "study" },
+            },
+        })).EnsureSuccessStatusCode();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
 
     public void Dispose() => _factory.Dispose();
 
-    private async Task CreateGoalAsync(string tracking)
+    private async Task CreateGoalAsync(string period, int target)
     {
         (await _client.PostAsJsonAsync($"/goals?date={Day}", new
         {
@@ -35,54 +47,54 @@ public sealed class GoalCreditEndpointsTests : IAsyncLifetime, IDisposable
             categoryId = "study",
             title = "Study",
             type = "frequency",
-            period = "weekly",
-            target = 5,
-            tracking,
+            period,
+            target,
         })).EnsureSuccessStatusCode();
     }
 
-    private async Task<int> DoneAsync() =>
-        (await _client.GetFromJsonAsync<JsonArray>($"/goals?date={Day}"))!.Single()!["done"]!.GetValue<int>();
+    private async Task CompleteAsync(string blockId, string day = Day) =>
+        (await _client.PutAsJsonAsync($"/routines/weekdays/days/{day}/blocks/{blockId}", new { outcome = "done", at = "14:00" }))
+            .EnsureSuccessStatusCode();
+
+    private async Task<int> DoneAsync(string day = Day) =>
+        (await _client.GetFromJsonAsync<JsonArray>($"/goals?date={day}"))!.Single()!["done"]!.GetValue<int>();
 
     [Fact]
     public async Task ACompletedBlock_CountsAndUndoingItTakesItBack()
     {
-        await CreateGoalAsync("blocks");
-        (await _client.PutAsJsonAsync("/routines/weekdays", new
-        {
-            name = "Weekdays",
-            days = new[] { 0 },
-            start = "08:00",
-            end = "17:00",
-            blocks = new[] { new { id = "csharp", name = "C# study", start = "13:30", end = "15:00", categoryId = "study" } },
-        })).EnsureSuccessStatusCode();
-        const string path = $"/routines/weekdays/days/{Day}/blocks/csharp";
+        await CreateGoalAsync("weekly", 5);
 
-        (await _client.PutAsJsonAsync(path, new { outcome = "done", at = "14:00" })).EnsureSuccessStatusCode();
+        await CompleteAsync("csharp");
         var afterDone = await DoneAsync();
-        (await _client.DeleteAsync(path)).EnsureSuccessStatusCode();
+        (await _client.DeleteAsync($"/routines/weekdays/days/{Day}/blocks/csharp")).EnsureSuccessStatusCode();
 
         (afterDone, await DoneAsync()).ShouldBe((1, 0));
     }
 
     [Fact]
-    public async Task ACheckedTask_CountsAndUncheckingItTakesItBack()
+    public async Task ADailyGoal_CountsBeyondItsTarget_AndStartsOverTheNextDay()
     {
-        await CreateGoalAsync("tasks");
-        (await _client.PutAsJsonAsync("/tasks/t1", new { title = "Read", repeat = "daily", categoryId = "study" }))
-            .EnsureSuccessStatusCode();
+        await CreateGoalAsync("daily", 1);
 
-        (await _client.PutAsync($"/tasks/t1/completions/{Day}", null)).EnsureSuccessStatusCode();
-        var afterCheck = await DoneAsync();
-        (await _client.DeleteAsync($"/tasks/t1/completions/{Day}")).EnsureSuccessStatusCode();
+        await CompleteAsync("csharp");
+        await CompleteAsync("linq");
 
-        (afterCheck, await DoneAsync()).ShouldBe((1, 0));
+        (await DoneAsync(), await DoneAsync("2026-10-29")).ShouldBe((2, 0));
     }
 
     [Fact]
-    public async Task AGoalTrackedByHand_IgnoresCompletions()
+    public async Task AWeeklyGoal_StartsTheNextWeekAtZero_AndKeepsTheWeekBefore()
     {
-        await CreateGoalAsync("manual");
+        await CreateGoalAsync("weekly", 5);
+        await CompleteAsync("csharp");
+
+        (await DoneAsync("2026-11-01"), await DoneAsync("2026-11-02")).ShouldBe((1, 0));
+    }
+
+    [Fact]
+    public async Task ACheckedTask_DoesNotCount()
+    {
+        await CreateGoalAsync("weekly", 5);
         (await _client.PutAsJsonAsync("/tasks/t1", new { title = "Read", repeat = "daily", categoryId = "study" }))
             .EnsureSuccessStatusCode();
 

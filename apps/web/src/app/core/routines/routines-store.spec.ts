@@ -96,72 +96,50 @@ describe('RoutinesStore', () => {
     expect(errors.errors).toEqual([categories.failure]);
   });
 
-  it('increments a goal without passing its target', () => {
-    const { store } = createStore();
-
-    store.incrementGoal('g3');
-
-    expect(store.goals().find((goal) => goal.id === 'g3')?.done).toBe(1);
-  });
-
-  it('ignores progress on an unknown goal', () => {
-    const { store, errors } = createStore();
-
-    store.incrementGoal('missing');
-
-    expect(errors.errors).toEqual([]);
-  });
-
-  it('restores the progress when logging it fails', () => {
-    const { store, goals, errors } = createStore();
-    goals.failure = new Error('offline');
-
-    store.incrementGoal('g1');
-
-    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(3);
-    expect(errors.errors).toEqual([goals.failure]);
-  });
-
   it('loads the goals for the period around today', () => {
     const { goals } = createStore();
 
     expect(goals.listedDays).toEqual(['2026-10-26']);
   });
 
-  it('logs +1 as an entry with its own id, for today', () => {
+  it('marks an objective achieved today and shows it as done', () => {
     const { store, goals } = createStore();
 
-    store.incrementGoal('g1');
+    store.setAchieved('g2', true);
 
-    expect(goals.entries).toEqual([{ eventId: 'id-1', isoDay: '2026-10-26', amount: 1 }]);
-    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(4);
+    expect(goals.achievements).toEqual([{ goalId: 'g2', isoDay: '2026-10-26', isAchieved: true }]);
+    expect(store.goals().find((goal) => goal.id === 'g2')).toMatchObject({
+      achievedOn: '2026-10-26',
+      done: 12,
+    });
   });
 
-  it('takes one back with a -1 entry', () => {
-    const { store, goals } = createStore();
-
-    store.decrementGoal('g1');
-
-    expect(goals.entries[0].amount).toBe(-1);
-    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(2);
-  });
-
-  it('never shows progress below zero when taking back', () => {
+  it('takes the achieved mark back', () => {
     const { store } = createStore();
 
-    store.decrementGoal('g5');
+    store.setAchieved('g6', false);
 
-    expect(store.goals().find((goal) => goal.id === 'g5')?.done).toBe(0);
+    const goal = store.goals().find((current) => current.id === 'g6');
+    expect([goal?.achievedOn, goal?.done]).toEqual([undefined, 0]);
   });
 
-  it('restores the progress when taking one back fails', () => {
+  it('puts the objective back as it was when marking it fails', () => {
     const { store, goals, errors } = createStore();
     goals.failure = new Error('offline');
 
-    store.decrementGoal('g1');
+    store.setAchieved('g2', true);
 
-    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(3);
+    expect(store.goals().find((goal) => goal.id === 'g2')?.achievedOn).toBeUndefined();
     expect(errors.errors).toEqual([goals.failure]);
+  });
+
+  it('never marks a frequency goal or an unknown one', () => {
+    const { store, goals } = createStore();
+
+    store.setAchieved('g1', true);
+    store.setAchieved('missing', true);
+
+    expect(goals.achievements).toEqual([]);
   });
 
   it('edits a goal and keeps its type and category', () => {
@@ -170,7 +148,6 @@ describe('RoutinesStore', () => {
       title: 'Study C# 2x',
       period: 'monthly',
       target: 2,
-      tracking: 'blocks',
     } as const;
 
     store.updateGoal('g1', changes);
@@ -179,7 +156,7 @@ describe('RoutinesStore', () => {
       ...changes,
       type: 'frequency',
       categoryId: 'study',
-      done: 2,
+      done: 3,
     });
     expect(goals.updated).toEqual([{ goalId: 'g1', changes }]);
   });
@@ -188,7 +165,7 @@ describe('RoutinesStore', () => {
     const { store, goals } = createStore();
     goals.failure = new Error('offline');
 
-    store.updateGoal('g1', { title: 'Renamed', period: 'weekly', target: 5, tracking: 'manual' });
+    store.updateGoal('g1', { title: 'Renamed', period: 'weekly', target: 5 });
 
     expect(store.goals().find((goal) => goal.id === 'g1')?.title).toBe('Study C# 5x a week');
   });
@@ -205,16 +182,16 @@ describe('RoutinesStore', () => {
     expect(goals.deleted).toEqual(['g3', 'g4']);
   });
 
-  it('follows the day when a page is left open: +1 and reloads use the new day', () => {
+  it('follows the day when a page is left open: marks and reloads use the new day', () => {
     const sunday = new MovableClock(new Date(2026, 10, 1, 23, 50));
     const { store, goals } = createStore(undefined, undefined, undefined, sunday);
-    store.incrementGoal('g1');
+    store.setAchieved('g2', true);
 
     sunday.moment = new Date(2026, 10, 2, 0, 10);
-    store.incrementGoal('g1');
+    store.setAchieved('g2', false);
     store.refreshGoals();
 
-    expect(goals.entries.map((entry) => entry.isoDay)).toEqual(['2026-11-01', '2026-11-02']);
+    expect(goals.achievements.map((entry) => entry.isoDay)).toEqual(['2026-11-01', '2026-11-02']);
     expect(goals.listedDays).toEqual(['2026-11-01', '2026-11-02']);
   });
 
@@ -226,7 +203,6 @@ describe('RoutinesStore', () => {
       type: 'frequency',
       period: 'weekly',
       target: 2,
-      tracking: 'manual',
     });
 
     store.refreshGoals();
@@ -236,14 +212,14 @@ describe('RoutinesStore', () => {
 
   it('updates the progress of the goals it already has from a reload', () => {
     const { store, goals } = createStore();
-    goals.logProgress('g1', { eventId: 'outside', isoDay: '2026-10-26', amount: 1 }).subscribe();
+    goals.setDone('g1', 4);
 
     store.refreshGoals();
 
     expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(4);
   });
 
-  it('reloads the goals when asked, for after a block or a task counted', () => {
+  it('reloads the goals when asked, for after a block counted', () => {
     const { store, goals } = createStore();
 
     store.refreshGoals();
@@ -261,7 +237,6 @@ describe('RoutinesStore', () => {
       type: 'frequency',
       period: 'weekly',
       target: 2,
-      tracking: 'manual',
     });
 
     expect(store.goals().at(-1)).toEqual({ ...goal, done: 0 });
@@ -278,7 +253,6 @@ describe('RoutinesStore', () => {
       type: 'frequency',
       period: 'daily',
       target: 1,
-      tracking: 'manual',
     });
 
     expect(store.goals()).toHaveLength(7);

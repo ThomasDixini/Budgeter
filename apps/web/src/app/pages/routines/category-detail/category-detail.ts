@@ -10,7 +10,7 @@ import {
   countLabel,
   withAlpha,
 } from '../../../core/routines/category';
-import { GoalChanges, averageProgress } from '../../../core/routines/goal';
+import { Goal, GoalChanges, averageProgress } from '../../../core/routines/goal';
 import { GoalDraft, RoutinesStore } from '../../../core/routines/routines-store';
 import { TasksStore } from '../../../core/routines/tasks-store';
 import { GoalCard } from './goal-card/goal-card';
@@ -115,12 +115,8 @@ export class CategoryDetail {
     return (event.target as HTMLInputElement).value;
   }
 
-  protected incrementGoal(goalId: string): void {
-    this.store.incrementGoal(goalId);
-  }
-
-  protected decrementGoal(goalId: string): void {
-    this.store.decrementGoal(goalId);
+  protected toggleAchieved(goal: Goal): void {
+    this.store.setAchieved(goal.id, goal.achievedOn === undefined);
   }
 
   protected startEditing(goalId: string): void {
