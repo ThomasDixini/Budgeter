@@ -1,10 +1,12 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   LOCALE_ID,
   afterNextRender,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -12,11 +14,12 @@ import { RouterLink } from '@angular/router';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { Clock } from '../../../core/calendar/clock';
 import { isoDate, longDateLabel } from '../../../core/calendar/date-label';
-import { minutesOfDay, weekdayIndex } from '../../../core/calendar/time-of-day';
+import { minutesOfDay, toMinutes, weekdayIndex } from '../../../core/calendar/time-of-day';
 import { Category, findCategory } from '../../../core/routines/category';
+import { isHappening } from '../../../core/routines/day-clock';
 import { dayProgress } from '../../../core/routines/day-timeline';
 import { GOAL_TYPE_LABELS, Goal, goalPeriodInfo, goalProgress } from '../../../core/routines/goal';
-import { routineForWeekday } from '../../../core/routines/routine';
+import { activeRoutine } from '../../../core/routines/routine';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { NotTodayGroup, Task, TaskDraft, occursOn, repeatLabel } from '../../../core/routines/task';
 import { TasksStore } from '../../../core/routines/tasks-store';
@@ -25,6 +28,9 @@ import { BlockOutcomeKind, planDay } from '../../../core/routines/day-plan';
 import { DayTimeline } from './day-timeline/day-timeline';
 import { EndedBlock, NowCard } from './now-card/now-card';
 import { TaskForm } from './task-form/task-form';
+
+/** How often the "now" line and the Now card catch up with the clock. */
+const CLOCK_TICK_MS = 30_000;
 
 /** Goals shown in the "Goals in focus" card. */
 const FOCUS_GOAL_COUNT = 3;
@@ -75,15 +81,22 @@ export class Today {
   private opener: HTMLElement | undefined;
   private readonly outcomesStore = inject(BlockOutcomesStore);
   private readonly clock = inject(Clock);
+  /** The day the task lists are about, fixed when the page opens (see `TasksStore`). */
   private readonly now = this.clock.now();
+  private readonly locale = inject(LOCALE_ID);
+  private readonly moment = signal(this.now);
 
-  /** Refreshed when a block ends, so the timeline and the Now card move on with the day. */
-  protected readonly nowMinutes = signal(minutesOfDay(this.now));
-  protected readonly dateLabel = longDateLabel(this.now, inject(LOCALE_ID));
+  /** Ticks with the clock, so the timeline and the Now card move on without a reload. */
+  protected readonly nowMinutes = computed(() => minutesOfDay(this.moment()));
+  protected readonly dateLabel = computed(() => longDateLabel(this.moment(), this.locale));
   protected readonly categories = this.store.categories;
-  /** Today's version of the routine, with completed and skipped blocks applied. */
+  /** The routine running now, which may be last night's when it runs past midnight. */
+  private readonly active = computed(() =>
+    activeRoutine(this.store.routines(), weekdayIndex(this.moment()), this.nowMinutes()),
+  );
+  /** The running routine's version of the day, with completed and skipped blocks applied. */
   protected readonly plan = computed(() => {
-    const routine = routineForWeekday(this.store.routines(), weekdayIndex(this.now));
+    const routine = this.active()?.routine;
     return routine === undefined ? undefined : planDay(routine, this.outcomesStore.outcomes());
   });
   protected readonly routine = computed(() => this.plan()?.routine);
@@ -147,16 +160,32 @@ export class Today {
       .map((goal) => this.toFocusGoal(goal)),
   );
 
+  constructor() {
+    const timer = setInterval(() => this.moment.set(this.clock.now()), CLOCK_TICK_MS);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+    effect(() => this.outcomesStore.showDay(this.routineDay()));
+  }
+
+  /** The day the running routine began on: yesterday for a night shift still going. */
+  private routineDay(): string {
+    const started = new Date(this.moment());
+    if (this.active()?.startedYesterday) started.setDate(started.getDate() - 1);
+    return isoDate(started);
+  }
+
   /**
-   * Ends the running block now as done or skipped; the rest of today's blocks move earlier.
+   * Ends a block as done or skipped. The running block ends now and the rest of the day moves earlier;
+   * one that is ahead or already over ends at its planned end, so nothing else moves.
    * @example this.endBlock('project', 'done')
    */
   protected endBlock(blockId: string, kind: BlockOutcomeKind): void {
     const routine = this.routine();
-    if (routine === undefined) return;
+    const block = routine?.blocks.find((candidate) => candidate.id === blockId);
+    if (routine === undefined || block === undefined) return;
     const now = minutesOfDay(this.clock.now());
-    this.nowMinutes.set(now);
-    this.outcomesStore.record(routine.id, blockId, kind, now);
+    this.moment.set(this.clock.now());
+    const at = isHappening(block, now) ? now : toMinutes(block.end);
+    this.outcomesStore.record(routine.id, blockId, kind, at);
   }
 
   /**

@@ -68,6 +68,21 @@ describe('HttpCategoriesGateway', () => {
     expect(request.request.body).toEqual(STUDY);
     request.flush(STUDY);
   });
+
+  it('puts the name and color of an edited category', () => {
+    TestBed.inject(HttpCategoriesGateway).update(STUDY).subscribe();
+
+    const request = httpTesting.expectOne({ method: 'PUT', url: '/api/categories/study' });
+
+    expect(request.request.body).toEqual({ name: 'Study', color: '#7DD3FC' });
+    request.flush(STUDY);
+  });
+
+  it('deletes a category, escaping its id', () => {
+    TestBed.inject(HttpCategoriesGateway).delete('a/b').subscribe();
+
+    httpTesting.expectOne({ method: 'DELETE', url: '/api/categories/a%2Fb' }).flush(null);
+  });
 });
 
 describe('HttpRoutinesGateway', () => {

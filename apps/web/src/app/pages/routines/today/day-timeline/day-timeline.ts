@@ -58,6 +58,10 @@ export class DayTimeline {
   readonly plannedLengths = input<ReadonlyMap<string, number>>(new Map());
   /** Emits the id of an ended block the user wants back as it was planned. */
   readonly undo = output<string>();
+  /** Emits the id of a pending block the user marks as done. */
+  readonly complete = output<string>();
+  /** Emits the id of a pending block the user skips. */
+  readonly skip = output<string>();
 
   /** Ended blocks with their planned length, falling back to how long they lasted. */
   private readonly endedBlocks = computed(

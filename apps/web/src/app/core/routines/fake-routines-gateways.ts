@@ -18,6 +18,8 @@ import { TasksGateway } from './tasks-gateway';
 export class FakeCategoriesGateway extends CategoriesGateway {
   failure: Error | undefined;
   readonly saved: Category[] = [];
+  readonly updated: Category[] = [];
+  readonly deleted: string[] = [];
 
   constructor(private readonly categories: readonly Category[] = SAMPLE_CATEGORIES) {
     super();
@@ -31,6 +33,18 @@ export class FakeCategoriesGateway extends CategoriesGateway {
     if (this.failure !== undefined) return throwError(() => this.failure);
     this.saved.push(category);
     return of(category);
+  }
+
+  override update(category: Category): Observable<Category> {
+    if (this.failure !== undefined) return throwError(() => this.failure);
+    this.updated.push(category);
+    return of(category);
+  }
+
+  override delete(categoryId: string): Observable<void> {
+    if (this.failure !== undefined) return throwError(() => this.failure);
+    this.deleted.push(categoryId);
+    return of(undefined);
   }
 }
 

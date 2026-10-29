@@ -112,6 +112,19 @@ export class TasksStore {
   }
 
   /**
+   * Drops a deleted category from the tasks that used it. The API already did; this keeps the list
+   * from saving a task against a category that is gone.
+   * @example store.detachCategory('languages')
+   */
+  detachCategory(categoryId: string): void {
+    this.taskList.update((tasks) =>
+      tasks.map((task) =>
+        task.categoryId === categoryId ? { ...task, categoryId: undefined } : task,
+      ),
+    );
+  }
+
+  /**
    * Flips a task between done and pending for today only; a repeating task starts pending again
    * on its next day.
    * @example store.toggleDone('t3')

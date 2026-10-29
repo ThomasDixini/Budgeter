@@ -1,5 +1,5 @@
 <div class="page">
-  <app-page-heading eyebrow="Routines & Goals" eyebrowIcon="routines" [heading]="dateLabel">
+  <app-page-heading eyebrow="Routines & Goals" eyebrowIcon="routines" [heading]="dateLabel()">
     <div class="day-progress">
       <span class="ui-muted">Day</span>
       <div class="ui-track day-track" aria-hidden="true">
@@ -42,6 +42,8 @@
           [nowMinutes]="nowMinutes()"
           [outcomes]="outcomes()"
           [plannedLengths]="plannedLengths()"
+          (complete)="endBlock($event, 'done')"
+          (skip)="endBlock($event, 'skipped')"
           (undo)="undoBlock($event)"
         />
       } @else {

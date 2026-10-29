@@ -7,23 +7,42 @@ import { BlockOutcome, BlockOutcomeKind } from './day-plan';
 import { RoutinesStore } from './routines-store';
 
 /**
- * Routine blocks completed or skipped today. Recording applies locally first and rolls back if
- * the gateway rejects it.
+ * Routine blocks completed or skipped on the day being shown (today unless `showDay` moves it, as a
+ * night shift that began yesterday does). Recording applies locally first and rolls back if the
+ * gateway rejects it.
  */
 @Injectable({ providedIn: 'root' })
 export class BlockOutcomesStore {
   private readonly gateway = inject(BlockOutcomesGateway);
   private readonly errorHandler = inject(ErrorHandler);
   private readonly goals = inject(RoutinesStore);
-  private readonly today = isoDate(inject(Clock).now());
+  private readonly day = signal(isoDate(inject(Clock).now()));
   private readonly outcomeList = signal<readonly BlockOutcome[]>([]);
 
   /** Today's outcomes, in the order they were recorded. */
   readonly outcomes = this.outcomeList.asReadonly();
 
   constructor() {
-    this.gateway.list(this.today).subscribe({
-      next: (outcomes) => this.outcomeList.set(outcomes),
+    this.load(this.day());
+  }
+
+  /**
+   * Switches to the outcomes of another ISO day, e.g. the evening a night shift began on.
+   * @example store.showDay('2026-10-26')
+   */
+  showDay(isoDay: string): void {
+    if (isoDay === this.day()) return;
+    this.day.set(isoDay);
+    this.outcomeList.set([]);
+    this.load(isoDay);
+  }
+
+  private load(isoDay: string): void {
+    this.gateway.list(isoDay).subscribe({
+      // A slow answer for a day that is no longer shown must not replace the current one.
+      next: (outcomes) => {
+        if (this.day() === isoDay) this.outcomeList.set(outcomes);
+      },
       error: (error: unknown) => this.errorHandler.handleError(error),
     });
   }
@@ -41,7 +60,7 @@ export class BlockOutcomesStore {
     };
     const before = this.outcomeList();
     this.outcomeList.set([...before.filter((current) => !isSameBlock(current, outcome)), outcome]);
-    this.gateway.record(this.today, outcome).subscribe({
+    this.gateway.record(this.day(), outcome).subscribe({
       // The API counts (or takes back) the block for goals tracked from blocks, so reload them.
       complete: () => this.goals.refreshGoals(),
       error: (error: unknown) => this.rejected(error, before),
@@ -56,7 +75,7 @@ export class BlockOutcomesStore {
     const before = this.outcomeList();
     const target = { routineId, blockId };
     this.outcomeList.set(before.filter((current) => !isSameBlock(current, target)));
-    this.gateway.undo(this.today, routineId, blockId).subscribe({
+    this.gateway.undo(this.day(), routineId, blockId).subscribe({
       complete: () => this.goals.refreshGoals(),
       error: (error: unknown) => this.rejected(error, before),
     });

@@ -154,6 +154,46 @@ export class RoutinesStore {
   }
 
   /**
+   * Renames and recolors a category; the page shows it right away and goes back if it is rejected.
+   * @example store.updateCategory('languages', 'Spanish', '#7DD3FC')
+   */
+  updateCategory(categoryId: string, name: string, color: string): void {
+    const previous = this.categoryList().find((category) => category.id === categoryId);
+    if (previous === undefined) return;
+    const category: Category = { id: categoryId, name, color };
+    replaceById(this.categoryList, category);
+    this.categoriesGateway.update(category).subscribe({
+      next: (saved) => replaceById(this.categoryList, saved),
+      error: (error: unknown) =>
+        this.rejected(error, () => replaceById(this.categoryList, previous)),
+    });
+  }
+
+  /**
+   * Deletes a category with its goals; routine blocks that used it stay, without a category (the API
+   * does the same). Everything comes back if the gateway rejects it.
+   * @example store.deleteCategory('languages')
+   */
+  deleteCategory(categoryId: string): void {
+    const before = {
+      categories: this.categoryList(),
+      goals: this.goalList(),
+      routines: this.routineList(),
+    };
+    this.categoryList.update((categories) => categories.filter((c) => c.id !== categoryId));
+    this.goalList.update((goals) => goals.filter((goal) => goal.categoryId !== categoryId));
+    this.routineList.update((routines) => routines.map((r) => withoutCategory(r, categoryId)));
+    this.categoriesGateway.delete(categoryId).subscribe({
+      error: (error: unknown) =>
+        this.rejected(error, () => {
+          this.categoryList.set(before.categories);
+          this.goalList.set(before.goals);
+          this.routineList.set(before.routines);
+        }),
+    });
+  }
+
+  /**
    * Saves a routine: replaces the stored one with the same id, or adds it when it is new.
    * Resolves to whether the gateway accepted it, so the editor knows when its draft is safe to drop.
    * @example const saved = await store.saveRoutine({ ...weekdays, end: '18:00' })
@@ -274,6 +314,14 @@ export class RoutinesStore {
 function withFreshProgress(current: readonly Goal[], fresh: readonly Goal[]): Goal[] {
   const byId = new Map(fresh.map((goal) => [goal.id, goal]));
   return current.map((goal) => byId.get(goal.id) ?? goal);
+}
+
+function withoutCategory(routine: Routine, categoryId: string): Routine {
+  if (!routine.blocks.some((block) => block.categoryId === categoryId)) return routine;
+  const blocks = routine.blocks.map((block) =>
+    block.categoryId === categoryId ? { ...block, categoryId: undefined } : block,
+  );
+  return { ...routine, blocks };
 }
 
 function replaceById<TRecord extends Identified>(

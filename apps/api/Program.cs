@@ -27,6 +27,8 @@ builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
 builder.Services.AddSqlitePersistence();
 builder.Services.AddScoped<ListCategories>();
 builder.Services.AddScoped<CreateCategory>();
+builder.Services.AddScoped<UpdateCategory>();
+builder.Services.AddScoped<DeleteCategory>();
 builder.Services.AddScoped<ListGoals>();
 builder.Services.AddScoped<CreateGoal>();
 builder.Services.AddScoped<LogGoalProgress>();

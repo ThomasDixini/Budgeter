@@ -312,6 +312,53 @@ describe('RoutinesStore', () => {
     expect(errors.errors).toEqual([categories.failure]);
   });
 
+  it('renames and recolors a category and saves it', () => {
+    const { store, categories } = createStore();
+
+    store.updateCategory('study', 'Learning', '#F0ABFC');
+
+    const expected = { id: 'study', name: 'Learning', color: '#F0ABFC' };
+    expect(store.categories()[0]).toEqual(expected);
+    expect(categories.updated).toEqual([expected]);
+  });
+
+  it('puts a category back when the gateway rejects its edit', () => {
+    const { store, categories, errors } = createStore();
+    categories.failure = new Error('offline');
+
+    store.updateCategory('study', 'Learning', '#F0ABFC');
+
+    expect(store.categories()[0].name).toBe('Study');
+    expect(errors.errors).toEqual([categories.failure]);
+  });
+
+  it('deletes a category with its goals and detaches its routine blocks', () => {
+    const { store, categories } = createStore();
+
+    store.deleteCategory('study');
+
+    expect(categories.deleted).toEqual(['study']);
+    expect(store.categories().map((category) => category.id)).not.toContain('study');
+    expect(store.goals().some((goal) => goal.categoryId === 'study')).toBe(false);
+    const blocks = store.routines().flatMap((routine) => routine.blocks);
+    expect(blocks.some((block) => block.categoryId === 'study')).toBe(false);
+    expect(blocks.some((block) => block.id === 'csharp')).toBe(true);
+  });
+
+  it('brings everything back when the gateway rejects a category deletion', () => {
+    const { store, categories, errors } = createStore();
+    const goalsBefore = store.goals();
+    const routinesBefore = store.routines();
+    categories.failure = new Error('offline');
+
+    store.deleteCategory('study');
+
+    expect(store.categories()).toHaveLength(4);
+    expect(store.goals()).toEqual(goalsBefore);
+    expect(store.routines()).toEqual(routinesBefore);
+    expect(errors.errors).toEqual([categories.failure]);
+  });
+
   it('loads routines from the gateway', () => {
     const { store } = createStore();
 

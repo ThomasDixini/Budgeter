@@ -63,6 +63,44 @@ describe('CategoryDetail', () => {
     expect(values).toEqual(['3', '64%', '7h30']);
   });
 
+  it('edits the category name and color', async () => {
+    const page = await openCategory('/routines/categories/study');
+    click(page, '.hero-top button', 0);
+    const name = page.element.querySelector<HTMLInputElement>(
+      'form[aria-label="Edit category"] input',
+    );
+    if (name === null) throw new Error('Expected the category name input, found none');
+    name.value = 'Learning';
+    name.dispatchEvent(new Event('input'));
+    click(page, '.swatch', 2);
+
+    page.element
+      .querySelector('form[aria-label="Edit category"]')
+      ?.dispatchEvent(new Event('submit'));
+    page.render();
+
+    expect(TestBed.inject(RoutinesStore).categories()[0]).toEqual({
+      id: 'study',
+      name: 'Learning',
+      color: '#F0ABFC',
+    });
+    expect(page.element.querySelector('#category-title')?.textContent).toBe('Learning');
+  });
+
+  it('deletes the category after confirming', async () => {
+    const page = await openCategory('/routines/categories/study');
+
+    click(page, '.hero-top button', 1);
+    expect(TestBed.inject(RoutinesStore).categories()).toHaveLength(4);
+    click(page, '[aria-label="Confirm deletion"] button', 0);
+
+    expect(
+      TestBed.inject(RoutinesStore)
+        .categories()
+        .map((category) => category.id),
+    ).not.toContain('study');
+  });
+
   it('lists the routine blocks of the category', async () => {
     const page = await openCategory('/routines/categories/study');
 

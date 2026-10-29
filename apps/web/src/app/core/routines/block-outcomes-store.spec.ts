@@ -117,3 +117,23 @@ describe('BlockOutcomesStore', () => {
     expect(errors.errors).toEqual([gateway.failure]);
   });
 });
+
+describe('BlockOutcomesStore showDay', () => {
+  it('loads another day and records on it', () => {
+    const { store, gateway } = createStore();
+
+    store.showDay('2026-10-26');
+    store.record('night', 'patrol', 'done', 23 * 60);
+
+    expect(gateway.listedDays).toEqual(['2026-10-27', '2026-10-26']);
+    expect(gateway.recorded.at(-1)?.isoDay).toBe('2026-10-26');
+  });
+
+  it('does not reload the day already shown', () => {
+    const { store, gateway } = createStore();
+
+    store.showDay('2026-10-27');
+
+    expect(gateway.listedDays).toEqual(['2026-10-27']);
+  });
+});

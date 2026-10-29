@@ -18,7 +18,11 @@ export class FakeBlockOutcomesGateway extends BlockOutcomesGateway {
     super();
   }
 
-  override list(): Observable<readonly BlockOutcome[]> {
+  /** Days `list` was asked for, in order. */
+  readonly listedDays: string[] = [];
+
+  override list(isoDay: string): Observable<readonly BlockOutcome[]> {
+    this.listedDays.push(isoDay);
     return this.failure === undefined ? of(this.outcomes) : throwError(() => this.failure);
   }
 

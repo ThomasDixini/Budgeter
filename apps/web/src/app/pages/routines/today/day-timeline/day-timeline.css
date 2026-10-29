@@ -121,7 +121,8 @@
   color: var(--color-text-faint);
 }
 
-.undo {
+.undo,
+.step {
   width: 26px;
   height: 26px;
   flex: none;
@@ -136,12 +137,15 @@
 }
 
 .undo:hover,
+.step:hover,
+.step:focus-visible,
 .undo:focus-visible {
   color: var(--color-text);
   background: rgba(255, 255, 255, 0.08);
 }
 
-.block.is-compact .undo {
+.block.is-compact .undo,
+.block.is-compact .step {
   width: 20px;
   height: 20px;
 }

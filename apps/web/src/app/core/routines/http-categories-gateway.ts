@@ -6,6 +6,10 @@ import { Category } from './category';
 
 const CATEGORIES_URL = '/api/categories';
 
+function categoryUrl(categoryId: string): string {
+  return `${CATEGORIES_URL}/${encodeURIComponent(categoryId)}`;
+}
+
 /** Categories stored by the Budgeter API. */
 @Injectable()
 export class HttpCategoriesGateway extends CategoriesGateway {
@@ -17,5 +21,14 @@ export class HttpCategoriesGateway extends CategoriesGateway {
 
   override create(category: Category): Observable<Category> {
     return this.httpClient.post<Category>(CATEGORIES_URL, category);
+  }
+
+  override update(category: Category): Observable<Category> {
+    const { name, color } = category;
+    return this.httpClient.put<Category>(categoryUrl(category.id), { name, color });
+  }
+
+  override delete(categoryId: string): Observable<void> {
+    return this.httpClient.delete<void>(categoryUrl(categoryId));
   }
 }
