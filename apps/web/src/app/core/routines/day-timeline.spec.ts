@@ -8,6 +8,7 @@ import {
   timelineBlocks,
   timelineHeight,
   timelineHours,
+  timelineLayout,
 } from './day-timeline';
 import { Routine } from './routine';
 import { SAMPLE_ROUTINES } from './sample-routines';
@@ -73,11 +74,44 @@ describe('timelineBlocks with ended blocks', () => {
   }
 
   // Regression: a block completed minutes (or seconds) after it started shrank to nothing.
-  it('stacks ended blocks upward, one line each, the latest right above where it ended', () => {
+  it('puts short ended blocks in one line, side by side, oldest on the left', () => {
     const { guitar, read } = placed(STUDY_TIME);
 
     expect(read).toEqual({ top: 266, height: 24 }); // 13:33 – 14:03
-    expect(guitar).toEqual({ top: 242, height: 24 }); // 13:03 – 13:33, above Reading
+    expect(guitar).toEqual({ top: 266, height: 24 });
+    const columns = timelineBlocks(ended, STUDY_TIME, PLANNED).map(
+      ({ block, left, width }) => [block.id, left, width] as const,
+    );
+    expect(columns).toContainEqual(['guitar', 0, 50]);
+    expect(columns).toContainEqual(['read', 50, 50]);
+  });
+
+  it('stacks short ended blocks beyond a full row upward, one line per row', () => {
+    const four: Routine = {
+      ...weekdays,
+      blocks: ['a', 'b', 'c', 'd', 'e'].map((id) => ({
+        id,
+        name: id,
+        start: '14:03',
+        end: '14:03',
+      })),
+    };
+    const endedInOrder = new Map(['a', 'b', 'c', 'd', 'e'].map((id) => [id, 0]));
+
+    const tops = timelineBlocks(four, STUDY_TIME, endedInOrder).map((item) => item.top);
+
+    expect([...new Set(tops)].sort((first, second) => first - second)).toEqual([242, 266]);
+  });
+
+  it('keeps a long ended block on a row of its own', () => {
+    const long: Routine = {
+      ...weekdays,
+      blocks: [{ id: 'work', name: 'Work', start: '12:00', end: '14:00' }],
+    };
+
+    const [work] = timelineBlocks(long, STUDY_TIME, new Map([['work', 120]]));
+
+    expect({ left: work.left, width: work.width }).toEqual({ left: 0, width: 100 });
   });
 
   it('puts the block ended last lowest when two ended at the same minute', () => {
@@ -96,13 +130,6 @@ describe('timelineBlocks with ended blocks', () => {
     const [upper, lower] = timelineBlocks(sameMinute, STUDY_TIME, endedInOrder);
 
     expect([upper.block.id, lower.block.id]).toEqual(['b', 'a']);
-  });
-
-  it('never lets two ended blocks share a row', () => {
-    const { guitar, read } = placed(STUDY_TIME);
-    const rows = [guitar, read];
-
-    expect(new Set(rows.map((row) => row.top)).size).toBe(rows.length);
   });
 
   it('never draws an ended block past the "now" line', () => {
@@ -165,5 +192,70 @@ describe('current block', () => {
     const block = { start: '13:30', end: '15:00' };
 
     expect([blockElapsed(block, STUDY_TIME), minutesLeft(block, STUDY_TIME)]).toEqual([44, 50]);
+  });
+});
+
+// Regression: completing several blocks in a row stacked them over a block still pending (Gym).
+describe('timelineLayout making room for ended blocks', () => {
+  const evening: Routine = {
+    id: 'evening',
+    name: 'Evening',
+    days: [0],
+    start: '18:00',
+    end: '23:00',
+    blocks: [
+      { id: 'gym', name: 'Gym', start: '18:00', end: '19:00' },
+      { id: 'hello', name: 'Hello world', start: '19:00', end: '19:42' },
+      { id: 'side', name: 'Side project', start: '19:42', end: '19:42' },
+      { id: 'guitar', name: 'Guitar', start: '19:42', end: '19:42' },
+      { id: 'reading', name: 'Reading', start: '19:42', end: '20:27' },
+    ],
+  };
+  const NOW = 19 * 60 + 42;
+  const ENDED = new Map([
+    ['hello', 60],
+    ['side', 90],
+    ['guitar', 45],
+  ]);
+
+  function blockById(id: string): { top: number; height: number } {
+    const found = timelineLayout(evening, NOW, ENDED).blocks.find((item) => item.block.id === id);
+    if (found === undefined) throw new Error(`Expected block "${id}" on the timeline, found none`);
+    return found;
+  }
+
+  it('keeps every ended block below the pending block before it', () => {
+    const gym = blockById('gym');
+    const gymBottom = gym.top + gym.height;
+
+    for (const id of ['hello', 'side', 'guitar']) {
+      expect(blockById(id).top).toBeGreaterThanOrEqual(gymBottom);
+    }
+  });
+
+  it('puts the "now" line right under the stack and the running block right after it', () => {
+    const layout = timelineLayout(evening, NOW, ENDED);
+    const side = blockById('side');
+
+    expect(layout.nowOffset).toBe(side.top + side.height);
+    expect(blockById('reading').top).toBe(layout.nowOffset);
+  });
+
+  it('spreads the hours before "now" and grows the timeline by the same room', () => {
+    const plain = timelineLayout(evening, NOW);
+    const stretched = timelineLayout(evening, NOW, ENDED);
+    const hourTop = (label: string): number | undefined =>
+      stretched.hours.find((hour) => hour.label === label)?.top;
+
+    expect(hourTop('19:00')).toBe(48);
+    expect(hourTop('20:00')).toBeGreaterThan(96);
+    expect(stretched.height).toBeGreaterThan(plain.height);
+  });
+
+  it('leaves the layout untouched when the stack fits', () => {
+    // Hello world ran 19:00–19:42, right after Gym: it fills its own time and needs no room.
+    const fits = new Map([['hello', 60]]);
+
+    expect(timelineLayout(evening, NOW, fits).height).toBe(timelineLayout(evening, NOW).height);
   });
 });

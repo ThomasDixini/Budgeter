@@ -44,6 +44,19 @@
   box-sizing: border-box;
 }
 
+/* Short ended blocks sit side by side in one row, with a small gap between them. */
+.block-slot.shares-row-left {
+  padding-right: 3px;
+}
+
+.block-slot.shares-row-right {
+  padding-left: 3px;
+}
+
+.block-slot.shares-row-inner {
+  padding-right: 3px;
+}
+
 /* An ended block may grow over the past part of an earlier one; it stays on top to be read. */
 .block-slot.is-ended {
   z-index: 1;
@@ -270,4 +283,17 @@
 
 .block.is-compact .block-select {
   align-self: center;
+}
+
+/* On a narrow timeline the shared row drops the check and category dot so the name stays readable. */
+.timeline {
+  container-type: inline-size;
+}
+
+@container (max-width: 520px) {
+  .block-slot[class*='shares-row'] .done-check,
+  .block-slot[class*='shares-row'] .block-range,
+  .block-slot[class*='shares-row'] .ui-dot {
+    display: none;
+  }
 }

@@ -11,8 +11,13 @@
       <li
         class="block-slot"
         [class.is-ended]="block.outcome !== undefined"
+        [class.shares-row-left]="block.width < 100 && block.left === 0"
+        [class.shares-row-right]="block.width < 100 && block.left > 0"
+        [class.shares-row-inner]="block.left > 0 && block.left + block.width < 100"
         [style.top.px]="block.top"
         [style.height.px]="block.height"
+        [style.left.%]="block.left"
+        [style.width.%]="block.width"
       >
         <div
           class="block"

@@ -5,10 +5,7 @@ import { BlockOutcomeKind } from '../../../../core/routines/day-plan';
 import {
   TimelineBlock,
   isCompactBlock,
-  nowLineOffset,
-  timelineBlocks,
-  timelineHeight,
-  timelineHours,
+  timelineLayout,
 } from '../../../../core/routines/day-timeline';
 import { Routine } from '../../../../core/routines/routine';
 
@@ -21,6 +18,8 @@ interface TimelineBlockView {
   readonly summary: string;
   readonly top: number;
   readonly height: number;
+  readonly left: number;
+  readonly width: number;
   readonly isNow: boolean;
   readonly isSelected: boolean;
   /** Set once the block was completed or skipped today. */
@@ -79,15 +78,17 @@ export class DayTimeline {
       ),
   );
 
-  protected readonly height = computed(() => timelineHeight(this.routine()));
-  protected readonly hours = computed(() => timelineHours(this.routine()));
-  protected readonly nowOffset = computed(() => nowLineOffset(this.routine(), this.nowMinutes()));
+  /** Heights, hour lines and blocks, with the hours before "now" spread out to fit ended blocks. */
+  private readonly layout = computed(() =>
+    timelineLayout(this.routine(), this.nowMinutes(), this.endedBlocks()),
+  );
+  protected readonly height = computed(() => this.layout().height);
+  protected readonly hours = computed(() => this.layout().hours);
+  protected readonly nowOffset = computed(() => this.layout().nowOffset);
   protected readonly nowLabel = computed(() => formatClock(this.nowMinutes()));
   protected readonly outcomeLabels = OUTCOME_LABELS;
   protected readonly blocks = computed(() =>
-    timelineBlocks(this.routine(), this.nowMinutes(), this.endedBlocks()).map((entry) =>
-      this.toView(entry),
-    ),
+    this.layout().blocks.map((entry) => this.toView(entry)),
   );
 
   private toView({ block, isNow, ...placement }: TimelineBlock): TimelineBlockView {
