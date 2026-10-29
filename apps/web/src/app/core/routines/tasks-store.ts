@@ -2,7 +2,7 @@ import { ErrorHandler, Injectable, computed, inject, signal } from '@angular/cor
 import { Clock } from '../calendar/clock';
 import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
-import { Task, TaskDraft, occursOn } from './task';
+import { NotTodayTask, Task, TaskDraft, occursOn, tasksNotToday } from './task';
 import { RoutinesStore } from './routines-store';
 import { TasksGateway } from './tasks-gateway';
 
@@ -22,6 +22,11 @@ export class TasksStore {
   private readonly ids = inject(IdGenerator);
   private readonly errorHandler = inject(ErrorHandler);
   private readonly goals = inject(RoutinesStore);
+  /**
+   * The day the list, the done marks and the checkboxes are all about, fixed when the store starts so
+   * they cannot disagree with each other. A page left open past midnight keeps showing that day until it
+   * is reloaded (the same limit as the Today page itself).
+   */
   private readonly now = inject(Clock).now();
   private readonly today = isoDate(this.now);
   private readonly taskList = signal<readonly Task[]>([]);
@@ -33,6 +38,11 @@ export class TasksStore {
     this.taskList()
       .filter((task) => occursOn(task, this.now, this.today))
       .map((task): TodayTask => ({ task, isDone: this.doneToday().has(task.id) })),
+  );
+
+  /** Tasks that are not due today (scheduled, repeating on other days, past), to edit or delete. */
+  readonly notToday = computed((): NotTodayTask[] =>
+    tasksNotToday(this.taskList(), this.now, this.today),
   );
 
   constructor() {
@@ -47,15 +57,44 @@ export class TasksStore {
   }
 
   /**
-   * Adds a task; one that happens once is set for today.
+   * Adds a task; one that happens once is set for the day the draft names, or today. The server's
+   * answer is not applied over the list (it only normalizes what the form already sends), so a slow
+   * answer cannot overwrite an edit made to the task in the meantime.
    * @example store.addTask({ title: 'Call the bank', repeat: 'once', days: [] })
    */
   addTask(draft: TaskDraft): Task {
     const task: Task = { ...draft, id: this.ids.next(), date: this.dateFor(draft) };
     this.taskList.update((tasks) => [...tasks, task]);
     this.gateway.save(task).subscribe({
-      next: (saved) => this.taskList.update((tasks) => replaceTask(tasks, saved)),
-      error: (error: unknown) => this.rejected(error, () => this.removeTask(task.id)),
+      // Removed only while it is still the version added: an edit since then is the user's, and is
+      // saved by its own request.
+      error: (error: unknown) =>
+        this.rejected(error, () =>
+          this.taskList.update((tasks) => tasks.filter((current) => current !== task)),
+        ),
+    });
+    return task;
+  }
+
+  /**
+   * Edits a task in place: its title, category, repeat and day. It shows the change right away. A
+   * failed save puts back the previous version only if this edit is still the one shown, so neither a
+   * later edit of the same task nor an add or delete made in the meantime is undone; and the server's
+   * answer is not applied over the list, so a slow answer cannot overwrite a newer edit.
+   * @example store.updateTask('t3', { title: 'Do the LINQ exercises', repeat: 'daily', days: [] })
+   */
+  updateTask(taskId: string, draft: TaskDraft): Task | undefined {
+    const previous = this.taskList().find((task) => task.id === taskId);
+    if (previous === undefined) return undefined;
+    const task: Task = { ...draft, id: taskId, date: this.dateFor(draft) };
+    this.taskList.update((tasks) => replaceTask(tasks, task));
+    this.gateway.save(task).subscribe({
+      error: (error: unknown) =>
+        this.rejected(error, () =>
+          this.taskList.update((tasks) =>
+            tasks.map((current) => (current === task ? previous : current)),
+          ),
+        ),
     });
     return task;
   }

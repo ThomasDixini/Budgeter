@@ -123,6 +123,27 @@ public class GoalCreditsTests
     }
 
     [Fact]
+    public async Task ChangingATasksCategory_KeepsTheCreditEarnedAndUncheckingStillTakesItBack()
+    {
+        var goals = new InMemoryGoalRepository(
+            Goal.Create(GoalDefinitions.WeeklyStudy("study-tasks") with { Tracking = GoalTracking.Tasks }),
+            Goal.Create(GoalDefinitions.WeeklyStudy("reading-tasks", "reading") with { Tracking = GoalTracking.Tasks }));
+        var credits = new GoalCredits(goals, goals);
+        var completions = new TaskCompletions(_tasks, credits);
+        var categories = new InMemoryCategoryRepository(
+            Category.Create("study", "Study", "#7DD3FC"), Category.Create("reading", "Reading", "#FBBF24"));
+        await completions.SetAsync("t1", Today, isDone: true, CancellationToken.None);
+
+        await new SaveTask(_tasks, categories)
+            .ExecuteAsync(new("t1", "Read", "reading", TaskRepeat.Daily, [], null), CancellationToken.None);
+        var afterMove = (await goals.ListAsync(Today, CancellationToken.None)).ToDictionary(goal => goal.Id, goal => goal.Done);
+        await completions.SetAsync("t1", Today, isDone: false, CancellationToken.None);
+
+        afterMove.ShouldBe(new Dictionary<string, int> { ["study-tasks"] = 1, ["reading-tasks"] = 0 });
+        goals.Events.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task CheckingOffATaskWithoutACategory_CreditsNothing()
     {
         await new TaskCompletions(_tasks, Credits).SetAsync("t2", Today, isDone: true, CancellationToken.None);

@@ -142,6 +142,60 @@ test.describe('today', () => {
     await expect(page.getByRole('button', { name: 'Undo C# study' })).toHaveCount(0);
   });
 
+  test('an edited task keeps its new title and category after a reload', async ({
+    page,
+    request,
+  }) => {
+    const task = await createDailyTask(request);
+    const renamed = uniqueTitle('Stretch and breathe');
+    await routines.goto();
+    const tasksCard = page.getByRole('region', { name: "Today's tasks" });
+    const saved = page.waitForResponse(
+      (response) => response.request().method() === 'PUT' && response.url().includes('/api/tasks/'),
+    );
+
+    await tasksCard.getByRole('button', { name: `Edit ${task.title}` }).click();
+    const form = tasksCard.getByRole('form', { name: 'Edit task' });
+    await form.getByLabel('Task').fill(renamed);
+    await form.getByLabel('Category').selectOption({ label: 'Study' });
+    await form.getByRole('button', { name: 'Save task' }).click();
+    await saved;
+    await page.reload();
+
+    const row = tasksCard.getByRole('listitem').filter({ hasText: renamed });
+    await expect(row).toContainText('Study');
+    await expect(tasksCard.getByText(task.title, { exact: true })).toHaveCount(0);
+  });
+
+  test('a one-time task scheduled for another day waits in "Not today" and shows up on that day', async ({
+    page,
+  }) => {
+    const title = uniqueTitle('Renew the passport');
+    // A far-off random day, so runs and browser projects do not share one and nothing else is due.
+    const day = new Date(2031, 0, 6 + Math.floor(Math.random() * 300), 9, 0);
+    const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    await routines.goto();
+    const tasksCard = page.getByRole('region', { name: "Today's tasks" });
+    const saved = page.waitForResponse(
+      (response) => response.request().method() === 'PUT' && response.url().includes('/api/tasks/'),
+    );
+
+    await tasksCard.getByRole('button', { name: 'New task' }).click();
+    const form = tasksCard.getByRole('form', { name: 'New task' });
+    await form.getByLabel('Task').fill(title);
+    await form.getByLabel('On').fill(iso);
+    await form.getByRole('button', { name: 'Add task' }).click();
+    await saved;
+
+    const waiting = tasksCard.getByRole('list', { name: 'Tasks not due today' });
+    await expect(waiting.getByRole('listitem').filter({ hasText: title })).toBeVisible();
+    await expect(tasksCard.getByRole('checkbox', { name: title })).toHaveCount(0);
+
+    await page.clock.setFixedTime(day);
+    await page.reload();
+    await expect(tasksCard.getByRole('checkbox', { name: title })).toBeVisible();
+  });
+
   test('checking a task off is kept after a reload', async ({ page, request }) => {
     const task = await createDailyTask(request);
     await routines.goto();

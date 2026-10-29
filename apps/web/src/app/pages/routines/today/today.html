@@ -74,7 +74,7 @@
             type="button"
             aria-label="New task"
             [attr.aria-expanded]="isAddingTask()"
-            (click)="isAddingTask.set(!isAddingTask())"
+            (click)="startAddingTask($event)"
           >
             <svg
               width="18"
@@ -94,8 +94,19 @@
           <app-task-form
             [categories]="categories()"
             [weekday]="weekday"
-            (create)="addTask($event)"
-            (dismiss)="isAddingTask.set(false)"
+            [today]="todayIso"
+            (save)="addTask($event)"
+            (dismiss)="closeTaskForm()"
+          />
+        }
+        @for (task of editingTasks(); track task.id) {
+          <app-task-form
+            [categories]="categories()"
+            [weekday]="weekday"
+            [today]="todayIso"
+            [task]="task"
+            (save)="saveTask(task.id, $event)"
+            (dismiss)="closeTaskForm()"
           />
         }
         <ul class="tasks">
@@ -119,7 +130,27 @@
                 }
               </label>
               <button
-                class="task-delete"
+                class="task-action"
+                type="button"
+                [attr.aria-label]="'Edit ' + item.task.title"
+                (click)="startEditingTask(item.task.id, $event)"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4 20h4L19 9l-4-4L4 16v4z"></path>
+                </svg>
+              </button>
+              <button
+                class="task-action task-delete"
                 type="button"
                 [attr.aria-label]="'Delete ' + item.task.title"
                 (click)="deleteTask(item.task.id)"
@@ -142,6 +173,80 @@
             <li class="ui-muted no-tasks">Nothing for today. Add a task with +.</li>
           }
         </ul>
+        @if (notToday().length > 0) {
+          <button
+            class="not-today-toggle"
+            type="button"
+            [attr.aria-expanded]="isNotTodayOpen()"
+            (click)="isNotTodayOpen.set(!isNotTodayOpen())"
+          >
+            Not today
+            <span class="ui-muted ui-tabular">{{ notToday().length }}</span>
+            <span class="chevron" aria-hidden="true">{{ isNotTodayOpen() ? '▾' : '▸' }}</span>
+          </button>
+          @if (isNotTodayOpen()) {
+            <ul class="tasks not-today" aria-label="Tasks not due today">
+              @for (item of notToday(); track item.task.id) {
+                <li
+                  class="task-row other-task"
+                  [class.is-highlighted]="item.task.id === highlightedTaskId()"
+                >
+                  <span class="task-text">
+                    <span class="task-title">{{ item.task.title }}</span>
+                    <span class="task-repeat">
+                      {{ notTodayGroupLabels[item.group] }} · {{ item.repeat }}
+                    </span>
+                  </span>
+                  @if (item.category; as category) {
+                    <span class="task-category" [style.color]="category.color">
+                      <span class="ui-dot" [style.background]="category.color"></span>
+                      {{ category.name }}
+                    </span>
+                  }
+                  <button
+                    class="task-action"
+                    type="button"
+                    [attr.aria-label]="'Edit ' + item.task.title"
+                    (click)="startEditingTask(item.task.id, $event)"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M4 20h4L19 9l-4-4L4 16v4z"></path>
+                    </svg>
+                  </button>
+                  <button
+                    class="task-action task-delete"
+                    type="button"
+                    [attr.aria-label]="'Delete ' + item.task.title"
+                    (click)="deleteTask(item.task.id)"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M6 6l12 12M18 6L6 18"></path>
+                    </svg>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        }
       </section>
 
       <section class="ui-card side-card goals-card" aria-labelledby="goals-title">

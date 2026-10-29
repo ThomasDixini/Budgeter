@@ -1,11 +1,13 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Observable, Subject } from 'rxjs';
 import { Clock } from '../calendar/clock';
 import { FixedClock } from '../calendar/fixed-clock';
 import { IdGenerator } from '../ids/id-generator';
 import { SequentialIdGenerator } from '../ids/sequential-id-generator';
 import { FakeGoalsGateway, provideFakeRoutinesGateways } from './fake-routines-gateways';
 import { FakeTasksGateway } from './fake-tasks-gateway';
+import { Task } from './task';
 import { TasksGateway } from './tasks-gateway';
 import { TasksStore } from './tasks-store';
 
@@ -41,6 +43,18 @@ function createStore(
     ],
   });
   return { store: TestBed.inject(TasksStore), gateway, goals, errors };
+}
+
+/** Saves that stay open until a test answers them, to play out slow or reordered replies. */
+class ControlledSaveTasksGateway extends FakeTasksGateway {
+  readonly pending: Subject<Task>[] = [];
+
+  override save(task: Task): Observable<Task> {
+    this.saved.push(task);
+    const reply = new Subject<Task>();
+    this.pending.push(reply);
+    return reply;
+  }
 }
 
 function todayIds(store: TasksStore): string[] {
@@ -141,5 +155,129 @@ describe('TasksStore', () => {
 
     expect(todayIds(store)).toEqual(['t2', 't4', 't5']);
     expect(gateway.deleted).toEqual(['t1', 't2']);
+  });
+
+  it('sets a one-time task for the day the draft names, not always today', () => {
+    const { store, gateway } = createStore();
+
+    const task = store.addTask({
+      title: 'Renew the passport',
+      repeat: 'once',
+      days: [],
+      date: '2026-12-01',
+    });
+
+    expect(task.date).toBe('2026-12-01');
+    expect(todayIds(store)).not.toContain(task.id);
+    expect(gateway.saved).toEqual([task]);
+  });
+
+  describe('updateTask', () => {
+    const DAILY_READ = { title: 'Read 30 pages', repeat: 'daily', days: [] } as const;
+
+    it('edits the task and saves it under the same id', () => {
+      const { store, gateway } = createStore();
+
+      const task = store.updateTask('t5', { ...DAILY_READ, categoryId: 'study' });
+
+      expect(task).toEqual({ id: 't5', ...DAILY_READ, categoryId: 'study', date: undefined });
+      expect(store.tasks().find((current) => current.id === 't5')).toEqual(task);
+      expect(gateway.saved).toEqual([task]);
+    });
+
+    it('moves a task out of today and into the "not today" list when its day changes', () => {
+      const { store } = createStore();
+
+      store.updateTask('t1', { title: 'Reply to pending emails', repeat: 'weekly', days: [1] });
+
+      expect(todayIds(store)).not.toContain('t1');
+      expect(store.notToday().map((item) => item.task.id)).toContain('t1');
+    });
+
+    it('ignores a task it does not have', () => {
+      const { store, gateway } = createStore();
+
+      expect(store.updateTask('missing', DAILY_READ)).toBeUndefined();
+      expect(gateway.saved).toEqual([]);
+    });
+
+    it('puts back only the failed task, keeping what was added in the meantime', () => {
+      const gateway = new ControlledSaveTasksGateway();
+      const { store } = createStore(gateway);
+      store.updateTask('t5', DAILY_READ);
+
+      const added = store.addTask({ title: 'Call the bank', repeat: 'once', days: [] });
+      gateway.pending[0].error(new Error('offline'));
+
+      expect(store.tasks().find((task) => task.id === 't5')?.title).toBe('Read 20 pages');
+      expect(store.tasks().map((task) => task.id)).toContain(added.id);
+    });
+
+    // Regression: rolling back an old failed edit used to undo a newer edit that had worked.
+    it('does not undo a newer edit of the same task when an older save fails', () => {
+      const gateway = new ControlledSaveTasksGateway();
+      const { store } = createStore(gateway);
+      store.updateTask('t5', { ...DAILY_READ, title: 'First edit' });
+      store.updateTask('t5', { ...DAILY_READ, title: 'Second edit' });
+
+      gateway.pending[1].next({} as Task);
+      gateway.pending[0].error(new Error('offline'));
+
+      expect(store.tasks().find((task) => task.id === 't5')?.title).toBe('Second edit');
+    });
+
+    it('does not let a slow answer to an earlier edit overwrite a newer one', () => {
+      const gateway = new ControlledSaveTasksGateway();
+      const { store } = createStore(gateway);
+      const first = store.updateTask('t5', { ...DAILY_READ, title: 'First edit' })!;
+      const second = store.updateTask('t5', { ...DAILY_READ, title: 'Second edit' })!;
+
+      gateway.pending[1].next(second);
+      gateway.pending[0].next(first);
+
+      expect(store.tasks().find((task) => task.id === 't5')?.title).toBe('Second edit');
+    });
+  });
+
+  describe('a task edited before its add is answered', () => {
+    const DRAFT = { title: 'Call the bank', repeat: 'once', days: [] } as const;
+
+    it('keeps the edit when the add is answered late', () => {
+      const gateway = new ControlledSaveTasksGateway();
+      const { store } = createStore(gateway);
+      const added = store.addTask(DRAFT);
+      store.updateTask(added.id, { ...DRAFT, title: 'Call the bank back' });
+
+      gateway.pending[0].next(added);
+
+      expect(store.tasks().find((task) => task.id === added.id)?.title).toBe('Call the bank back');
+    });
+
+    it('keeps the edit when the add fails, since the edit is saved by its own request', () => {
+      const gateway = new ControlledSaveTasksGateway();
+      const { store } = createStore(gateway);
+      const added = store.addTask(DRAFT);
+      store.updateTask(added.id, { ...DRAFT, title: 'Call the bank back' });
+
+      gateway.pending[0].error(new Error('offline'));
+
+      expect(store.tasks().find((task) => task.id === added.id)?.title).toBe('Call the bank back');
+    });
+
+    it('drops an add that failed and was not touched', () => {
+      const gateway = new ControlledSaveTasksGateway();
+      const { store } = createStore(gateway);
+      const added = store.addTask(DRAFT);
+
+      gateway.pending[0].error(new Error('offline'));
+
+      expect(store.tasks().map((task) => task.id)).not.toContain(added.id);
+    });
+  });
+
+  it('lists the tasks that are not due today, for editing and deleting', () => {
+    const { store } = createStore();
+
+    expect(store.notToday().map((item) => item.task.id)).toEqual(['t3']);
   });
 });
