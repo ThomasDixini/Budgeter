@@ -48,7 +48,7 @@ public class TaskUseCaseTests
     public async Task Completions_MarkAndUnmarkADay()
     {
         await new SaveTask(_tasks, _categories).ExecuteAsync(ReadDaily(), CancellationToken.None);
-        var completions = new TaskCompletions(_tasks, new GoalCredits(_goals, _goals));
+        var completions = new TaskCompletions(_tasks);
 
         await completions.SetAsync("t1", Today, isDone: true, CancellationToken.None);
         var done = await completions.ListAsync(Today, CancellationToken.None);
@@ -62,7 +62,7 @@ public class TaskUseCaseTests
     public async Task Completions_RejectAnUnknownTask()
     {
         await Should.ThrowAsync<ResourceNotFoundException>(() =>
-            new TaskCompletions(_tasks, new GoalCredits(_goals, _goals)).SetAsync("missing", Today, isDone: true, CancellationToken.None));
+            new TaskCompletions(_tasks).SetAsync("missing", Today, isDone: true, CancellationToken.None));
     }
 
     [Fact]

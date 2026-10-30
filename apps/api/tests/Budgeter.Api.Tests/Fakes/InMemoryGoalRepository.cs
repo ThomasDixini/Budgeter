@@ -62,12 +62,9 @@ internal sealed class InMemoryGoalRepository : IGoalRepository, IGoalProgressLed
         return Task.CompletedTask;
     }
 
-    public Task TakeBackAsync(GoalProgressEvent entry, GoalWindow window, CancellationToken cancellationToken)
+    public Task RemoveAsync(string eventId, CancellationToken cancellationToken)
     {
-        var manual = _events
-            .Where(stored => stored.GoalId == entry.GoalId && stored.Source == GoalSource.Manual && window.Contains(stored.Date))
-            .Sum(stored => stored.Amount);
-        if (manual + entry.Amount >= 0) return RecordAsync(entry, cancellationToken);
+        _events.RemoveAll(entry => entry.EventId == eventId);
         return Task.CompletedTask;
     }
 
@@ -77,26 +74,20 @@ internal sealed class InMemoryGoalRepository : IGoalRepository, IGoalProgressLed
         return Task.CompletedTask;
     }
 
-    public Task RemoveAutomaticAsync(string goalId, CancellationToken cancellationToken)
-    {
-        _events.RemoveAll(entry => entry.GoalId == goalId && entry.Source != GoalSource.Manual);
-        return Task.CompletedTask;
-    }
-
     private Goal Restore(GoalDefinition definition, DateOnly day)
     {
-        var window = GoalWindow.For(definition.Period, day, definition.Deadline);
-        var inWindow = _events.Where(entry => entry.GoalId == definition.Id && window.Contains(entry.Date)).ToList();
-        var manual = inWindow.Where(entry => entry.Source == GoalSource.Manual).Sum(entry => entry.Amount);
-        var automaticSource = definition.Tracking switch
+        var normalized = Goal.Create(definition).Definition;
+        if (normalized.Type == GoalType.Objective)
         {
-            GoalTracking.Blocks => GoalSource.Block,
-            GoalTracking.Tasks => GoalSource.Task,
-            _ => GoalSource.Manual,
-        };
-        var automatic = inWindow
-            .Where(entry => entry.Source != GoalSource.Manual && entry.Source == automaticSource)
-            .Sum(entry => entry.Amount);
-        return Goal.Restore(definition, GoalProgress.Compute(definition.Target, manual, automatic));
+            var achievement = _events.Find(entry => entry.EventId == GoalAchievement.EntryId(definition.Id) && entry.Date <= day);
+            return Goal.RestoreObjective(definition, achievement?.Date);
+        }
+        var window = GoalWindow.For(definition.Period, day, definition.Deadline);
+        var inWindow = _events
+            .Where(entry => entry.GoalId == definition.Id && entry.SourceRef != GoalAchievement.SourceRef && window.Contains(entry.Date))
+            .ToList();
+        var manual = inWindow.Where(entry => entry.Source == GoalSource.Manual).Sum(entry => entry.Amount);
+        var automatic = inWindow.Where(entry => entry.Source != GoalSource.Manual).Sum(entry => entry.Amount);
+        return Goal.Restore(definition, GoalProgress.Compute(manual, automatic));
     }
 }

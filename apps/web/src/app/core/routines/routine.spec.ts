@@ -1,6 +1,7 @@
 import {
   Routine,
   RoutineBlock,
+  activeRoutine,
   hourTicks,
   plannedMinutes,
   routineForWeekday,
@@ -129,5 +130,47 @@ describe('weekdaysLabel', () => {
 describe('routineForWeekday', () => {
   it('finds the routine that runs on the weekday', () => {
     expect(routineForWeekday(SAMPLE_ROUTINES, 5)?.name).toBe('Weekend');
+  });
+});
+
+describe('activeRoutine', () => {
+  const NIGHT_SHIFT: Routine = {
+    id: 'night',
+    name: 'Night shift',
+    days: [0],
+    start: '22:00',
+    end: '06:00',
+    blocks: [],
+  };
+  const TUESDAY = 1;
+  const DAYTIME: Routine = { ...weekdays, days: [1, 2, 3, 4] };
+
+  it('is the routine of the weekday during the day', () => {
+    const active = activeRoutine([DAYTIME, NIGHT_SHIFT], TUESDAY, 14 * 60);
+
+    expect(active).toEqual({ routine: DAYTIME, startedYesterday: false });
+  });
+
+  it("keeps last night's routine running until it ends", () => {
+    const active = activeRoutine([DAYTIME, NIGHT_SHIFT], TUESDAY, 2 * 60);
+
+    expect(active).toEqual({ routine: NIGHT_SHIFT, startedYesterday: true });
+  });
+
+  it("goes back to the weekday routine once last night's has ended", () => {
+    const active = activeRoutine([DAYTIME, NIGHT_SHIFT], TUESDAY, 6 * 60);
+
+    expect(active?.routine).toBe(DAYTIME);
+  });
+
+  it("ignores yesterday's routine when it ended before midnight", () => {
+    expect(activeRoutine([DAYTIME], TUESDAY, 60)).toEqual({
+      routine: DAYTIME,
+      startedYesterday: false,
+    });
+  });
+
+  it('is nothing when no routine covers the day', () => {
+    expect(activeRoutine([DAYTIME], 5, 600)).toBeUndefined();
   });
 });

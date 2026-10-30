@@ -14,8 +14,8 @@ public class UpdateAndDeleteGoalTests
     private Task<Goal> Update(Func<UpdateGoalCommand, UpdateGoalCommand>? change = null)
     {
         var command = new UpdateGoalCommand(
-            "g1", "Study C# 4x a week", GoalPeriod.Weekly, 4, null, null, GoalTracking.Manual, TestDays.Today);
-        return new UpdateGoal(_goals, _goals).ExecuteAsync(change?.Invoke(command) ?? command, CancellationToken.None);
+            "g1", "Study C# 4x a week", GoalPeriod.Weekly, 4, null, null, TestDays.Today);
+        return new UpdateGoal(_goals).ExecuteAsync(change?.Invoke(command) ?? command, CancellationToken.None);
     }
 
     [Fact]
@@ -35,25 +35,15 @@ public class UpdateAndDeleteGoalTests
     }
 
     [Fact]
-    public async Task Update_LoweringTheTargetBelowTheProgressShowsItCapped()
+    public async Task Update_LoweringTheTargetBelowTheProgressKeepsEveryRepetition()
     {
         var goal = await Update(command => command with { Target = 2 });
 
-        goal.Done.ShouldBe(2);
+        goal.Done.ShouldBe(3);
     }
 
     [Fact]
-    public async Task Update_ChangingWhatFeedsTheGoalDropsTheOldAutomaticEntriesOnly()
-    {
-        await _goals.RecordAsync(new("auto", "g1", TestDays.Today, 1, GoalSource.Block, "weekdays/csharp"), CancellationToken.None);
-
-        await Update(command => command with { Tracking = GoalTracking.Tasks });
-
-        _goals.Events.Select(entry => entry.EventId).ShouldBe(["seed:g1"]);
-    }
-
-    [Fact]
-    public async Task Update_KeepingTheTrackingKeepsAutomaticEntries()
+    public async Task Update_KeepsTheProgressEntries()
     {
         await _goals.RecordAsync(new("auto", "g1", TestDays.Today, 1, GoalSource.Block, "weekdays/csharp"), CancellationToken.None);
 

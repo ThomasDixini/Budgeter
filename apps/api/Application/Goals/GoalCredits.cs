@@ -3,34 +3,35 @@ using Budgeter.Api.Domain.Goals;
 namespace Budgeter.Api.Application.Goals;
 
 /// <summary>
-/// Turns completed routine blocks and tasks into goal progress. The block or task is saved first and
-/// the credit second; both writes are idempotent, so a retry repairs whichever one failed.
+/// Turns completed routine blocks into goal progress. The block outcome is saved first and the credit
+/// second; both writes are idempotent, so a retry repairs whichever one failed.
 /// </summary>
 public sealed class GoalCredits(IGoalRepository goals, IGoalProgressLedger ledger)
 {
     /// <summary>
-    /// Counts one completion for every goal that is tracked from this kind of source in the category.
-    /// Doing it again for the same completion changes nothing. A completion without a category credits nothing.
+    /// Counts one completion for every frequency goal of the block's category. Doing it again for the
+    /// same block on the same day changes nothing. A block without a category credits nothing.
     /// </summary>
-    /// <example><code>await goalCredits.CreditAsync(GoalSource.Block, "weekdays/csharp", "study", day, ct);</code></example>
-    public async Task CreditAsync(
-        GoalSource source, string sourceRef, string? categoryId, DateOnly day, CancellationToken cancellationToken)
+    /// <example><code>await goalCredits.CreditBlockAsync("weekdays/csharp", "study", day, ct);</code></example>
+    public async Task CreditBlockAsync(
+        string blockRef, string? categoryId, DateOnly day, CancellationToken cancellationToken)
     {
         if (categoryId is null) return;
         foreach (var goal in await goals.ListAsync(day, cancellationToken))
         {
-            if (!goal.Accepts(source, categoryId)) continue;
-            var entryId = $"{goal.Id}:{source.ToString().ToLowerInvariant()}:{sourceRef}:{day:yyyy-MM-dd}";
-            await ledger.RecordAsync(new GoalProgressEvent(entryId, goal.Id, day, 1, source, sourceRef), cancellationToken);
+            if (!goal.AcceptsBlockOf(categoryId)) continue;
+            var entryId = $"{goal.Id}:block:{blockRef}:{day:yyyy-MM-dd}";
+            await ledger.RecordAsync(
+                new GoalProgressEvent(entryId, goal.Id, day, 1, GoalSource.Block, blockRef), cancellationToken);
         }
     }
 
     /// <summary>
-    /// Takes back what a completion earned, for when it is undone, skipped or unchecked.
+    /// Takes back what a block earned on a day, for when it is undone or skipped.
     /// </summary>
-    /// <example><code>await goalCredits.RevokeAsync(GoalSource.Task, "t1", day, ct);</code></example>
-    public Task RevokeAsync(GoalSource source, string sourceRef, DateOnly day, CancellationToken cancellationToken)
+    /// <example><code>await goalCredits.RevokeBlockAsync("weekdays/csharp", day, ct);</code></example>
+    public Task RevokeBlockAsync(string blockRef, DateOnly day, CancellationToken cancellationToken)
     {
-        return ledger.RemoveBySourceAsync(source, sourceRef, day, cancellationToken);
+        return ledger.RemoveBySourceAsync(GoalSource.Block, blockRef, day, cancellationToken);
     }
 }

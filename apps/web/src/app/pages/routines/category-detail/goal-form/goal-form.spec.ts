@@ -41,12 +41,6 @@ function submit(fixture: ComponentFixture<GoalForm>): GoalDraft[] {
   return drafts;
 }
 
-function clickTracking(fixture: ComponentFixture<GoalForm>, label: string): void {
-  const chips = [...element(fixture).querySelectorAll<HTMLButtonElement>('.ui-chip')];
-  chips.find((chip) => chip.textContent?.trim() === label)!.click();
-  fixture.detectChanges();
-}
-
 function preview(fixture: ComponentFixture<GoalForm>): string {
   return (
     element(fixture).querySelector('.preview-card')?.textContent?.replace(/\s+/g, ' ').trim() ?? ''
@@ -59,7 +53,6 @@ const STUDY_GOAL: Goal = {
   title: 'Study C# 5x a week',
   type: 'frequency',
   period: 'weekly',
-  tracking: 'tasks',
   done: 2,
   target: 5,
 };
@@ -111,49 +104,33 @@ describe('GoalForm', () => {
         target: 1,
         unit: undefined,
         deadline: undefined,
-        tracking: 'manual',
       },
     ]);
   });
 
-  it('can count a frequency goal from completed blocks', () => {
+  it('explains that a frequency goal counts completed blocks', () => {
     const fixture = createForm();
-    setField(fixture, '.name-input', 'Study blocks');
-    clickTracking(fixture, 'Completed blocks');
 
-    expect(submit(fixture)[0].tracking).toBe('blocks');
-    expect(element(fixture).querySelector('.tracking-hint')?.textContent).toContain(
-      'routine block',
+    expect(element(fixture).querySelector('.counting-hint')?.textContent).toContain(
+      'Each block of this category you complete counts once',
     );
   });
 
-  it('offers no automatic counting for an objective', () => {
-    const fixture = createForm();
-    clickTracking(fixture, 'Completed tasks');
-    click(fixture, '.type', 1);
-    setField(fixture, '.name-input', 'Finish the book');
-
-    expect(element(fixture).textContent).not.toContain('Count progress from');
-    expect(submit(fixture)[0].tracking).toBe('manual');
-  });
-
-  it('emits an objective with a custom deadline', () => {
+  it('emits an objective for a custom period with no count to fill in', () => {
     const fixture = createForm();
     setField(fixture, '.name-input', 'Finish the book');
     click(fixture, '.type', 1);
     click(fixture, '.periods .ui-chip', 4);
-    setField(fixture, '.unit-input', 'chapters');
-    setField(fixture, '.custom-dates input[type="date"]:last-of-type', '2026-12-01', 'change');
 
     const [draft] = submit(fixture);
 
     expect(draft).toMatchObject({
       type: 'objective',
       period: 'custom',
-      target: 10,
-      unit: 'chapters',
+      target: 1,
     });
-    expect(preview(fixture)).toContain('0 of 10 chapters');
+    expect(element(fixture).querySelector('.number-input')).toBeNull();
+    expect(preview(fixture)).toContain('Not achieved yet');
   });
 
   it('does not emit without a name', () => {
@@ -185,7 +162,6 @@ describe('GoalForm', () => {
     const fixture = editForm(STUDY_GOAL);
     setField(fixture, '.name-input', 'Study C# 3x a week');
     setField(fixture, '.number-input', '3', 'change');
-    clickTracking(fixture, 'By hand');
 
     expect(submitEdit(fixture)).toEqual([
       {
@@ -194,7 +170,6 @@ describe('GoalForm', () => {
         target: 3,
         unit: undefined,
         deadline: undefined,
-        tracking: 'manual',
       },
     ]);
   });

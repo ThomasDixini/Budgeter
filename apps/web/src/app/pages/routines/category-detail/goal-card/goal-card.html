@@ -77,28 +77,6 @@
           <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path>
         </svg>
       </button>
-      @if (!isAutomatic()) {
-        <button
-          class="ui-button-ghost step"
-          type="button"
-          [disabled]="goal().done === 0"
-          [attr.aria-label]="'Take back progress on ' + goal().title"
-          title="Take back one"
-          (click)="decrement.emit(goal().id)"
-        >
-          −1
-        </button>
-      }
-      <button
-        class="ui-button-ghost increment ui-tabular"
-        type="button"
-        [disabled]="isAutomatic() || isComplete()"
-        [attr.aria-label]="'Log progress on ' + goal().title"
-        [attr.title]="isAutomatic() ? trackingNote() : null"
-        (click)="increment.emit(goal().id)"
-      >
-        +1
-      </button>
     </div>
   </div>
   @if (isConfirmingDelete()) {
@@ -113,7 +91,32 @@
     </div>
   }
   <h3 class="title">{{ goal().title }}</h3>
-  @if (showsDots()) {
+  @if (isObjective()) {
+    <button
+      class="achieve"
+      type="button"
+      [class.is-achieved]="isMet()"
+      [attr.aria-pressed]="isMet()"
+      [style.border-color]="isMet() ? color() : null"
+      [style.color]="isMet() ? color() : null"
+      (click)="toggleAchieved.emit(goal().id)"
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+      </svg>
+      {{ isMet() ? 'Achieved' : 'Mark achieved' }}
+    </button>
+  } @else if (showsDots()) {
     <div class="dots" aria-hidden="true">
       @for (filled of dots(); track $index) {
         <span
@@ -121,6 +124,9 @@
           [style.background]="filled ? color() : null"
           [style.border-color]="filled ? color() : null"
         ></span>
+      }
+      @if (extra() > 0) {
+        <span class="extra ui-tabular" [style.color]="color()">+{{ extra() }}</span>
       }
     </div>
   } @else {
@@ -130,6 +136,6 @@
   }
   <div class="bottom">
     <span class="value ui-tabular">{{ value() }}</span>
-    <span class="footer">{{ trackingNote() || footer() }}</span>
+    <span class="footer">{{ footer() }}</span>
   </div>
 </article>

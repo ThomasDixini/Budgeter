@@ -25,7 +25,6 @@ const WEEKLY_GOAL: Goal = {
   title: 'Study C# 5x a week',
   type: 'frequency',
   period: 'weekly',
-  tracking: 'manual',
   done: 0,
   target: 5,
 };
@@ -67,6 +66,21 @@ describe('HttpCategoriesGateway', () => {
 
     expect(request.request.body).toEqual(STUDY);
     request.flush(STUDY);
+  });
+
+  it('puts the name and color of an edited category', () => {
+    TestBed.inject(HttpCategoriesGateway).update(STUDY).subscribe();
+
+    const request = httpTesting.expectOne({ method: 'PUT', url: '/api/categories/study' });
+
+    expect(request.request.body).toEqual({ name: 'Study', color: '#7DD3FC' });
+    request.flush(STUDY);
+  });
+
+  it('deletes a category, escaping its id', () => {
+    TestBed.inject(HttpCategoriesGateway).delete('a/b').subscribe();
+
+    httpTesting.expectOne({ method: 'DELETE', url: '/api/categories/a%2Fb' }).flush(null);
   });
 });
 
@@ -170,17 +184,17 @@ describe('HttpGoalsGateway', () => {
     request.flush(WEEKLY_GOAL);
   });
 
-  it('logs progress as an entry with its id, day and amount, escaping the goal id', () => {
+  it('puts whether an objective is achieved on a day, escaping the goal id', () => {
     let received: Goal | undefined;
 
     TestBed.inject(HttpGoalsGateway)
-      .logProgress('g 1', { eventId: 'e1', isoDay: '2026-10-28', amount: -1 })
+      .setAchievement('g 1', '2026-10-28', true)
       .subscribe((goal) => (received = goal));
-    const request = httpTesting.expectOne({ method: 'POST', url: '/api/goals/g%201/progress' });
-    request.flush({ ...WEEKLY_GOAL, done: 1 });
+    const request = httpTesting.expectOne({ method: 'PUT', url: '/api/goals/g%201/achievement' });
+    request.flush({ ...WEEKLY_GOAL, achievedOn: '2026-10-28' });
 
-    expect(request.request.body).toEqual({ eventId: 'e1', date: '2026-10-28', amount: -1 });
-    expect(received?.done).toBe(1);
+    expect(request.request.body).toEqual({ date: '2026-10-28', achieved: true });
+    expect(received?.achievedOn).toBe('2026-10-28');
   });
 
   it('puts the editable fields of a goal at its id for the day', () => {
@@ -188,7 +202,6 @@ describe('HttpGoalsGateway', () => {
       title: 'Study C# 3x',
       period: 'weekly',
       target: 3,
-      tracking: 'blocks',
     } as const;
 
     TestBed.inject(HttpGoalsGateway).update('g 1', changes, '2026-10-28').subscribe();

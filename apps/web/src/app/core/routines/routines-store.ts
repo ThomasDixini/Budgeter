@@ -65,35 +65,29 @@ export class RoutinesStore {
   }
 
   /**
-   * Logs one more repetition or unit of progress in the current period, stopping at the target.
-   * @example store.incrementGoal('g1')
+   * Marks an objective achieved today, or takes the mark back; the card shows it right away and goes
+   * back if the gateway rejects it. Frequency goals are not marked: they count completed blocks.
+   * @example store.setAchieved('g2', true)
    */
-  incrementGoal(goalId: string): void {
-    this.logProgress(goalId, 1);
-  }
-
-  /**
-   * Takes back one manual repetition in the current period. Progress that comes from completed
-   * blocks or tasks is not touched: the API ignores the take-back when no manual progress is left,
-   * and the card then snaps back to the real number.
-   * @example store.decrementGoal('g1')
-   */
-  decrementGoal(goalId: string): void {
-    this.logProgress(goalId, -1);
+  setAchieved(goalId: string, isAchieved: boolean): void {
+    const previous = this.goalList().find((goal) => goal.id === goalId);
+    if (previous?.type !== 'objective') return;
+    const today = this.today();
+    replaceById(this.goalList, withAchievement(previous, isAchieved ? today : undefined));
+    this.goalsGateway.setAchievement(goalId, today, isAchieved).subscribe({
+      next: (saved) => replaceById(this.goalList, saved),
+      error: (error: unknown) => this.rejected(error, () => replaceById(this.goalList, previous)),
+    });
   }
 
   /**
    * Edits a goal (not its type or category); the card shows the change right away.
-   * @example store.updateGoal('g1', { title: 'Study C# 4x', period: 'weekly', target: 4, tracking: 'manual' })
+   * @example store.updateGoal('g1', { title: 'Study C# 4x', period: 'weekly', target: 4 })
    */
   updateGoal(goalId: string, changes: GoalChanges): void {
     const previous = this.goalList().find((goal) => goal.id === goalId);
     if (previous === undefined) return;
-    replaceById(this.goalList, {
-      ...previous,
-      ...changes,
-      done: Math.min(previous.done, changes.target),
-    });
+    replaceById(this.goalList, { ...previous, ...changes });
     this.goalsGateway.update(goalId, changes, this.today()).subscribe({
       next: (saved) => replaceById(this.goalList, saved),
       error: (error: unknown) => this.rejected(error, () => replaceById(this.goalList, previous)),
@@ -113,8 +107,7 @@ export class RoutinesStore {
   }
 
   /**
-   * Reloads every goal's progress, for after something outside the goals changed it (a block or a
-   * task was completed or taken back).
+   * Reloads every goal's progress, for after a block was completed, skipped or taken back.
    * @example store.refreshGoals()
    */
   refreshGoals(): void {
@@ -126,7 +119,7 @@ export class RoutinesStore {
 
   /**
    * Adds a goal with no progress yet.
-   * @example store.addGoal({ categoryId: 'study', title: 'Read docs', type: 'frequency', period: 'weekly', target: 3, tracking: 'manual' })
+   * @example store.addGoal({ categoryId: 'study', title: 'Read docs', type: 'frequency', period: 'weekly', target: 3 })
    */
   addGoal(draft: GoalDraft): Goal {
     const goal: Goal = { ...draft, id: this.ids.next(), done: 0 };
@@ -151,6 +144,46 @@ export class RoutinesStore {
         this.rejected(error, () => removeById(this.categoryList, category.id)),
     });
     return category;
+  }
+
+  /**
+   * Renames and recolors a category; the page shows it right away and goes back if it is rejected.
+   * @example store.updateCategory('languages', 'Spanish', '#7DD3FC')
+   */
+  updateCategory(categoryId: string, name: string, color: string): void {
+    const previous = this.categoryList().find((category) => category.id === categoryId);
+    if (previous === undefined) return;
+    const category: Category = { id: categoryId, name, color };
+    replaceById(this.categoryList, category);
+    this.categoriesGateway.update(category).subscribe({
+      next: (saved) => replaceById(this.categoryList, saved),
+      error: (error: unknown) =>
+        this.rejected(error, () => replaceById(this.categoryList, previous)),
+    });
+  }
+
+  /**
+   * Deletes a category with its goals; routine blocks that used it stay, without a category (the API
+   * does the same). Everything comes back if the gateway rejects it.
+   * @example store.deleteCategory('languages')
+   */
+  deleteCategory(categoryId: string): void {
+    const before = {
+      categories: this.categoryList(),
+      goals: this.goalList(),
+      routines: this.routineList(),
+    };
+    this.categoryList.update((categories) => categories.filter((c) => c.id !== categoryId));
+    this.goalList.update((goals) => goals.filter((goal) => goal.categoryId !== categoryId));
+    this.routineList.update((routines) => routines.map((r) => withoutCategory(r, categoryId)));
+    this.categoriesGateway.delete(categoryId).subscribe({
+      error: (error: unknown) =>
+        this.rejected(error, () => {
+          this.categoryList.set(before.categories);
+          this.goalList.set(before.goals);
+          this.routineList.set(before.routines);
+        }),
+    });
   }
 
   /**
@@ -209,19 +242,6 @@ export class RoutinesStore {
     return isoDate(this.clock.now());
   }
 
-  /** Applies +1 or -1 locally, then lets the API answer with the real progress. */
-  private logProgress(goalId: string, amount: number): void {
-    const previous = this.goalList().find((goal) => goal.id === goalId);
-    if (previous === undefined) return;
-    const done = Math.max(0, Math.min(previous.target, previous.done + amount));
-    replaceById(this.goalList, { ...previous, done });
-    const entry = { eventId: this.ids.next(), isoDay: this.today(), amount };
-    this.goalsGateway.logProgress(goalId, entry).subscribe({
-      next: (saved) => replaceById(this.goalList, saved),
-      error: (error: unknown) => this.rejected(error, () => replaceById(this.goalList, previous)),
-    });
-  }
-
   private loaded<TRecord>(
     list: WritableSignal<readonly TRecord[]>,
     flag: WritableSignal<boolean>,
@@ -274,6 +294,20 @@ export class RoutinesStore {
 function withFreshProgress(current: readonly Goal[], fresh: readonly Goal[]): Goal[] {
   const byId = new Map(fresh.map((goal) => [goal.id, goal]));
   return current.map((goal) => byId.get(goal.id) ?? goal);
+}
+
+function withoutCategory(routine: Routine, categoryId: string): Routine {
+  if (!routine.blocks.some((block) => block.categoryId === categoryId)) return routine;
+  const blocks = routine.blocks.map((block) =>
+    block.categoryId === categoryId ? { ...block, categoryId: undefined } : block,
+  );
+  return { ...routine, blocks };
+}
+
+/** An objective as it reads once marked achieved on `isoDay`, or pending when it is undefined. */
+function withAchievement(goal: Goal, isoDay: string | undefined): Goal {
+  if (isoDay === undefined) return { ...goal, achievedOn: undefined, done: 0 };
+  return { ...goal, achievedOn: isoDay, done: goal.target };
 }
 
 function replaceById<TRecord extends Identified>(

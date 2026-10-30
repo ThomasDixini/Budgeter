@@ -1,14 +1,14 @@
 namespace Budgeter.Api.Domain.Goals;
 
-/// <summary>What feeds a goal's progress. Only frequency goals can be fed automatically.</summary>
+/// <summary>What feeds a goal's progress; it follows from the goal's type and is never chosen.</summary>
 public enum GoalTracking
 {
-    /// <summary>The user logs each repetition by hand.</summary>
+    /// <summary>An objective: the user marks it achieved.</summary>
     Manual,
 
-    /// <summary>Every completed routine block of the goal's category counts once.</summary>
+    /// <summary>A frequency goal: every completed routine block of the goal's category counts once.</summary>
     Blocks,
 
-    /// <summary>Every completed task of the goal's category counts once.</summary>
+    /// <summary>No longer assigned; kept so goals stored with it still read.</summary>
     Tasks,
 }

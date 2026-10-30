@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { Clock } from '../../core/calendar/clock';
@@ -36,6 +36,12 @@ function clickButton(element: HTMLElement, label: string): void {
 
 function text(element: HTMLElement, selector: string): string | undefined {
   return element.querySelector(selector)?.textContent?.trim();
+}
+
+function focusTitles(element: HTMLElement): string[] {
+  return [...element.querySelectorAll('.focus-goal-title')].map(
+    (title) => title.textContent?.trim() ?? '',
+  );
 }
 
 describe('Routines & Goals routes', () => {
@@ -91,15 +97,84 @@ describe('Today page', () => {
   it('lists the first three pending goals in focus', async () => {
     const element = await openPage('/routines');
 
-    const titles = [...element.querySelectorAll('.focus-goal-title')].map(
-      (title) => title.textContent,
-    );
-
-    expect(titles).toEqual([
+    expect(focusTitles(element)).toEqual([
       'Study C# 5x a week',
       'Finish the C# course',
       '10 new contacts this month',
     ]);
+  });
+
+  it('opens every goal with its progress from "See all", pending ones first, without leaving Today', async () => {
+    const element = await openPage('/routines');
+
+    clickButton(element, 'See all (7)');
+
+    expect(focusTitles(element)).toEqual([
+      'Study C# 5x a week',
+      'Finish the C# course',
+      '10 new contacts this month',
+      'Attend 1 event',
+      'Work out 3x a week',
+      'Review notes every day',
+      'Read 12 books in 2026',
+    ]);
+    expect(text(element, '#goals-title')).toBe('All goals');
+    expect(element.querySelectorAll('.focus-goal.is-met')).toHaveLength(2);
+    expect(TestBed.inject(Router).url).toBe('/routines');
+  });
+
+  it('shows each goal with its progress once opened', async () => {
+    const element = await openPage('/routines');
+
+    clickButton(element, 'See all (7)');
+
+    const values = [...element.querySelectorAll('.focus-goal-value')].map((value) =>
+      value.textContent?.trim(),
+    );
+    expect(values).toContain('3/5');
+    expect(values).toContain('Achieved on Oct 20');
+  });
+
+  it('marks an objective achieved from the goals card, which moves it to the goals met', async () => {
+    const element = await openPage('/routines');
+
+    element
+      .querySelector<HTMLButtonElement>('[aria-label="Mark achieved: Finish the C# course"]')!
+      .click();
+    TestBed.tick();
+
+    const goal = TestBed.inject(RoutinesStore)
+      .goals()
+      .find((current) => current.id === 'g2');
+    expect(goal?.achievedOn).toBe('2026-10-26');
+    expect(focusTitles(element)).not.toContain('Finish the C# course');
+  });
+
+  it('takes the achieved mark of an objective back from the goals card', async () => {
+    const element = await openPage('/routines');
+    clickButton(element, 'See all (7)');
+
+    element
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Take back achieved on Read 12 books in 2026"]',
+      )!
+      .click();
+    TestBed.tick();
+
+    const goal = TestBed.inject(RoutinesStore)
+      .goals()
+      .find((current) => current.id === 'g6');
+    expect(goal?.achievedOn).toBeUndefined();
+  });
+
+  it('goes back to the goals in focus with "Show less"', async () => {
+    const element = await openPage('/routines');
+    clickButton(element, 'See all (7)');
+
+    clickButton(element, 'Show less');
+
+    expect(focusTitles(element)).toHaveLength(3);
+    expect(text(element, '#goals-title')).toBe('Goals in focus');
   });
 
   it('completes the running block and moves the rest of the day earlier', async () => {
@@ -183,6 +258,170 @@ describe('Today page', () => {
 
     expect(element.querySelector('.task-form')).toBeNull();
     expect([...element.querySelectorAll('.task-title')].at(-1)?.textContent).toBe('Call the bank');
+  });
+
+  describe('editing and scheduling tasks', () => {
+    function taskForms(element: HTMLElement): NodeListOf<HTMLElement> {
+      return element.querySelectorAll<HTMLElement>('.task-form');
+    }
+
+    function editTask(element: HTMLElement, title: string): void {
+      element.querySelector<HTMLButtonElement>(`[aria-label="Edit ${title}"]`)!.click();
+      TestBed.tick();
+    }
+
+    function setField(
+      element: HTMLElement,
+      selector: string,
+      value: string,
+      event = 'input',
+    ): void {
+      const field = element.querySelector<HTMLInputElement>(selector)!;
+      field.value = value;
+      field.dispatchEvent(new Event(event));
+      TestBed.tick();
+    }
+
+    function saveForm(element: HTMLElement): void {
+      element.querySelector<HTMLButtonElement>('.task-form [type="submit"]')!.click();
+      TestBed.tick();
+    }
+
+    function chip(element: HTMLElement, label: string): void {
+      const chips = [...element.querySelectorAll<HTMLButtonElement>('.task-form .ui-chip')];
+      chips.find((candidate) => candidate.textContent?.trim() === label)!.click();
+      TestBed.tick();
+    }
+
+    function todayTitles(element: HTMLElement): string[] {
+      return [...element.querySelectorAll('.tasks:not(.not-today) .task-title')].map(
+        (title) => title.textContent ?? '',
+      );
+    }
+
+    it('edits a task from its row, with the form filled in', async () => {
+      const element = await openPage('/routines');
+
+      editTask(element, 'Read 20 pages');
+      expect(element.querySelector<HTMLInputElement>('.task-form input')!.value).toBe(
+        'Read 20 pages',
+      );
+      setField(element, '.task-form input', 'Read 30 pages');
+      saveForm(element);
+
+      expect(taskForms(element)).toHaveLength(0);
+      expect(todayTitles(element)).toContain('Read 30 pages');
+      expect(todayTitles(element)).not.toContain('Read 20 pages');
+    });
+
+    // Regression, same family as the goals: another task's form must not reuse the first one's fields.
+    it('opens the form of the task clicked, even with another one already open', async () => {
+      const element = await openPage('/routines');
+
+      editTask(element, 'Reply to pending emails');
+      editTask(element, 'Read 20 pages');
+
+      expect(taskForms(element)).toHaveLength(1);
+      expect(element.querySelector<HTMLInputElement>('.task-form input')!.value).toBe(
+        'Read 20 pages',
+      );
+    });
+
+    it('closes the add form when editing starts, and the other way round', async () => {
+      const element = await openPage('/routines');
+
+      element.querySelector<HTMLButtonElement>('[aria-label="New task"]')!.click();
+      TestBed.tick();
+      editTask(element, 'Read 20 pages');
+      expect(element.querySelector('.task-form')?.getAttribute('aria-label')).toBe('Edit task');
+      element.querySelector<HTMLButtonElement>('[aria-label="New task"]')!.click();
+      TestBed.tick();
+
+      expect(taskForms(element)).toHaveLength(1);
+      expect(element.querySelector('.task-form')?.getAttribute('aria-label')).toBe('New task');
+    });
+
+    it('lists tasks not due today under a collapsed "Not today"', async () => {
+      const element = await openPage('/routines');
+
+      expect(text(element, '.not-today-toggle')).toContain('Not today');
+      expect(element.querySelector('.not-today')).toBeNull();
+      element.querySelector<HTMLButtonElement>('.not-today-toggle')!.click();
+      TestBed.tick();
+
+      expect(text(element, '.not-today .task-title')).toBe('Do the LINQ exercises');
+      expect(text(element, '.not-today .task-repeat')).toContain('Tue, Thu');
+    });
+
+    it('schedules a one-time task for another day: it leaves today and shows, marked, in "Not today"', async () => {
+      const element = await openPage('/routines');
+      editTask(element, 'Read 20 pages');
+
+      chip(element, 'One time');
+      setField(element, '.task-form input[type="date"]', '2026-11-02', 'change');
+      saveForm(element);
+
+      expect(todayTitles(element)).not.toContain('Read 20 pages');
+      const row = element.querySelector('.not-today .is-highlighted');
+      expect(row?.textContent).toContain('Read 20 pages');
+      expect(row?.textContent).toContain('Nov 2');
+    });
+
+    it('returns the focus to the pencil that opened the form once it is saved', async () => {
+      const element = await openPage('/routines');
+      editTask(element, 'Read 20 pages');
+
+      saveForm(element);
+
+      expect(document.activeElement).toBe(
+        element.querySelector('[aria-label="Edit Read 20 pages"]'),
+      );
+    });
+
+    it('moves the focus to "Not today" when the task left the list the form was opened from', async () => {
+      const element = await openPage('/routines');
+      editTask(element, 'Read 20 pages');
+      chip(element, 'One time');
+      setField(element, '.task-form input[type="date"]', '2026-11-02', 'change');
+
+      saveForm(element);
+
+      expect(document.activeElement).toBe(element.querySelector('.not-today-toggle'));
+    });
+
+    it('keeps "Not today" closed when a task is saved for today', async () => {
+      const element = await openPage('/routines');
+      editTask(element, 'Read 20 pages');
+
+      saveForm(element);
+
+      expect(element.querySelector('.not-today')).toBeNull();
+    });
+
+    it('edits a task that is not due today', async () => {
+      const element = await openPage('/routines');
+      element.querySelector<HTMLButtonElement>('.not-today-toggle')!.click();
+      TestBed.tick();
+
+      editTask(element, 'Do the LINQ exercises');
+      chip(element, 'Every day');
+      saveForm(element);
+
+      expect(todayTitles(element)).toContain('Do the LINQ exercises');
+    });
+
+    it('deletes a task that is not due today', async () => {
+      const element = await openPage('/routines');
+      element.querySelector<HTMLButtonElement>('.not-today-toggle')!.click();
+      TestBed.tick();
+
+      element
+        .querySelector<HTMLButtonElement>('[aria-label="Delete Do the LINQ exercises"]')!
+        .click();
+      TestBed.tick();
+
+      expect(element.querySelector('.not-today-toggle')).toBeNull();
+    });
   });
 
   it('deletes a task', async () => {

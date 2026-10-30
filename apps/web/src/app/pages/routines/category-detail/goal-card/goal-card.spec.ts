@@ -2,18 +2,32 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Goal } from '../../../../core/routines/goal';
 import { GoalCard } from './goal-card';
 
-const MANUAL: Goal = {
+const WEEKLY: Goal = {
   id: 'g1',
   categoryId: 'study',
   title: 'Study C# 5x a week',
   type: 'frequency',
   period: 'weekly',
-  tracking: 'manual',
   done: 3,
   target: 5,
 };
 
-function createCard(goal: Goal = MANUAL): ComponentFixture<GoalCard> {
+const OBJECTIVE: Goal = {
+  id: 'g2',
+  categoryId: 'study',
+  title: 'Finish the C# course',
+  type: 'objective',
+  period: 'custom',
+  done: 0,
+  target: 1,
+  deadline: '2026-12-15',
+};
+
+function text(fixture: ComponentFixture<GoalCard>, selector: string): string | undefined {
+  return (fixture.nativeElement as HTMLElement).querySelector(selector)?.textContent?.trim();
+}
+
+function createCard(goal: Goal = WEEKLY): ComponentFixture<GoalCard> {
   const fixture = TestBed.createComponent(GoalCard);
   fixture.componentRef.setInput('goal', goal);
   fixture.componentRef.setInput('color', '#7DD3FC');
@@ -37,22 +51,43 @@ function clickText(fixture: ComponentFixture<GoalCard>, text: string): void {
 }
 
 describe('GoalCard', () => {
-  it('logs progress with +1 and takes it back with −1', () => {
+  it('has no +1 or −1: a frequency goal counts completed blocks by itself', () => {
     const fixture = createCard();
-    const events: string[] = [];
-    fixture.componentInstance.increment.subscribe(() => events.push('+1'));
-    fixture.componentInstance.decrement.subscribe(() => events.push('-1'));
 
-    button(fixture, 'Log progress on Study C# 5x a week').click();
-    button(fixture, 'Take back progress on Study C# 5x a week').click();
+    const labels = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].map(
+      (candidate) => candidate.textContent?.trim(),
+    );
 
-    expect(events).toEqual(['+1', '-1']);
+    expect(labels).not.toContain('+1');
+    expect(labels).not.toContain('−1');
   });
 
-  it('cannot take back anything when there is no progress', () => {
-    const fixture = createCard({ ...MANUAL, done: 0 });
+  it('shows what was done beyond the target', () => {
+    const fixture = createCard({ ...WEEKLY, done: 7 });
 
-    expect(button(fixture, 'Take back progress on Study C# 5x a week').disabled).toBe(true);
+    expect(text(fixture, '.extra')).toBe('+2');
+    expect(text(fixture, '.value')).toBe('7 of 5 times');
+    expect(text(fixture, '.footer')).toBe('Completed · 2 extra');
+  });
+
+  it('asks the page to mark an objective achieved', () => {
+    const fixture = createCard(OBJECTIVE);
+    const toggled: string[] = [];
+    fixture.componentInstance.toggleAchieved.subscribe((id) => toggled.push(id));
+
+    clickText(fixture, 'Mark achieved');
+
+    expect(toggled).toEqual(['g2']);
+  });
+
+  it('shows an achieved objective as pressed, with the day it was achieved', () => {
+    const fixture = createCard({ ...OBJECTIVE, done: 1, achievedOn: '2026-10-27' });
+
+    const achieve = (fixture.nativeElement as HTMLElement).querySelector('.achieve');
+
+    expect(achieve?.getAttribute('aria-pressed')).toBe('true');
+    expect(achieve?.textContent?.trim()).toBe('Achieved');
+    expect(text(fixture, '.value')).toBe('Achieved on Oct 27');
   });
 
   it('asks the page to edit the goal', () => {
@@ -91,26 +126,5 @@ describe('GoalCard', () => {
     clickText(fixture, 'Delete');
 
     expect(removed).toEqual(['g1']);
-  });
-
-  it('shows a goal that counts blocks as automatic: no +1 or −1, and a note instead of the renewal', () => {
-    const fixture = createCard({ ...MANUAL, tracking: 'blocks' });
-
-    expect(button(fixture, 'Log progress on Study C# 5x a week').disabled).toBe(true);
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '[aria-label="Take back progress on Study C# 5x a week"]',
-      ),
-    ).toBeNull();
-    expect((fixture.nativeElement as HTMLElement).querySelector('.footer')?.textContent).toBe(
-      'Counts completed blocks',
-    );
-  });
-
-  it('has nothing left to log once the target is reached', () => {
-    const fixture = createCard({ ...MANUAL, done: 5 });
-
-    expect(button(fixture, 'Log progress on Study C# 5x a week').disabled).toBe(true);
-    expect(button(fixture, 'Take back progress on Study C# 5x a week').disabled).toBe(false);
   });
 });

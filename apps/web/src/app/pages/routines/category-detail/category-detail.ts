@@ -1,12 +1,18 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { Clock } from '../../../core/calendar/clock';
 import { formatDuration } from '../../../core/calendar/time-of-day';
-import { countLabel, withAlpha } from '../../../core/routines/category';
-import { GoalChanges, averageProgress } from '../../../core/routines/goal';
+import {
+  CATEGORY_SWATCHES,
+  Category,
+  countLabel,
+  withAlpha,
+} from '../../../core/routines/category';
+import { Goal, GoalChanges, averageProgress } from '../../../core/routines/goal';
 import { GoalDraft, RoutinesStore } from '../../../core/routines/routines-store';
+import { TasksStore } from '../../../core/routines/tasks-store';
 import { GoalCard } from './goal-card/goal-card';
 import { GoalForm } from './goal-form/goal-form';
 import {
@@ -26,6 +32,8 @@ import {
 })
 export class CategoryDetail {
   private readonly store = inject(RoutinesStore);
+  private readonly tasksStore = inject(TasksStore);
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly categoryId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('categoryId') ?? '')),
@@ -40,6 +48,11 @@ export class CategoryDetail {
   /** Id of the goal whose form is open for editing. */
   protected readonly editingGoalId = signal<string | undefined>(undefined);
   protected readonly isLoaded = this.store.isLoaded;
+  protected readonly swatches = CATEGORY_SWATCHES;
+  protected readonly isEditingCategory = signal(false);
+  protected readonly isConfirmingDelete = signal(false);
+  protected readonly draftName = signal('');
+  protected readonly draftColor = signal('');
 
   protected readonly category = computed(() =>
     this.store.categories().find((category) => category.id === this.categoryId()),
@@ -77,12 +90,33 @@ export class CategoryDetail {
     this.goals().filter((goal) => matchesFilters(goal, this.periodFilter(), this.typeFilter())),
   );
 
-  protected incrementGoal(goalId: string): void {
-    this.store.incrementGoal(goalId);
+  protected startEditingCategory(category: Category): void {
+    this.isConfirmingDelete.set(false);
+    this.draftName.set(category.name);
+    this.draftColor.set(category.color);
+    this.isEditingCategory.set(true);
   }
 
-  protected decrementGoal(goalId: string): void {
-    this.store.decrementGoal(goalId);
+  protected saveCategory(event: SubmitEvent): void {
+    event.preventDefault();
+    const name = this.draftName().trim();
+    if (name === '') return;
+    this.store.updateCategory(this.categoryId(), name, this.draftColor());
+    this.isEditingCategory.set(false);
+  }
+
+  protected deleteCategory(categoryId: string): void {
+    this.store.deleteCategory(categoryId);
+    this.tasksStore.detachCategory(categoryId);
+    void this.router.navigate(['/routines/categories']);
+  }
+
+  protected valueOf(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
+  protected toggleAchieved(goal: Goal): void {
+    this.store.setAchieved(goal.id, goal.achievedOn === undefined);
   }
 
   protected startEditing(goalId: string): void {

@@ -1,6 +1,5 @@
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Domain;
-using Budgeter.Api.Domain.Goals;
 
 namespace Budgeter.Api.Application.Routines;
 
@@ -19,7 +18,6 @@ public sealed class UndoBlockOutcome(IBlockOutcomeRepository outcomes, GoalCredi
         var validRoutineId = EntityId.Require(routineId, "routine id");
         var validBlockId = EntityId.Require(blockId, "block id");
         await outcomes.DeleteAsync(validRoutineId, validBlockId, date, cancellationToken);
-        await goalCredits.RevokeAsync(
-            GoalSource.Block, BlockSourceRef.For(validRoutineId, validBlockId), date, cancellationToken);
+        await goalCredits.RevokeBlockAsync(BlockSourceRef.For(validRoutineId, validBlockId), date, cancellationToken);
     }
 }

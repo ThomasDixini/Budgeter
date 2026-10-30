@@ -76,12 +76,24 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task Custom_CountsEverythingUpToTheDeadline()
     {
-        await AddGoalAsync(GoalDefinitions.CourseObjective());
-        await Log("early", new DateOnly(2026, 9, 1), goalId: "g2");
-        await Log("on-deadline", new DateOnly(2026, 12, 15), goalId: "g2");
-        await Log("after", new DateOnly(2026, 12, 16), goalId: "g2");
+        await AddGoalAsync(GoalDefinitions.WeeklyStudy() with { Period = GoalPeriod.Custom, Deadline = new DateOnly(2026, 12, 15) });
+        await Log("early", new DateOnly(2026, 9, 1));
+        await Log("on-deadline", new DateOnly(2026, 12, 15));
+        await Log("after", new DateOnly(2026, 12, 16));
 
-        (await DoneOn(TestDays.Today, "g2")).ShouldBe(2);
+        (await DoneOn(TestDays.Today)).ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Progress_KeepsCountingBeyondTheTarget()
+    {
+        await AddGoalAsync(GoalDefinitions.WeeklyStudy() with { Target = 2 });
+        foreach (var blockId in new[] { "a", "b", "c" })
+        {
+            await Log(blockId, TestDays.Today, source: GoalSource.Block, sourceRef: $"weekdays/{blockId}");
+        }
+
+        (await DoneOn(TestDays.Today)).ShouldBe(3);
     }
 
     [Fact]
@@ -98,64 +110,60 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task ManualEntriesNeverGoBelowZero_AndAutomaticOnesAddOn()
     {
-        await AddGoalAsync(GoalDefinitions.WeeklyStudy() with { Tracking = GoalTracking.Blocks });
+        await AddGoalAsync(GoalDefinitions.WeeklyStudy());
         await Log("auto", TestDays.Today, source: GoalSource.Block, sourceRef: "weekdays/csharp");
         await Log("manual-back", TestDays.Today, amount: -3);
 
         (await DoneOn(TestDays.Today)).ShouldBe(1);
     }
 
-    private Task TakeBack(string eventId, DateOnly day, int amount = -1, string goalId = "g1") =>
-        _ledger.TakeBackAsync(
-            new GoalProgressEvent(eventId, goalId, day, amount, GoalSource.Manual, string.Empty),
-            GoalWindow.For(GoalPeriod.Weekly, day, null),
-            CancellationToken.None);
-
+    // Entries from before goals were fed by blocks only still count, so no past progress is lost.
     [Fact]
-    public async Task TakeBack_RemovesOneOfTheManualEntriesOfThisPeriod()
+    public async Task EveryEntryOfTheGoalCounts_WhateverItsSource()
     {
         await AddGoalAsync(GoalDefinitions.WeeklyStudy());
-        await Log("manual", TestDays.Today, amount: 2);
-
-        await TakeBack("back", TestDays.Today);
-
-        (await DoneOn(TestDays.Today)).ShouldBe(1);
-    }
-
-    [Fact]
-    public async Task TakeBack_IgnoresAutomaticEntriesAndOtherWeeks_SoItCannotGoBelowZero()
-    {
-        await AddGoalAsync(GoalDefinitions.WeeklyStudy() with { Tracking = GoalTracking.Tasks });
-        await Log("auto", TestDays.Today, source: GoalSource.Task, sourceRef: "t1");
-        await Log("old", TestDays.Today.AddDays(-14));
-
-        await TakeBack("back", TestDays.Today);
-
-        (await DoneOn(TestDays.Today)).ShouldBe(1);
-        (await CountEntriesAsync()).ShouldBe(2);
-    }
-
-    [Fact]
-    public async Task TakeBack_TwoAtOnce_CannotBothPassWithOneRepetitionLeft()
-    {
-        await AddGoalAsync(GoalDefinitions.WeeklyStudy());
-        await Log("manual", TestDays.Today);
-
-        await Task.WhenAll(TakeBack("back-1", TestDays.Today), TakeBack("back-2", TestDays.Today));
-
-        (await DoneOn(TestDays.Today)).ShouldBe(0);
-        (await CountEntriesAsync()).ShouldBe(2);
-    }
-
-    // Entries of another source than the one the goal is tracked from never add up.
-    [Fact]
-    public async Task OnlyEntriesFromTheCurrentTrackingCount()
-    {
-        await AddGoalAsync(GoalDefinitions.WeeklyStudy() with { Tracking = GoalTracking.Tasks });
         await Log("from-a-task", TestDays.Today, source: GoalSource.Task, sourceRef: "t1");
-        await Log("left-from-blocks", TestDays.Today, source: GoalSource.Block, sourceRef: "weekdays/csharp");
+        await Log("from-a-block", TestDays.Today, source: GoalSource.Block, sourceRef: "weekdays/csharp");
+        await Log("by-hand", TestDays.Today);
 
-        (await DoneOn(TestDays.Today)).ShouldBe(1);
+        (await DoneOn(TestDays.Today)).ShouldBe(3);
+    }
+
+    private Task Achieve(DateOnly day) =>
+        Log(GoalAchievement.EntryId("g2"), day, goalId: "g2", sourceRef: GoalAchievement.SourceRef);
+
+    [Fact]
+    public async Task Objective_IsAchievedFromTheDayItWasMarked()
+    {
+        await AddGoalAsync(GoalDefinitions.CourseObjective());
+        await Achieve(TestDays.Today);
+
+        var before = await _goals.FindAsync("g2", TestDays.Today.AddDays(-1), CancellationToken.None);
+        var after = await _goals.FindAsync("g2", TestDays.Today.AddDays(30), CancellationToken.None);
+
+        (before!.AchievedOn, after!.AchievedOn, after.Done).ShouldBe(((DateOnly?)null, TestDays.Today, 12));
+    }
+
+    [Fact]
+    public async Task Objective_IgnoresProgressLoggedBeforeObjectivesWereMarkedByHand()
+    {
+        await AddGoalAsync(GoalDefinitions.CourseObjective());
+        await Log("old-units", TestDays.Today, amount: 7, goalId: "g2");
+
+        (await DoneOn(TestDays.Today, "g2")).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Remove_DeletesOnlyThatEntry()
+    {
+        await AddGoalAsync(GoalDefinitions.CourseObjective());
+        await Achieve(TestDays.Today);
+        await Log("other", TestDays.Today, goalId: "g2");
+
+        await _ledger.RemoveAsync(GoalAchievement.EntryId("g2"), CancellationToken.None);
+
+        (await CountEntriesAsync()).ShouldBe(1);
+        (await DoneOn(TestDays.Today, "g2")).ShouldBe(0);
     }
 
     private async Task<long> CountEntriesAsync()
@@ -169,7 +177,7 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task RemoveBySource_OnlyRemovesThatCompletionOnThatDay()
     {
-        await AddGoalAsync(GoalDefinitions.WeeklyStudy() with { Tracking = GoalTracking.Blocks });
+        await AddGoalAsync(GoalDefinitions.WeeklyStudy());
         await Log("a", TestDays.Today, source: GoalSource.Block, sourceRef: "weekdays/csharp");
         await Log("b", TestDays.Today.AddDays(-1), source: GoalSource.Block, sourceRef: "weekdays/csharp");
         await Log("c", TestDays.Today, source: GoalSource.Block, sourceRef: "weekdays/other");
@@ -177,18 +185,6 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
         await _ledger.RemoveBySourceAsync(GoalSource.Block, "weekdays/csharp", TestDays.Today, CancellationToken.None);
 
         (await DoneOn(TestDays.Today)).ShouldBe(2);
-    }
-
-    [Fact]
-    public async Task RemoveAutomatic_KeepsTheManualEntries()
-    {
-        await AddGoalAsync(GoalDefinitions.WeeklyStudy());
-        await Log("manual", TestDays.Today);
-        await Log("auto", TestDays.Today, source: GoalSource.Task, sourceRef: "t1");
-
-        await _ledger.RemoveAutomaticAsync("g1", CancellationToken.None);
-
-        (await DoneOn(TestDays.Today)).ShouldBe(1);
     }
 
     [Fact]
@@ -203,7 +199,7 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
 
         var goal = (await _goals.FindAsync("g1", TestDays.Today, CancellationToken.None))!;
         (goal.Definition.Title, goal.Definition.Target, goal.Definition.Tracking, goal.Done)
-            .ShouldBe(("Renamed", 8, GoalTracking.Tasks, 2));
+            .ShouldBe(("Renamed", 8, GoalTracking.Blocks, 2));
     }
 
     [Fact]

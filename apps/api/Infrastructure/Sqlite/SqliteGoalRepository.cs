@@ -76,36 +76,52 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
             connection, "DELETE FROM goals WHERE id = $id", cancellationToken, ("$id", id));
     }
 
-    private static async Task<Goal> WithProgressAsync(
+    private static Task<Goal> WithProgressAsync(
+        SqliteConnection connection, GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
+    {
+        return definition.Type == GoalType.Objective
+            ? WithAchievementAsync(connection, definition, day, cancellationToken)
+            : WithCompletionsAsync(connection, definition, day, cancellationToken);
+    }
+
+    /// <summary>
+    /// A frequency goal counts every entry of its period around the day: completed blocks, plus the
+    /// manual and task entries kept from before goals were fed by blocks only, so no past progress is lost.
+    /// </summary>
+    private static async Task<Goal> WithCompletionsAsync(
         SqliteConnection connection, GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
     {
         var window = GoalWindow.For(definition.Period, day, definition.Deadline);
-        // Only entries from the source the goal is tracked from count, so entries left over from an
-        // earlier setting (or from a change that raced with a completion) never add up.
         var totals = await SqliteCommands.QueryAsync(
             connection,
             """
             SELECT COALESCE(SUM(CASE WHEN source = 'manual' THEN amount ELSE 0 END), 0),
-                   COALESCE(SUM(CASE WHEN source = $automaticSource THEN amount ELSE 0 END), 0)
-            FROM goal_progress WHERE goal_id = $id AND date >= $start AND date <= $end
+                   COALESCE(SUM(CASE WHEN source <> 'manual' THEN amount ELSE 0 END), 0)
+            FROM goal_progress
+            WHERE goal_id = $id AND source_ref <> $achievement AND date >= $start AND date <= $end
             """,
             reader => (Manual: reader.GetInt32(0), Automatic: reader.GetInt32(1)),
             cancellationToken,
-            ("$id", definition.Id),
-            ("$automaticSource", AutomaticSourceOf(definition.Tracking)),
-            ("$start", window.Start.ToString(DateFormat, CultureInfo.InvariantCulture)),
-            ("$end", window.End.ToString(DateFormat, CultureInfo.InvariantCulture)));
+            ("$id", definition.Id), ("$achievement", GoalAchievement.SourceRef),
+            ("$start", ToText(window.Start)), ("$end", ToText(window.End)));
         var (manual, automatic) = totals[0];
-        return Goal.Restore(definition, GoalProgress.Compute(definition.Target, manual, automatic));
+        return Goal.Restore(definition, GoalProgress.Compute(manual, automatic));
     }
 
-    /// <summary>The progress source a tracking counts; "manual" progress is summed separately, so it matches nothing here.</summary>
-    private static string AutomaticSourceOf(GoalTracking tracking) => tracking switch
+    /// <summary>An objective is achieved as of the day it was marked, so earlier days still show it pending.</summary>
+    private static async Task<Goal> WithAchievementAsync(
+        SqliteConnection connection, GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
     {
-        GoalTracking.Blocks => "block",
-        GoalTracking.Tasks => "task",
-        _ => string.Empty,
-    };
+        var dates = await SqliteCommands.QueryAsync(
+            connection,
+            "SELECT date FROM goal_progress WHERE event_id = $eventId AND date <= $day",
+            reader => DateOnly.ParseExact(reader.GetString(0), DateFormat, CultureInfo.InvariantCulture),
+            cancellationToken,
+            ("$eventId", GoalAchievement.EntryId(definition.Id)), ("$day", ToText(day)));
+        return Goal.RestoreObjective(definition, dates.Count == 0 ? null : dates[0]);
+    }
+
+    private static string ToText(DateOnly day) => day.ToString(DateFormat, CultureInfo.InvariantCulture);
 
     private static GoalDefinition ToDefinition(SqliteDataReader reader)
     {

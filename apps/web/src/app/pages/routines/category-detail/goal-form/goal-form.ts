@@ -3,12 +3,10 @@ import { formatDate } from '@angular/common';
 import { withAlpha } from '../../../../core/routines/category';
 import {
   GOAL_PERIODS,
-  GOAL_TRACKING_OPTIONS,
   GOAL_TYPE_LABELS,
   Goal,
   GoalChanges,
   GoalPeriod,
-  GoalTracking,
   GoalType,
   goalPeriodInfo,
   parseIsoDate,
@@ -30,9 +28,13 @@ const GOAL_TYPE_OPTIONS: readonly {
   {
     value: 'frequency',
     label: 'By frequency',
-    description: 'Repeat an action X times in the period.',
+    description: 'Complete blocks of this category X times in the period.',
   },
-  { value: 'objective', label: 'By objective', description: 'Reach a value or milestone.' },
+  {
+    value: 'objective',
+    label: 'By objective',
+    description: 'A specific milestone you mark as achieved.',
+  },
 ];
 
 /** Inline form to define a goal for a category, with a live preview of the resulting card. */
@@ -57,16 +59,9 @@ export class GoalForm implements OnInit {
   protected readonly type = signal<GoalType>('frequency');
   protected readonly period = signal<GoalPeriod>('weekly');
   protected readonly times = signal(3);
-  protected readonly target = signal(10);
-  protected readonly unit = signal('');
   protected readonly from = signal('');
   protected readonly to = signal('');
-  protected readonly tracking = signal<GoalTracking>('manual');
-  protected readonly trackingOptions = GOAL_TRACKING_OPTIONS;
   protected readonly isEditing = computed(() => this.goal() !== undefined);
-  protected readonly trackingHint = computed(
-    () => GOAL_TRACKING_OPTIONS.find((option) => option.value === this.tracking())?.hint ?? '',
-  );
 
   protected readonly ring = computed(() => withAlpha(this.color(), 0.4));
   protected readonly selectedTint = computed(() => withAlpha(this.color(), 0.08));
@@ -86,7 +81,7 @@ export class GoalForm implements OnInit {
   protected readonly previewValue = computed(() =>
     this.type() === 'frequency'
       ? `0 of ${this.times()} ${this.times() === 1 ? 'time' : 'times'}`
-      : `0 of ${this.target()} ${this.unit()}`.trim(),
+      : 'Not achieved yet',
   );
   protected readonly previewFooter = computed(() => {
     if (this.period() !== 'custom') return periodFooter(this.period(), this.today());
@@ -105,10 +100,7 @@ export class GoalForm implements OnInit {
     this.name.set(goal.title);
     this.type.set(goal.type);
     this.period.set(goal.period);
-    this.tracking.set(goal.tracking);
     if (goal.type === 'frequency') this.times.set(goal.target);
-    else this.target.set(goal.target);
-    this.unit.set(goal.unit ?? '');
     this.to.set(goal.deadline ?? '');
   }
 
@@ -127,7 +119,6 @@ export class GoalForm implements OnInit {
       target: draft.target,
       unit: draft.unit,
       deadline: draft.deadline,
-      tracking: draft.tracking,
     });
   }
 
@@ -140,17 +131,16 @@ export class GoalForm implements OnInit {
     return Math.max(1, Number.parseInt(this.textOf(event), 10) || 1);
   }
 
+  /** An objective has no count: it is achieved or not, so it is stored with a target of one. */
   private toDraft(title: string): GoalDraft {
-    const isFrequency = this.type() === 'frequency';
     return {
       categoryId: this.categoryId(),
       title,
       type: this.type(),
       period: this.period(),
-      target: isFrequency ? this.times() : this.target(),
-      unit: isFrequency ? undefined : this.unit().trim() || undefined,
+      target: this.type() === 'frequency' ? this.times() : 1,
+      unit: undefined,
       deadline: this.period() === 'custom' ? this.customTo() : undefined,
-      tracking: isFrequency ? this.tracking() : 'manual',
     };
   }
 

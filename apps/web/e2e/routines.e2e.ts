@@ -2,11 +2,15 @@ import { Page, expect, test } from '@playwright/test';
 import { HomePage } from './pages/home.page';
 import { RoutinesPage } from './pages/routines.page';
 import {
+  completeBlock,
   createCategory,
   createCategorizedTask,
   createDailyTask,
+  createObjective,
   createRoutine,
   createWeeklyGoal,
+  localDay,
+  localToday,
   SeededRoutine,
   uniqueTitle,
 } from './support/routines-api';
@@ -128,7 +132,8 @@ test.describe('today', () => {
     await page.clock.setFixedTime(monday);
     await routines.goto();
     const skipped = page.waitForResponse((response) => response.url().includes('/days/'));
-    await page.getByRole('button', { name: 'Skip' }).click();
+    // Exact: every timeline block also has a "Skip <block name>" button.
+    await page.getByRole('button', { name: 'Skip', exact: true }).click();
     await skipped;
     const undone = page.waitForResponse(
       (response) => response.url().includes('/days/') && response.request().method() === 'DELETE',
@@ -140,6 +145,60 @@ test.describe('today', () => {
 
     await expect(page.getByRole('heading', { level: 2, name: 'C# study' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Undo C# study' })).toHaveCount(0);
+  });
+
+  test('an edited task keeps its new title and category after a reload', async ({
+    page,
+    request,
+  }) => {
+    const task = await createDailyTask(request);
+    const renamed = uniqueTitle('Stretch and breathe');
+    await routines.goto();
+    const tasksCard = page.getByRole('region', { name: "Today's tasks" });
+    const saved = page.waitForResponse(
+      (response) => response.request().method() === 'PUT' && response.url().includes('/api/tasks/'),
+    );
+
+    await tasksCard.getByRole('button', { name: `Edit ${task.title}` }).click();
+    const form = tasksCard.getByRole('form', { name: 'Edit task' });
+    await form.getByLabel('Task').fill(renamed);
+    await form.getByLabel('Category').selectOption({ label: 'Study' });
+    await form.getByRole('button', { name: 'Save task' }).click();
+    await saved;
+    await page.reload();
+
+    const row = tasksCard.getByRole('listitem').filter({ hasText: renamed });
+    await expect(row).toContainText('Study');
+    await expect(tasksCard.getByText(task.title, { exact: true })).toHaveCount(0);
+  });
+
+  test('a one-time task scheduled for another day waits in "Not today" and shows up on that day', async ({
+    page,
+  }) => {
+    const title = uniqueTitle('Renew the passport');
+    // A far-off random day, so runs and browser projects do not share one and nothing else is due.
+    const day = new Date(2031, 0, 6 + Math.floor(Math.random() * 300), 9, 0);
+    const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+    await routines.goto();
+    const tasksCard = page.getByRole('region', { name: "Today's tasks" });
+    const saved = page.waitForResponse(
+      (response) => response.request().method() === 'PUT' && response.url().includes('/api/tasks/'),
+    );
+
+    await tasksCard.getByRole('button', { name: 'New task' }).click();
+    const form = tasksCard.getByRole('form', { name: 'New task' });
+    await form.getByLabel('Task').fill(title);
+    await form.getByLabel('On').fill(iso);
+    await form.getByRole('button', { name: 'Add task' }).click();
+    await saved;
+
+    const waiting = tasksCard.getByRole('list', { name: 'Tasks not due today' });
+    await expect(waiting.getByRole('listitem').filter({ hasText: title })).toBeVisible();
+    await expect(tasksCard.getByRole('checkbox', { name: title })).toHaveCount(0);
+
+    await page.clock.setFixedTime(day);
+    await page.reload();
+    await expect(tasksCard.getByRole('checkbox', { name: title })).toBeVisible();
   });
 
   test('checking a task off is kept after a reload', async ({ page, request }) => {
@@ -257,35 +316,33 @@ test.describe('categories & goals', () => {
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
   });
 
-  test('+1 logs progress on a goal and keeps it', async ({ page, request }) => {
-    const goal = await createWeeklyGoal(request, 'exercise', 3);
-    await routines.goto('/routines/categories/exercise');
+  test('a completed block of the category counts toward its goal', async ({ page, request }) => {
+    // Its own category: a completed block counts toward every frequency goal of its category, so
+    // sharing one with other tests (they run in parallel) would credit them by accident.
+    const category = await createCategory(request, 'Strength');
+    const goal = await createWeeklyGoal(request, category.id, 3);
+    const routine = await createRoutine(request, category.id);
+
+    await completeBlock(request, routine, localToday());
+    await routines.goto(`/routines/categories/${category.id}`);
+
     const card = page.getByRole('article').filter({ hasText: goal.title });
-    // Progress shows before the API answers; reloading earlier would abort the request.
-    const logged = page.waitForResponse((response) => response.url().endsWith('/progress'));
-
-    await page.getByRole('button', { name: `Log progress on ${goal.title}` }).click();
-
     await expect(card.getByText('1 of 3 times')).toBeVisible();
-    await logged;
-    await page.reload();
-    await expect(card.getByText('1 of 3 times')).toBeVisible();
+    await expect(card.getByRole('button', { name: '+1' })).toHaveCount(0);
   });
 
-  test('−1 takes a repetition back and keeps it after a reload', async ({ page, request }) => {
-    const goal = await createWeeklyGoal(request, 'exercise', 3);
+  test('an objective marked achieved stays achieved after a reload', async ({ page, request }) => {
+    const goal = await createObjective(request, 'exercise');
     await routines.goto('/routines/categories/exercise');
     const card = page.getByRole('article').filter({ hasText: goal.title });
-    const logged = page.waitForResponse((response) => response.url().endsWith('/progress'));
-    await page.getByRole('button', { name: `Log progress on ${goal.title}` }).click();
-    await logged;
-    const takenBack = page.waitForResponse((response) => response.url().endsWith('/progress'));
+    // The mark shows before the API answers; reloading earlier would abort the request.
+    const marked = page.waitForResponse((response) => response.url().endsWith('/achievement'));
 
-    await page.getByRole('button', { name: `Take back progress on ${goal.title}` }).click();
-    await takenBack;
+    await card.getByRole('button', { name: 'Mark achieved' }).click();
+    await marked;
     await page.reload();
 
-    await expect(card.getByText('0 of 3 times')).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Achieved', exact: true })).toBeVisible();
   });
 
   test('an edited goal keeps its new name and target after a reload', async ({ page, request }) => {
@@ -325,11 +382,9 @@ test.describe('categories & goals', () => {
     await expect(page.getByRole('heading', { name: goal.title })).toHaveCount(0);
   });
 
-  test('checking a task off counts toward a goal tracked from tasks', async ({ page, request }) => {
-    // Its own category: every task of a category counts toward the goals tracked from tasks there,
-    // so sharing one with other tests (they run in parallel) would credit them by accident.
+  test('checking a task off does not count toward goals', async ({ page, request }) => {
     const category = await createCategory(request, 'Mobility');
-    const goal = await createWeeklyGoal(request, category.id, 3, 'tasks');
+    const goal = await createWeeklyGoal(request, category.id, 3);
     const task = await createCategorizedTask(request, category.id);
     await routines.goto();
     const marked = page.waitForResponse((response) => response.url().includes('/completions/'));
@@ -339,7 +394,24 @@ test.describe('categories & goals', () => {
     await routines.goto(`/routines/categories/${category.id}`);
 
     const card = page.getByRole('article').filter({ hasText: goal.title });
-    await expect(card.getByText('1 of 3 times')).toBeVisible();
-    await expect(card.getByText('Counts completed tasks')).toBeVisible();
+    await expect(card.getByText('0 of 3 times')).toBeVisible();
+  });
+});
+
+test.describe('history', () => {
+  test('shows a block completed on a past day and the goal it met', async ({ page, request }) => {
+    const category = await createCategory(request, 'Focus');
+    const goal = await createWeeklyGoal(request, category.id, 1);
+    const routine = await createRoutine(request, category.id);
+    const yesterday = localDay(-1);
+    await completeBlock(request, routine, yesterday);
+
+    await routines.goto('/routines/history');
+    await page.getByLabel('Day to show').fill(yesterday);
+
+    const blocks = page.getByRole('region', { name: 'Blocks completed' });
+    await expect(blocks.getByText(routine.name)).toBeVisible();
+    const goals = page.getByRole('region', { name: 'Goals met' });
+    await expect(goals.getByText(goal.title)).toBeVisible();
   });
 });

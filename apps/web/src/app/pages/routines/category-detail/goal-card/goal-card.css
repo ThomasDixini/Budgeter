@@ -26,12 +26,6 @@
   gap: 8px;
 }
 
-.increment {
-  height: 36px;
-  padding: 0 12px;
-  font-size: var(--font-size-sm);
-}
-
 .title {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
@@ -41,7 +35,41 @@
 .dots {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+}
+
+/* Blocks completed beyond the target. */
+.extra {
+  margin-left: 2px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Marks an objective achieved; fills with the category color once it is. */
+.achieve {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--color-border-control);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.achieve:hover,
+.achieve:focus-visible {
+  color: var(--color-text);
+}
+
+.achieve.is-achieved {
+  font-weight: var(--font-weight-medium);
 }
 
 .dot {

@@ -34,6 +34,36 @@ public sealed class SqliteCategoryRepository(SqliteConnectionFactory connections
             ("$id", category.Id), ("$name", category.Name), ("$color", category.Color));
     }
 
+    public async Task UpdateAsync(Category category, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await SqliteCommands.ExecuteAsync(
+            connection,
+            "UPDATE categories SET name = $name, color = $color WHERE id = $id",
+            cancellationToken,
+            ("$id", category.Id), ("$name", category.Name), ("$color", category.Color));
+    }
+
+    public async Task DeleteAsync(string id, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        // Goals go first (their progress cascades); blocks and tasks only lose the reference.
+        foreach (var sql in DeleteStatements)
+        {
+            await SqliteCommands.ExecuteAsync(connection, sql, cancellationToken, ("$id", id));
+        }
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static readonly string[] DeleteStatements =
+    [
+        "DELETE FROM goals WHERE category_id = $id",
+        "UPDATE routine_blocks SET category_id = NULL WHERE category_id = $id",
+        "UPDATE tasks SET category_id = NULL WHERE category_id = $id",
+        "DELETE FROM categories WHERE id = $id",
+    ];
+
     private static Category ToCategory(SqliteDataReader reader)
     {
         return Category.Create(reader.GetString(0), reader.GetString(1), reader.GetString(2));

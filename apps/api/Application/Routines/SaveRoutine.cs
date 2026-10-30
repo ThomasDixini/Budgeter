@@ -1,4 +1,5 @@
 using Budgeter.Api.Application.Categories;
+using Budgeter.Api.Domain;
 using Budgeter.Api.Domain.Routines;
 
 namespace Budgeter.Api.Application.Routines;
@@ -30,8 +31,22 @@ public sealed class SaveRoutine(IRoutineRepository routines, ICategoryRepository
         {
             await RequireCategoryAsync(categoryId, cancellationToken);
         }
+        await RequireFreeDaysAsync(routine, cancellationToken);
         await routines.SaveAsync(routine, cancellationToken);
         return routine;
+    }
+
+    // Two routines on the same weekday would leave Today guessing which one applies.
+    private async Task RequireFreeDaysAsync(Routine routine, CancellationToken cancellationToken)
+    {
+        var stored = await routines.ListAsync(cancellationToken);
+        foreach (var other in stored.Where(other => other.Id != routine.Id))
+        {
+            var shared = other.Days.Intersect(routine.Days).ToList();
+            if (shared.Count == 0) continue;
+            throw new DomainRuleException(
+                $"Expected weekdays no other routine uses, received [{string.Join(", ", shared)}] already used by \"{other.Name}\"");
+        }
     }
 
     private static Routine ToRoutine(SaveRoutineCommand command)

@@ -35,6 +35,31 @@ public class SaveRoutineTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsWeekdaysAnotherRoutineUses()
+    {
+        var routines = new InMemoryRoutineRepository(Routines.Weekdays());
+        var overlapping = new SaveRoutineCommand("friday-late", "Friday late", [4, 5], "09:00", "18:00", []);
+
+        var exception = await Should.ThrowAsync<DomainRuleException>(() =>
+            new SaveRoutine(routines, _categories).ExecuteAsync(overlapping, CancellationToken.None));
+
+        exception.Message.ShouldContain("[4]");
+        exception.Message.ShouldContain("Weekdays");
+        routines.SaveCount.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AllowsResavingARoutineOnItsOwnDays()
+    {
+        var routines = new InMemoryRoutineRepository(Routines.Weekdays());
+
+        await new SaveRoutine(routines, _categories)
+            .ExecuteAsync(Routines.WeekdaysCommand(), CancellationToken.None);
+
+        (await routines.ListAsync(CancellationToken.None)).Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RejectsUnknownBlockCategory()
     {
         var saveRoutine = new SaveRoutine(_routines, _categories);
