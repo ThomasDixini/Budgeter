@@ -1,5 +1,6 @@
 import {
   appendBlock,
+  newRoutine,
   partitionLaneCount,
   partitionSegments,
   removeBlock,
@@ -12,6 +13,19 @@ import { SAMPLE_ROUTINES } from './sample-routines';
 const weekdays = SAMPLE_ROUTINES[0];
 /** Runs during work on purpose. */
 const PODCAST: RoutineBlock = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
+
+describe('newRoutine', () => {
+  it('starts blank and on no weekday, so it never takes over another routine’s day', () => {
+    expect(newRoutine('r1')).toEqual({
+      id: 'r1',
+      name: 'New routine',
+      days: [],
+      start: '08:00',
+      end: '17:00',
+      blocks: [],
+    });
+  });
+});
 
 describe('toggleDay', () => {
   it('adds a missing weekday', () => {

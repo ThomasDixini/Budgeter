@@ -17,10 +17,10 @@ public class CreateGoalTests
         var goals = new InMemoryGoalRepository();
 
         var creation = await new CreateGoal(goals, _categories)
-            .ExecuteAsync(GoalDefinitions.WeeklyStudy(), CancellationToken.None);
+            .ExecuteAsync(GoalDefinitions.WeeklyStudy(), TestDays.Today, CancellationToken.None);
 
         creation.WasCreated.ShouldBeTrue();
-        (await goals.FindAsync("g1", CancellationToken.None))!.Done.ShouldBe(0);
+        (await goals.FindAsync("g1", TestDays.Today, CancellationToken.None))!.Done.ShouldBe(0);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class CreateGoalTests
         var createGoal = new CreateGoal(new InMemoryGoalRepository(), _categories);
 
         var exception = await Should.ThrowAsync<ResourceNotFoundException>(() =>
-            createGoal.ExecuteAsync(GoalDefinitions.WeeklyStudy(categoryId: "unknown"), CancellationToken.None));
+            createGoal.ExecuteAsync(GoalDefinitions.WeeklyStudy(categoryId: "unknown"), TestDays.Today, CancellationToken.None));
 
         exception.Message.ShouldContain("\"unknown\"");
     }
@@ -40,7 +40,7 @@ public class CreateGoalTests
         var goals = new InMemoryGoalRepository(Goal.Restore(GoalDefinitions.WeeklyStudy(), done: 2));
 
         var creation = await new CreateGoal(goals, _categories)
-            .ExecuteAsync(GoalDefinitions.WeeklyStudy(), CancellationToken.None);
+            .ExecuteAsync(GoalDefinitions.WeeklyStudy(), TestDays.Today, CancellationToken.None);
 
         creation.WasCreated.ShouldBeFalse();
         creation.Record.Done.ShouldBe(2);

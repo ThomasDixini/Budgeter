@@ -1,0 +1,40 @@
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid var(--color-border);
+  background: var(--color-surface-glass);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.days {
+  margin-top: 10px;
+}
+
+.day {
+  min-width: 44px;
+  justify-content: center;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actions .ui-button-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.once-date {
+  margin-top: 10px;
+  max-width: 220px;
+}

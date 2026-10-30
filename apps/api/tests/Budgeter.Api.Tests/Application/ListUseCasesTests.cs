@@ -24,7 +24,7 @@ public class ListUseCasesTests
     {
         var repository = new InMemoryGoalRepository(Goal.Create(GoalDefinitions.WeeklyStudy()));
 
-        var goals = await new ListGoals(repository).ExecuteAsync(CancellationToken.None);
+        var goals = await new ListGoals(repository).ExecuteAsync(TestDays.Today, CancellationToken.None);
 
         goals.Select(goal => goal.Id).ShouldBe(["g1"]);
     }

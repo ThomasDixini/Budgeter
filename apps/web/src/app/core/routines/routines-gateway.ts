@@ -11,4 +11,7 @@ export abstract class RoutinesGateway {
 
   /** Creates or replaces the routine as a whole; answers with the stored (normalized) version. */
   abstract save(routine: Routine): Observable<Routine>;
+
+  /** Deletes the routine and its blocks; deleting one already gone succeeds. */
+  abstract delete(routineId: string): Observable<void>;
 }

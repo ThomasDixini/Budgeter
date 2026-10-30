@@ -12,6 +12,7 @@ internal static class GoalRules
         RequireTarget(definition.Target);
         return definition with
         {
+            Tracking = TrackingFor(definition.Type),
             Id = EntityId.Require(definition.Id, "goal id"),
             CategoryId = EntityId.Require(definition.CategoryId, "category id"),
             Title = RequiredText.Require(definition.Title, Goal.MaxTitleLength, "goal title"),
@@ -28,6 +29,10 @@ internal static class GoalRules
                 $"Expected the goal target to be between 1 and {Goal.MaxTarget}, received {target}");
         }
     }
+
+    // Frequency goals count completed blocks; objectives are marked achieved by hand.
+    private static GoalTracking TrackingFor(GoalType type) =>
+        type == GoalType.Frequency ? GoalTracking.Blocks : GoalTracking.Manual;
 
     private static string? NormalizeUnit(GoalType type, string? unit)
     {

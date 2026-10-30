@@ -38,8 +38,75 @@
             "
             [style.border-color]="accent().ring"
           ></span>
-          <button class="ui-button-ghost small" type="button">Edit category</button>
+          <div class="hero-actions">
+            <button
+              class="ui-button-ghost small"
+              type="button"
+              (click)="startEditingCategory(category)"
+            >
+              Edit category
+            </button>
+            <button
+              class="ui-button-ghost small danger-text"
+              type="button"
+              (click)="isConfirmingDelete.set(true)"
+            >
+              Delete
+            </button>
+          </div>
         </div>
+        @if (isEditingCategory()) {
+          <form class="edit-form" aria-label="Edit category" (submit)="saveCategory($event)">
+            <label class="ui-field">
+              Category name
+              <input
+                class="ui-input"
+                type="text"
+                [value]="draftName()"
+                (input)="draftName.set(valueOf($event))"
+              />
+            </label>
+            <div class="swatches" role="group" aria-label="Color">
+              @for (swatch of swatches; track swatch.color) {
+                <button
+                  class="swatch"
+                  type="button"
+                  [attr.aria-label]="swatch.label"
+                  [attr.aria-pressed]="swatch.color === draftColor()"
+                  (click)="draftColor.set(swatch.color)"
+                >
+                  <span class="swatch-color" [style.background]="swatch.color"></span>
+                </button>
+              }
+            </div>
+            <div class="hero-actions">
+              <button class="ui-button-primary" type="submit">Save</button>
+              <button class="ui-button-ghost" type="button" (click)="isEditingCategory.set(false)">
+                Cancel
+              </button>
+            </div>
+          </form>
+        }
+        @if (isConfirmingDelete()) {
+          <div class="edit-form" role="group" aria-label="Confirm deletion">
+            <span class="hero-caption">
+              Delete “{{ category.name }}” and its {{ stats().goalCount }} goals? Routine blocks and
+              tasks stay, without a category.
+            </span>
+            <div class="hero-actions">
+              <button
+                class="ui-button-ghost danger-text"
+                type="button"
+                (click)="deleteCategory(category.id)"
+              >
+                Yes, delete
+              </button>
+              <button class="ui-button-ghost" type="button" (click)="isConfirmingDelete.set(false)">
+                Keep it
+              </button>
+            </div>
+          </div>
+        }
         <div class="hero-text">
           <h1 id="category-title" class="hero-title">{{ category.name }}</h1>
           <span class="hero-caption">{{ stats().blocksLabel }}</span>
@@ -78,7 +145,11 @@
       <div class="goals-header">
         <h2 id="goals-title" class="goals-title">{{ category.name }} goals</h2>
         @if (!isAdding()) {
-          <button class="ui-button-primary" type="button" (click)="isAdding.set(true)">
+          <button
+            class="ui-button-primary"
+            type="button"
+            (click)="editingGoalId.set(undefined); isAdding.set(true)"
+          >
             <svg
               width="16"
               height="16"
@@ -103,6 +174,17 @@
           [today]="today"
           (create)="addGoal($event)"
           (dismiss)="isAdding.set(false)"
+        />
+      }
+
+      @for (goal of editingGoals(); track goal.id) {
+        <app-goal-form
+          [categoryId]="category.id"
+          [color]="category.color"
+          [today]="today"
+          [goal]="goal"
+          (save)="saveGoal(goal.id, $event)"
+          (dismiss)="editingGoalId.set(undefined)"
         />
       }
 
@@ -140,7 +222,9 @@
             [goal]="goal"
             [color]="category.color"
             [today]="today"
-            (increment)="incrementGoal($event)"
+            (toggleAchieved)="toggleAchieved(goal)"
+            (edit)="startEditing($event)"
+            (remove)="deleteGoal($event)"
           />
         }
       </div>

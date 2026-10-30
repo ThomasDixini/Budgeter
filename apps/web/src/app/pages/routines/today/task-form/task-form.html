@@ -1,0 +1,78 @@
+<form
+  class="task-form ui-enter"
+  [attr.aria-label]="isEditing() ? 'Edit task' : 'New task'"
+  (submit)="submit($event)"
+>
+  <label class="ui-field">
+    Task
+    <input
+      class="ui-input"
+      type="text"
+      maxlength="80"
+      placeholder="E.g. Read 20 pages"
+      [value]="title()"
+      (input)="title.set(valueOf($event))"
+    />
+  </label>
+
+  <label class="ui-field">
+    Category
+    <select class="ui-input" (change)="categoryId.set(valueOf($event))">
+      <option value="" [selected]="categoryId() === ''">No category</option>
+      @for (category of categories(); track category.id) {
+        <option [value]="category.id" [selected]="category.id === categoryId()">
+          {{ category.name }}
+        </option>
+      }
+    </select>
+  </label>
+
+  <fieldset class="ui-fieldset">
+    <legend class="ui-legend">Repeat</legend>
+    <div class="chips">
+      @for (option of repeatOptions; track option.value) {
+        <button
+          class="ui-chip"
+          type="button"
+          [attr.aria-pressed]="option.value === repeat()"
+          (click)="repeat.set(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+    @if (repeat() === 'once') {
+      <label class="ui-field once-date">
+        On
+        <input
+          class="ui-input"
+          type="date"
+          [min]="earliestDate()"
+          [value]="date()"
+          (change)="date.set(valueOf($event))"
+        />
+      </label>
+    }
+    @if (repeat() === 'weekly') {
+      <div class="chips days" role="group" aria-label="Repeat on">
+        @for (label of weekdayLabels; track label; let day = $index) {
+          <button
+            class="ui-chip day"
+            type="button"
+            [attr.aria-pressed]="days().includes(day)"
+            (click)="toggleDay(day)"
+          >
+            {{ label }}
+          </button>
+        }
+      </div>
+    }
+  </fieldset>
+
+  <div class="actions">
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ isEditing() ? 'Save task' : 'Add task' }}
+    </button>
+  </div>
+</form>

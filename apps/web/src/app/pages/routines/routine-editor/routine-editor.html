@@ -19,20 +19,20 @@
     </div>
   </app-page-heading>
 
-  @if (draft(); as draft) {
+  @if (isLoaded()) {
     <div class="templates" role="tablist" aria-label="Routines">
       @for (routine of routines(); track routine.id) {
         <button
           class="ui-chip template"
           type="button"
           role="tab"
-          [attr.aria-selected]="routine.id === draft.id"
+          [attr.aria-selected]="routine.id === draft()?.id"
           (click)="selectRoutine(routine.id)"
         >
-          {{ routine.name }}
+          {{ routine.name || 'Untitled' }}
         </button>
       }
-      <button class="ui-dashed-button new-routine" type="button">
+      <button class="ui-dashed-button new-routine" type="button" (click)="createRoutine()">
         <svg
           width="14"
           height="14"
@@ -48,11 +48,23 @@
         New routine
       </button>
     </div>
+  }
 
+  @if (draft(); as draft) {
     <div class="columns">
       <div class="main">
         <section class="ui-card settings" aria-labelledby="settings-title">
           <h2 id="settings-title" class="ui-visually-hidden">Settings</h2>
+          <label class="ui-field routine-name">
+            Routine name
+            <input
+              class="ui-input"
+              type="text"
+              maxlength="40"
+              [value]="draft.name"
+              (change)="rename(valueOf($event))"
+            />
+          </label>
           <fieldset class="ui-fieldset">
             <legend class="ui-legend days-legend">Days of the week</legend>
             <div class="days">
@@ -87,6 +99,31 @@
                 (change)="setHour('end', valueOf($event))"
               />
             </label>
+          </div>
+          <div class="danger-zone">
+            @if (isConfirmingDelete()) {
+              <div class="delete-confirm" role="group" aria-label="Confirm deletion">
+                <span>Delete "{{ draft.name || 'Untitled' }}" and its blocks?</span>
+                <button class="ui-button-ghost delete-yes" type="button" (click)="deleteRoutine()">
+                  Delete
+                </button>
+                <button
+                  class="ui-button-ghost"
+                  type="button"
+                  (click)="isConfirmingDelete.set(false)"
+                >
+                  Cancel
+                </button>
+              </div>
+            } @else {
+              <button
+                class="ui-button-ghost delete-routine"
+                type="button"
+                (click)="isConfirmingDelete.set(true)"
+              >
+                Delete routine
+              </button>
+            }
           </div>
         </section>
 
@@ -190,6 +227,10 @@
       <app-routine-summary class="summary" [routine]="draft" [categories]="categories()" />
     </div>
   } @else {
-    <p class="ui-muted empty">{{ isLoaded() ? 'No routines yet.' : 'Loading your routines…' }}</p>
+    <p class="ui-muted empty">
+      {{
+        isLoaded() ? 'No routines yet. Create one with "New routine".' : 'Loading your routines…'
+      }}
+    </p>
   }
 </div>

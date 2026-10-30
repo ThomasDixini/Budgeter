@@ -28,4 +28,10 @@ internal sealed class InMemoryRoutineRepository : IRoutineRepository
         SaveCount++;
         return Task.CompletedTask;
     }
+
+    public Task DeleteAsync(string routineId, CancellationToken cancellationToken)
+    {
+        _routines.RemoveAll(stored => stored.Id == routineId);
+        return Task.CompletedTask;
+    }
 }

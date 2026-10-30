@@ -33,14 +33,22 @@ public sealed record RoutineResponse(
 public static class RoutineEndpoints
 {
     /// <summary>
-    /// Maps <c>GET /routines</c> and <c>PUT /routines/{routineId}</c>.
+    /// Maps <c>GET /routines</c>, <c>PUT /routines/{routineId}</c> and <c>DELETE /routines/{routineId}</c>.
     /// </summary>
     /// <example><code>app.MapRoutineEndpoints();</code></example>
     public static IEndpointRouteBuilder MapRoutineEndpoints(this IEndpointRouteBuilder routes)
     {
         routes.MapGet("/routines", ListAsync);
         routes.MapPut("/routines/{routineId}", SaveAsync);
+        routes.MapDelete("/routines/{routineId}", DeleteAsync);
         return routes;
+    }
+
+    private static async Task<IResult> DeleteAsync(
+        string routineId, DeleteRoutine deleteRoutine, CancellationToken cancellationToken)
+    {
+        await deleteRoutine.ExecuteAsync(routineId, cancellationToken);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> ListAsync(ListRoutines listRoutines, CancellationToken cancellationToken)

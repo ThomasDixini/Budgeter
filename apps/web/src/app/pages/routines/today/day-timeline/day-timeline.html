@@ -10,7 +10,10 @@
     @for (block of blocks(); track block.key) {
       <li
         class="block-slot"
-        [class.is-shared]="block.width < 100"
+        [class.is-ended]="block.outcome !== undefined"
+        [class.shares-row-left]="block.width < 100 && block.left === 0"
+        [class.shares-row-right]="block.width < 100 && block.left > 0"
+        [class.shares-row-inner]="block.left > 0 && block.left + block.width < 100"
         [style.top.px]="block.top"
         [style.height.px]="block.height"
         [style.left.%]="block.left"
@@ -19,23 +22,148 @@
         <div
           class="block"
           [class.is-now]="block.isNow"
+          [class.is-selected]="block.isSelected"
+          [class.is-compact]="block.isCompact"
+          [class.is-done]="block.outcome === 'done'"
+          [class.is-skipped]="block.outcome === 'skipped'"
           [style.background]="block.background"
           [style.border-color]="block.border"
           [attr.aria-current]="block.isNow ? 'time' : null"
+          [attr.title]="block.isCompact ? block.summary : null"
         >
-          <div class="block-text">
-            <span class="block-name">{{ block.name }}</span>
+          <button
+            class="block-text block-select"
+            type="button"
+            [attr.aria-pressed]="block.isSelected"
+            [attr.aria-label]="'Show tasks for ' + block.name"
+            (click)="pick.emit(block.blockId)"
+          >
+            <span class="block-name">
+              @if (block.outcome === 'done') {
+                <svg
+                  class="done-check"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+                </svg>
+              } @else if (block.outcome === 'skipped') {
+                <svg
+                  class="skip-mark"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 5l9 7-9 7V5zM19 5v14"></path>
+                </svg>
+              }
+              {{ block.name }}
+            </span>
             <span class="block-range ui-tabular">{{ block.range }}</span>
-          </div>
+          </button>
           <div class="block-badges">
-            @if (block.isNow) {
+            @if (block.isNow && !block.isCompact) {
               <span class="ui-badge-now">Now</span>
             }
-            @if (block.category; as category) {
-              <span class="category-badge" [style.color]="category.color">
-                <span class="ui-dot" [style.background]="category.color"></span>
-                {{ category.name }}
+            @if (block.outcome; as outcome) {
+              <span class="outcome-label" [class.ui-visually-hidden]="block.isCompact">
+                {{ outcomeLabels[outcome] }}
               </span>
+            }
+            @if (block.category; as category) {
+              @if (block.isCompact) {
+                <span
+                  class="ui-dot"
+                  role="img"
+                  [attr.aria-label]="category.name"
+                  [style.background]="category.color"
+                ></span>
+              } @else {
+                <span class="category-badge" [style.color]="category.color">
+                  <span class="ui-dot" [style.background]="category.color"></span>
+                  {{ category.name }}
+                </span>
+              }
+            }
+            @if (!block.outcome) {
+              <button
+                class="step complete-block"
+                type="button"
+                [attr.aria-label]="'Complete ' + block.name"
+                title="Complete"
+                (click)="complete.emit(block.blockId)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+                </svg>
+              </button>
+              <button
+                class="step skip-block"
+                type="button"
+                [attr.aria-label]="'Skip ' + block.name"
+                title="Skip"
+                (click)="skip.emit(block.blockId)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 5l9 7-9 7V5zM19 5v14"></path>
+                </svg>
+              </button>
+            } @else {
+              <button
+                class="undo"
+                type="button"
+                [attr.aria-label]="'Undo ' + block.name"
+                title="Undo"
+                (click)="undo.emit(block.blockId)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 14L4 9l5-5"></path>
+                  <path d="M4 9h10.5a5.5 5.5 0 010 11H11"></path>
+                </svg>
+              </button>
             }
           </div>
         </div>

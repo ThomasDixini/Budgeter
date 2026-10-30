@@ -6,6 +6,7 @@ import { Routine, WEEKDAY_LABELS } from '../../../core/routines/routine';
 import {
   BlockChanges,
   appendBlock,
+  newRoutine,
   removeBlock,
   toggleDay,
   updateBlock,
@@ -16,13 +17,14 @@ import { RoutineSummary } from './routine-summary/routine-summary';
 
 const UNCATEGORIZED_COLOR = '#8A8A94';
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
+type SaveState = 'idle' | 'saving' | 'saved' | 'failed' | 'delete-failed';
 
 const SAVE_STATE_MESSAGES: Readonly<Record<SaveState, string>> = {
   idle: '',
   saving: 'Saving…',
   saved: 'All changes saved',
-  failed: "Couldn't save. Check the block names and times, then try again.",
+  failed: "Couldn't save. Check the routine and block names, then try again.",
+  'delete-failed': "Couldn't delete the routine. Try again.",
 };
 
 /** Lets the user pick a day template, its weekdays and hours, and split the day into blocks. */
@@ -43,15 +45,21 @@ export class RoutineEditor {
   protected readonly weekdayLabels = WEEKDAY_LABELS;
   protected readonly categories = this.store.categories;
   protected readonly isLoaded = this.store.isLoaded;
-  protected readonly routines = computed(() =>
-    this.store.routines().map((routine) => this.edits().get(routine.id) ?? routine),
-  );
+  /** Stored routines with their unsaved edits, then routines created here and not saved yet. */
+  protected readonly routines = computed(() => {
+    const stored = this.store.routines();
+    const storedIds = new Set(stored.map((routine) => routine.id));
+    const created = [...this.edits().values()].filter((routine) => !storedIds.has(routine.id));
+    return [...stored.map((routine) => this.edits().get(routine.id) ?? routine), ...created];
+  });
   protected readonly draft = computed(
     () => this.routines().find((routine) => routine.id === this.selectedId()) ?? this.routines()[0],
   );
   protected readonly hasChanges = computed(() => this.edits().has(this.draft()?.id ?? ''));
   protected readonly isSaving = computed(() => this.saveState() === 'saving');
-  protected readonly hasSaveFailed = computed(() => this.saveState() === 'failed');
+  protected readonly hasSaveFailed = computed(() => this.saveState().endsWith('failed'));
+  /** Deleting asks first, since a routine and its blocks cannot be brought back. */
+  protected readonly isConfirmingDelete = signal(false);
   protected readonly saveMessage = computed(() =>
     this.hasChanges() && this.saveState() === 'idle'
       ? 'Unsaved changes'
@@ -64,9 +72,38 @@ export class RoutineEditor {
     })),
   );
 
-  protected selectRoutine(routineId: string): void {
+  protected selectRoutine(routineId: string | undefined): void {
     this.selectedId.set(routineId);
     this.saveState.set('idle');
+    this.isConfirmingDelete.set(false);
+  }
+
+  /**
+   * Deletes the selected routine after the user confirmed. A routine created here and never
+   * saved only exists as a draft, so dropping the draft is enough.
+   */
+  protected async deleteRoutine(): Promise<void> {
+    const draft = this.draft();
+    if (draft === undefined) return;
+    this.isConfirmingDelete.set(false);
+    const isStored = this.store.routines().some((routine) => routine.id === draft.id);
+    if (isStored && !(await this.store.deleteRoutine(draft.id))) {
+      this.saveState.set('delete-failed');
+      return;
+    }
+    this.dropEdit(draft.id);
+    this.selectRoutine(undefined);
+  }
+
+  /** Opens a blank routine as an unsaved draft; it is stored on "Save routine". */
+  protected createRoutine(): void {
+    const routine = newRoutine(this.ids.next());
+    this.edits.update((edits) => new Map(edits).set(routine.id, routine));
+    this.selectRoutine(routine.id);
+  }
+
+  protected rename(name: string): void {
+    this.edit((routine) => ({ ...routine, name }));
   }
 
   protected toggleWeekday(day: number): void {
@@ -127,10 +164,13 @@ export class RoutineEditor {
 
   /** Edits made while the request was in flight stay as unsaved changes. */
   private dropEditIfUnchanged(saved: Routine): void {
-    if (this.edits().get(saved.id) !== saved) return;
+    if (this.edits().get(saved.id) === saved) this.dropEdit(saved.id);
+  }
+
+  private dropEdit(routineId: string): void {
     this.edits.update((edits) => {
       const remaining = new Map(edits);
-      remaining.delete(saved.id);
+      remaining.delete(routineId);
       return remaining;
     });
   }
