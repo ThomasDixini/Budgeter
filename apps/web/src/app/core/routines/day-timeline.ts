@@ -9,6 +9,7 @@ import {
   offsetInDay,
   routineSpan,
 } from './day-clock';
+import { pieceLanes } from './day-lanes';
 import { Routine, RoutineBlock } from './routine';
 import { NO_STRETCH, TimelineStretch, stretchForStack } from './timeline-stretch';
 
@@ -40,8 +41,8 @@ export interface TimelineHour {
 }
 
 /**
- * A block (or one piece of a block wrapping around a 24-hour day) on the Today timeline, as a
- * full-width row: `top`/`height` in pixels.
+ * A block (or one piece of a block wrapping around a 24-hour day) on the Today timeline:
+ * `top`/`height` in pixels, full width unless it shares the time with another block.
  */
 export interface TimelineBlock {
   readonly block: RoutineBlock;
@@ -116,11 +117,7 @@ export function timelineLayout(
       start: stretch.at(piece.start),
       end: stretch.at(piece.end),
     })),
-    ...stack.map((piece) => ({
-      ...piece,
-      start: piece.start + stretch.stackShift,
-      end: piece.end + stretch.stackShift,
-    })),
+    ...stack.map((piece) => ({ ...piece, ...stretch.placeEnded(piece) })),
   ];
   return drawLayout(routine, nowMinutes, pieces, stretch);
 }
@@ -152,10 +149,24 @@ function drawLayout(
       top: toPixels(stretch.at(offset)),
     })),
     nowOffset: nowOffset > span ? undefined : toPixels(stretch.at(nowOffset)),
-    blocks: [...pieces]
+    blocks: inLanes(pieces)
       .sort((first, second) => first.start - second.start)
       .map((piece) => toTimelineBlock(piece, nowMinutes)),
   };
+}
+
+/**
+ * Blocks that overlap in time (a podcast during work) share the width side by side, as drawn, so
+ * neither covers the other. Short ended blocks already sharing a row keep their columns.
+ */
+function inLanes(pieces: readonly PlacedPiece[]): PlacedPiece[] {
+  const lanes = pieceLanes(pieces.filter((piece) => piece.columns === 1));
+  return pieces.map((piece) => {
+    const placement = piece.columns === 1 ? lanes.get(piece.key) : undefined;
+    return placement === undefined
+      ? piece
+      : { ...piece, column: placement.lane, columns: placement.lanes };
+  });
 }
 
 function toTimelineBlock(piece: PlacedPiece, nowMinutes: number): TimelineBlock {

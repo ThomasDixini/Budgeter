@@ -329,12 +329,24 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 10px;
+  padding: 4px 11px;
   border-radius: var(--radius-pill);
+  font: inherit;
   font-size: 11px;
-  color: var(--color-text-muted);
+  color: var(--color-text-soft);
   background: rgba(255, 255, 255, 0.04);
-  border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
+  border: var(--border-hairline) solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast),
+    border-color var(--duration-fast);
+}
+
+.objective-pill:hover,
+.objective-pill:focus-visible {
+  color: var(--color-text);
+  background: rgba(var(--color-mint-rgb), 0.08);
+  border-color: rgba(var(--color-mint-rgb), 0.45);
 }
 
 .objective-pill.is-achieved {

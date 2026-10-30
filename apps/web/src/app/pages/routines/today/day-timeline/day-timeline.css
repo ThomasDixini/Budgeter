@@ -29,7 +29,7 @@
   border-top: var(--border-hairline) solid var(--color-border-subtle);
 }
 
-/* Blocks sit right of the hour labels, each on its own full-width row. */
+/* Blocks sit right of the hour labels; blocks at the same time share the width side by side. */
 .blocks {
   list-style: none;
   position: absolute;
@@ -74,6 +74,8 @@
   gap: 12px;
   overflow: hidden;
   border: var(--border-hairline) solid;
+  /* Holds the select button's hit area, which covers the whole block. */
+  position: relative;
 }
 
 .block.is-now {
@@ -102,10 +104,26 @@
   align-items: flex-start;
 }
 
+/* The whole block picks it, not just its name: the button's hit area stretches over the block. */
+.block-select::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
 .block-select:focus-visible {
+  outline: none;
+}
+
+.block-select:focus-visible::after {
   outline: 2px solid var(--color-mint);
-  outline-offset: 4px;
-  border-radius: 6px;
+  outline-offset: -2px;
+  border-radius: 14px;
+}
+
+.block:hover {
+  filter: brightness(1.15);
 }
 
 .block.is-selected {
@@ -128,6 +146,14 @@
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
+  /* Badges let clicks through to the block; their buttons stay on top and keep their own action. */
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.block-badges button {
+  pointer-events: auto;
 }
 
 /* Completed today: mint card with a check. */
@@ -291,9 +317,9 @@
 }
 
 @container (max-width: 520px) {
-  .block-slot[class*='shares-row'] .done-check,
-  .block-slot[class*='shares-row'] .block-range,
-  .block-slot[class*='shares-row'] .ui-dot {
+  .block-slot.is-ended[class*='shares-row'] .done-check,
+  .block-slot.is-ended[class*='shares-row'] .block-range,
+  .block-slot.is-ended[class*='shares-row'] .ui-dot {
     display: none;
   }
 }

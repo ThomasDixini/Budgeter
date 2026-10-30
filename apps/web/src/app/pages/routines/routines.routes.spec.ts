@@ -135,6 +135,38 @@ describe('Today page', () => {
     expect(values).toContain('Achieved on Oct 20');
   });
 
+  it('marks an objective achieved from the goals card, which moves it to the goals met', async () => {
+    const element = await openPage('/routines');
+
+    element
+      .querySelector<HTMLButtonElement>('[aria-label="Mark achieved: Finish the C# course"]')!
+      .click();
+    TestBed.tick();
+
+    const goal = TestBed.inject(RoutinesStore)
+      .goals()
+      .find((current) => current.id === 'g2');
+    expect(goal?.achievedOn).toBe('2026-10-26');
+    expect(focusTitles(element)).not.toContain('Finish the C# course');
+  });
+
+  it('takes the achieved mark of an objective back from the goals card', async () => {
+    const element = await openPage('/routines');
+    clickButton(element, 'See all (7)');
+
+    element
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Take back achieved on Read 12 books in 2026"]',
+      )!
+      .click();
+    TestBed.tick();
+
+    const goal = TestBed.inject(RoutinesStore)
+      .goals()
+      .find((current) => current.id === 'g6');
+    expect(goal?.achievedOn).toBeUndefined();
+  });
+
   it('goes back to the goals in focus with "Show less"', async () => {
     const element = await openPage('/routines');
     clickButton(element, 'See all (7)');

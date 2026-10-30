@@ -337,7 +337,17 @@
                 <span class="focus-goal-meta">{{ item.meta }}</span>
               </div>
               @if (item.goal.type === 'objective') {
-                <span class="focus-goal-value objective-pill" [class.is-achieved]="item.isMet">
+                <button
+                  class="focus-goal-value objective-pill"
+                  type="button"
+                  [class.is-achieved]="item.isMet"
+                  [attr.aria-pressed]="item.isMet"
+                  [attr.aria-label]="
+                    (item.isMet ? 'Take back achieved on ' : 'Mark achieved: ') + item.goal.title
+                  "
+                  [attr.title]="item.isMet ? 'Click to take the mark back' : null"
+                  (click)="toggleAchieved(item.goal)"
+                >
                   @if (item.isMet) {
                     <svg
                       width="12"
@@ -353,8 +363,8 @@
                       <path d="M5 12.5l4.5 4.5L19 7.5"></path>
                     </svg>
                   }
-                  {{ item.isMet ? item.value : 'Pending' }}
-                </span>
+                  {{ item.isMet ? item.value : 'Mark achieved' }}
+                </button>
               } @else {
                 <span
                   class="focus-goal-value ui-tabular"

@@ -239,6 +239,14 @@ export class Today {
     return block === undefined || task.categoryId === block.categoryId;
   }
 
+  /**
+   * Marks an objective achieved today, or takes the mark back.
+   * @example this.toggleAchieved(courseObjective)
+   */
+  protected toggleAchieved(goal: Goal): void {
+    this.store.setAchieved(goal.id, goal.achievedOn === undefined);
+  }
+
   protected toggleTask(taskId: string): void {
     this.tasksStore.toggleDone(taskId);
   }

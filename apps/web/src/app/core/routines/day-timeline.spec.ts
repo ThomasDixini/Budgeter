@@ -38,13 +38,21 @@ describe('timeline geometry', () => {
     expect(now.map((item) => item.block.name)).toEqual(['C# study']);
   });
 
-  it('places an overlapping block at its own time, without splitting the width', () => {
+  it('places an overlapping block at its own time, beside the block it overlaps', () => {
     const podcast = { id: 'podcast', name: 'Podcast', start: '09:00', end: '10:00' };
     const routine = { ...weekdays, blocks: [...weekdays.blocks, podcast] };
 
-    const placed = timelineBlocks(routine, STUDY_TIME).find((item) => item.block.id === 'podcast');
+    const blocks = timelineBlocks(routine, STUDY_TIME);
+    const placed = (id: string) => blocks.find((item) => item.block.id === id);
 
-    expect({ top: placed?.top, height: placed?.height }).toEqual({ top: 48, height: 48 });
+    expect(placed('podcast')).toMatchObject({ top: 48, height: 48, left: 50, width: 50 });
+    expect(placed('work')).toMatchObject({ left: 0, width: 50 });
+  });
+
+  it('keeps blocks that overlap nothing at full width', () => {
+    const lunch = timelineBlocks(weekdays, STUDY_TIME).find((item) => item.block.id === 'lunch');
+
+    expect(lunch).toMatchObject({ left: 0, width: 100 });
   });
 });
 
@@ -257,5 +265,42 @@ describe('timelineLayout making room for ended blocks', () => {
     const fits = new Map([['hello', 60]]);
 
     expect(timelineLayout(evening, NOW, fits).height).toBe(timelineLayout(evening, NOW).height);
+  });
+});
+
+// Regression: completing a past block (Morning run) at 19:30 moved it up to "now" and stretched the
+// running block over the whole gap. It must stay in its own slot, only marked done.
+describe('timelineLayout with a past block completed later', () => {
+  const day: Routine = {
+    id: 'weekdays',
+    name: 'Weekdays',
+    days: [0],
+    start: '06:00',
+    end: '23:00',
+    blocks: [
+      { id: 'run', name: 'Morning run', start: '06:00', end: '06:30' },
+      { id: 'gym', name: 'Gym', start: '18:00', end: '19:00' },
+      { id: 'hello', name: 'Hello world practice', start: '19:00', end: '20:00' },
+    ],
+  };
+  const NOW = 19 * 60 + 30;
+  const RUN_DONE = new Map([['run', 30]]);
+
+  function placed(id: string): { top: number; height: number } {
+    const found = timelineLayout(day, NOW, RUN_DONE).blocks.find((item) => item.block.id === id);
+    if (found === undefined) throw new Error(`Expected block "${id}" on the timeline, found none`);
+    return { top: found.top, height: found.height };
+  }
+
+  it('keeps the completed block where it was planned', () => {
+    expect(placed('run')).toEqual({ top: 0, height: 24 });
+  });
+
+  it('leaves every other block and the timeline as they were', () => {
+    const plain = timelineLayout(day, NOW);
+
+    expect(placed('hello')).toEqual({ top: 624, height: 48 });
+    expect(timelineLayout(day, NOW, RUN_DONE).height).toBe(plain.height);
+    expect(timelineLayout(day, NOW, RUN_DONE).nowOffset).toBe(plain.nowOffset);
   });
 });
