@@ -54,22 +54,10 @@ public sealed class SqliteRepositoryTests : IAsyncLifetime, IDisposable
         var definition = GoalDefinitions.CourseObjective();
         await _goals.AddAsync(Goal.Create(definition), CancellationToken.None);
 
-        var stored = await _goals.FindAsync(definition.Id, CancellationToken.None);
+        var stored = await _goals.FindAsync(definition.Id, TestDays.Today, CancellationToken.None);
 
         stored!.Definition.ShouldBe(definition);
         stored.Done.ShouldBe(0);
-    }
-
-    [Fact]
-    public async Task Goals_SaveProgressPersistsDone()
-    {
-        var goal = Goal.Create(GoalDefinitions.WeeklyStudy());
-        await _goals.AddAsync(goal, CancellationToken.None);
-        goal.LogProgress();
-
-        await _goals.SaveProgressAsync(goal, CancellationToken.None);
-
-        (await _goals.ListAsync(CancellationToken.None)).Single().Done.ShouldBe(1);
     }
 
     [Fact]

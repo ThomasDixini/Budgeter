@@ -5,8 +5,8 @@ import { Task } from './task';
 
 /*
  * Placeholder content taken from the "Rotinas & Metas" boards of the Design canvas (artifact 8b717000).
- * Tasks seed the in-memory store until they can be persisted. Categories, goals and routines
- * now come from the API; their samples only feed the fake gateways used by tests.
+ * Categories, goals, routines and tasks come from the API; these samples only feed the fake
+ * gateways used by tests.
  */
 
 export const SAMPLE_CATEGORIES: readonly Category[] = [
@@ -44,12 +44,25 @@ export const SAMPLE_ROUTINES: readonly Routine[] = [
   },
 ];
 
+/** Mirrors the API's sample tasks (SampleTaskSeed.cs). */
 export const SAMPLE_TASKS: readonly Task[] = [
-  { id: 't1', title: 'Reply to pending emails', done: true },
-  { id: 't2', title: 'Review class 3 notes', done: true, categoryId: 'study' },
-  { id: 't3', title: 'Do the LINQ exercises', done: false, categoryId: 'study' },
-  { id: 't4', title: 'Message 2 contacts', done: false, categoryId: 'networking' },
-  { id: 't5', title: 'Read 20 pages', done: false, categoryId: 'reading' },
+  { id: 't1', title: 'Reply to pending emails', repeat: 'daily', days: [] },
+  {
+    id: 't2',
+    title: 'Review class notes',
+    categoryId: 'study',
+    repeat: 'weekly',
+    days: [0, 1, 2, 3, 4],
+  },
+  { id: 't3', title: 'Do the LINQ exercises', categoryId: 'study', repeat: 'weekly', days: [1, 3] },
+  {
+    id: 't4',
+    title: 'Message 2 contacts',
+    categoryId: 'networking',
+    repeat: 'weekly',
+    days: [0, 2, 4],
+  },
+  { id: 't5', title: 'Read 20 pages', categoryId: 'reading', repeat: 'daily', days: [] },
 ];
 
 export const SAMPLE_GOALS: readonly Goal[] = [
@@ -68,7 +81,7 @@ export const SAMPLE_GOALS: readonly Goal[] = [
     title: 'Finish the C# course',
     type: 'objective',
     period: 'custom',
-    done: 4,
+    done: 0,
     target: 12,
     unit: 'modules',
     deadline: '2026-12-15',
@@ -106,9 +119,10 @@ export const SAMPLE_GOALS: readonly Goal[] = [
     title: 'Read 12 books in 2026',
     type: 'objective',
     period: 'yearly',
-    done: 9,
+    done: 12,
     target: 12,
     unit: 'books',
+    achievedOn: '2026-10-20',
   },
   {
     id: 'g7',

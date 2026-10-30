@@ -1,11 +1,13 @@
 import {
   Goal,
   averageProgress,
+  goalExtra,
   goalFooter,
   goalPeriodInfo,
   goalProgress,
   goalTag,
   goalValueLabel,
+  isGoalMet,
   parseIsoDate,
   periodFooter,
   usesDots,
@@ -71,10 +73,18 @@ describe('goal labels', () => {
     expect(goalValueLabel({ ...weeklyGoal, target: 1, done: 0 })).toBe('0 of 1 time');
   });
 
-  it('counts units for objectives', () => {
-    expect(goalValueLabel({ type: 'objective', done: 4, target: 12, unit: 'modules' })).toBe(
-      '4 of 12 modules',
-    );
+  it('counts past the target for frequency goals', () => {
+    expect(goalValueLabel({ ...weeklyGoal, done: 7 })).toBe('7 of 5 times');
+  });
+
+  it('says when an objective was achieved', () => {
+    expect(
+      goalValueLabel({ type: 'objective', done: 1, target: 1, achievedOn: '2026-10-20' }),
+    ).toBe('Achieved on Oct 20');
+  });
+
+  it('says an objective is not achieved yet', () => {
+    expect(goalValueLabel({ type: 'objective', done: 0, target: 1 })).toBe('Not achieved yet');
   });
 
   it('falls back to the first period for an unknown value', () => {
@@ -89,6 +99,37 @@ describe('goalFooter', () => {
 
   it('says when a pending goal renews', () => {
     expect(goalFooter(weeklyGoal, TODAY)).toBe('Renews on Sunday');
+  });
+
+  it('counts what was done beyond the target', () => {
+    expect(goalFooter({ ...weeklyGoal, done: 7 }, TODAY)).toBe('Completed · 2 extra');
+  });
+
+  it('says completed once an objective is achieved', () => {
+    const objective: Goal = { ...weeklyGoal, type: 'objective', achievedOn: '2026-10-20' };
+
+    expect(goalFooter(objective, TODAY)).toBe('Completed');
+  });
+});
+
+describe('isGoalMet', () => {
+  it('needs the target for a frequency goal', () => {
+    expect([isGoalMet(weeklyGoal), isGoalMet({ ...weeklyGoal, done: 6 })]).toEqual([false, true]);
+  });
+
+  it('needs the achieved mark for an objective', () => {
+    const objective = { type: 'objective', done: 0, target: 1 } as const;
+
+    expect([isGoalMet(objective), isGoalMet({ ...objective, achievedOn: '2026-10-20' })]).toEqual([
+      false,
+      true,
+    ]);
+  });
+});
+
+describe('goalExtra', () => {
+  it('is what was done beyond the target, never negative', () => {
+    expect([goalExtra({ done: 7, target: 5 }), goalExtra({ done: 3, target: 5 })]).toEqual([2, 0]);
   });
 });
 

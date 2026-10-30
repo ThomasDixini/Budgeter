@@ -57,4 +57,37 @@ public sealed class CategoryEndpointsTests : IDisposable
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
+
+    [Fact]
+    public async Task Put_UpdatesTheCategory()
+    {
+        await _client.PostAsJsonAsync("/categories", new CreateCategoryRequest("languages", "Languages", "#86EFAC"));
+
+        var response = await _client.PutAsJsonAsync("/categories/languages", new UpdateCategoryRequest("Spanish", "#7DD3FC"));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var categories = await _client.GetFromJsonAsync<CategoryResponse[]>("/categories");
+        categories.ShouldBe([new CategoryResponse("languages", "Spanish", "#7DD3FC")]);
+    }
+
+    [Fact]
+    public async Task Put_UnknownCategoryIsNotFound()
+    {
+        var response = await _client.PutAsJsonAsync("/categories/missing", new UpdateCategoryRequest("Spanish", "#7DD3FC"));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Delete_RemovesTheCategoryAndRetriesSucceed()
+    {
+        await _client.PostAsJsonAsync("/categories", new CreateCategoryRequest("languages", "Languages", "#86EFAC"));
+
+        var first = await _client.DeleteAsync("/categories/languages");
+        var retry = await _client.DeleteAsync("/categories/languages");
+
+        first.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        retry.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await _client.GetFromJsonAsync<CategoryResponse[]>("/categories"))!.ShouldBeEmpty();
+    }
 }

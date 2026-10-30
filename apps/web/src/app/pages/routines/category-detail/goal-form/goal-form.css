@@ -180,3 +180,13 @@
 .preview-footer {
   color: var(--color-text-muted);
 }
+
+.counting-hint {
+  margin: 10px 0 0;
+  font-size: var(--font-size-sm);
+}
+
+.type:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

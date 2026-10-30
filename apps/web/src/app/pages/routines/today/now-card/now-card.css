@@ -53,3 +53,23 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* Right after completing or skipping, so a mistaken tap is one click away from undone. */
+.last-ended {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.undo-last {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--color-mint);
+  cursor: pointer;
+}

@@ -1,7 +1,10 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { NEVER, Observable, of } from 'rxjs';
+import { Clock } from '../calendar/clock';
+import { FixedClock } from '../calendar/fixed-clock';
 import { Category } from './category';
+import { Goal } from './goal';
 import {
   FakeCategoriesGateway,
   FakeGoalsGateway,
@@ -16,6 +19,24 @@ class RecordingErrorHandler extends ErrorHandler {
 
   override handleError(error: unknown): void {
     this.errors.push(error);
+  }
+}
+
+/** A clock a test can move, like a page left open while the day changes. */
+class MovableClock extends Clock {
+  constructor(public moment: Date) {
+    super();
+  }
+
+  override now(): Date {
+    return new Date(this.moment);
+  }
+}
+
+/** Creating a goal never answers, as while the API is slow. */
+class SlowCreateGoalsGateway extends FakeGoalsGateway {
+  override create(): Observable<Goal> {
+    return NEVER;
   }
 }
 
@@ -38,11 +59,13 @@ function createStore(
   categories = new FakeCategoriesGateway(),
   goals = new FakeGoalsGateway(),
   routines = new FakeRoutinesGateway(),
+  clock: Clock = new FixedClock(new Date(2026, 9, 26, 9, 0)),
 ): StoreSetup {
   const errors = new RecordingErrorHandler();
   TestBed.configureTestingModule({
     providers: [
       ...provideFakeRoutinesGateways(categories, goals, routines),
+      { provide: Clock, useValue: clock },
       { provide: ErrorHandler, useValue: errors },
     ],
   });
@@ -73,38 +96,136 @@ describe('RoutinesStore', () => {
     expect(errors.errors).toEqual([categories.failure]);
   });
 
-  it('toggles a task', () => {
+  it('loads the goals for the period around today', () => {
+    const { goals } = createStore();
+
+    expect(goals.listedDays).toEqual(['2026-10-26']);
+  });
+
+  it('marks an objective achieved today and shows it as done', () => {
+    const { store, goals } = createStore();
+
+    store.setAchieved('g2', true);
+
+    expect(goals.achievements).toEqual([{ goalId: 'g2', isoDay: '2026-10-26', isAchieved: true }]);
+    expect(store.goals().find((goal) => goal.id === 'g2')).toMatchObject({
+      achievedOn: '2026-10-26',
+      done: 12,
+    });
+  });
+
+  it('takes the achieved mark back', () => {
     const { store } = createStore();
 
-    store.toggleTask('t3');
+    store.setAchieved('g6', false);
 
-    expect(store.tasks().find((task) => task.id === 't3')?.done).toBe(true);
+    const goal = store.goals().find((current) => current.id === 'g6');
+    expect([goal?.achievedOn, goal?.done]).toEqual([undefined, 0]);
   });
 
-  it('increments a goal without passing its target', () => {
-    const { store } = createStore();
-
-    store.incrementGoal('g3');
-
-    expect(store.goals().find((goal) => goal.id === 'g3')?.done).toBe(1);
-  });
-
-  it('ignores progress on an unknown goal', () => {
-    const { store, errors } = createStore();
-
-    store.incrementGoal('missing');
-
-    expect(errors.errors).toEqual([]);
-  });
-
-  it('restores the progress when logging it fails', () => {
+  it('puts the objective back as it was when marking it fails', () => {
     const { store, goals, errors } = createStore();
     goals.failure = new Error('offline');
 
-    store.incrementGoal('g1');
+    store.setAchieved('g2', true);
 
-    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(3);
+    expect(store.goals().find((goal) => goal.id === 'g2')?.achievedOn).toBeUndefined();
     expect(errors.errors).toEqual([goals.failure]);
+  });
+
+  it('never marks a frequency goal or an unknown one', () => {
+    const { store, goals } = createStore();
+
+    store.setAchieved('g1', true);
+    store.setAchieved('missing', true);
+
+    expect(goals.achievements).toEqual([]);
+  });
+
+  it('edits a goal and keeps its type and category', () => {
+    const { store, goals } = createStore();
+    const changes = {
+      title: 'Study C# 2x',
+      period: 'monthly',
+      target: 2,
+    } as const;
+
+    store.updateGoal('g1', changes);
+
+    expect(store.goals().find((goal) => goal.id === 'g1')).toMatchObject({
+      ...changes,
+      type: 'frequency',
+      categoryId: 'study',
+      done: 3,
+    });
+    expect(goals.updated).toEqual([{ goalId: 'g1', changes }]);
+  });
+
+  it('puts the goal back as it was when editing it fails', () => {
+    const { store, goals } = createStore();
+    goals.failure = new Error('offline');
+
+    store.updateGoal('g1', { title: 'Renamed', period: 'weekly', target: 5 });
+
+    expect(store.goals().find((goal) => goal.id === 'g1')?.title).toBe('Study C# 5x a week');
+  });
+
+  it('deletes a goal and puts it back in place when that fails', () => {
+    const { store, goals } = createStore();
+
+    store.deleteGoal('g3');
+    expect(store.goals().map((goal) => goal.id)).not.toContain('g3');
+    goals.failure = new Error('offline');
+    store.deleteGoal('g4');
+
+    expect(store.goals().map((goal) => goal.id)).toContain('g4');
+    expect(goals.deleted).toEqual(['g3', 'g4']);
+  });
+
+  it('follows the day when a page is left open: marks and reloads use the new day', () => {
+    const sunday = new MovableClock(new Date(2026, 10, 1, 23, 50));
+    const { store, goals } = createStore(undefined, undefined, undefined, sunday);
+    store.setAchieved('g2', true);
+
+    sunday.moment = new Date(2026, 10, 2, 0, 10);
+    store.setAchieved('g2', false);
+    store.refreshGoals();
+
+    expect(goals.achievements.map((entry) => entry.isoDay)).toEqual(['2026-11-01', '2026-11-02']);
+    expect(goals.listedDays).toEqual(['2026-11-01', '2026-11-02']);
+  });
+
+  it('keeps a goal that is still being created when the reload answers without it', () => {
+    const { store } = createStore(undefined, new SlowCreateGoalsGateway());
+    const goal = store.addGoal({
+      categoryId: 'study',
+      title: 'Read the docs',
+      type: 'frequency',
+      period: 'weekly',
+      target: 2,
+    });
+
+    store.refreshGoals();
+
+    expect(store.goals().map((current) => current.id)).toContain(goal.id);
+  });
+
+  it('updates the progress of the goals it already has from a reload', () => {
+    const { store, goals } = createStore();
+    goals.setDone('g1', 4);
+
+    store.refreshGoals();
+
+    expect(store.goals().find((goal) => goal.id === 'g1')?.done).toBe(4);
+  });
+
+  it('reloads the goals when asked, for after a block counted', () => {
+    const { store, goals } = createStore();
+
+    store.refreshGoals();
+
+    expect(goals.listedDays).toEqual(['2026-10-26', '2026-10-26']);
+    expect(store.goals()).toHaveLength(7);
   });
 
   it('adds a goal with no progress and saves it', () => {
@@ -162,6 +283,53 @@ describe('RoutinesStore', () => {
     store.addCategory('Languages', '#86EFAC');
 
     expect(store.categories()).toHaveLength(4);
+    expect(errors.errors).toEqual([categories.failure]);
+  });
+
+  it('renames and recolors a category and saves it', () => {
+    const { store, categories } = createStore();
+
+    store.updateCategory('study', 'Learning', '#F0ABFC');
+
+    const expected = { id: 'study', name: 'Learning', color: '#F0ABFC' };
+    expect(store.categories()[0]).toEqual(expected);
+    expect(categories.updated).toEqual([expected]);
+  });
+
+  it('puts a category back when the gateway rejects its edit', () => {
+    const { store, categories, errors } = createStore();
+    categories.failure = new Error('offline');
+
+    store.updateCategory('study', 'Learning', '#F0ABFC');
+
+    expect(store.categories()[0].name).toBe('Study');
+    expect(errors.errors).toEqual([categories.failure]);
+  });
+
+  it('deletes a category with its goals and detaches its routine blocks', () => {
+    const { store, categories } = createStore();
+
+    store.deleteCategory('study');
+
+    expect(categories.deleted).toEqual(['study']);
+    expect(store.categories().map((category) => category.id)).not.toContain('study');
+    expect(store.goals().some((goal) => goal.categoryId === 'study')).toBe(false);
+    const blocks = store.routines().flatMap((routine) => routine.blocks);
+    expect(blocks.some((block) => block.categoryId === 'study')).toBe(false);
+    expect(blocks.some((block) => block.id === 'csharp')).toBe(true);
+  });
+
+  it('brings everything back when the gateway rejects a category deletion', () => {
+    const { store, categories, errors } = createStore();
+    const goalsBefore = store.goals();
+    const routinesBefore = store.routines();
+    categories.failure = new Error('offline');
+
+    store.deleteCategory('study');
+
+    expect(store.categories()).toHaveLength(4);
+    expect(store.goals()).toEqual(goalsBefore);
+    expect(store.routines()).toEqual(routinesBefore);
     expect(errors.errors).toEqual([categories.failure]);
   });
 

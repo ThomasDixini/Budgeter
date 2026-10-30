@@ -31,4 +31,16 @@ internal sealed class InMemoryCategoryRepository : ICategoryRepository
         AddCount++;
         return Task.CompletedTask;
     }
+
+    public Task UpdateAsync(Category category, CancellationToken cancellationToken)
+    {
+        _categories[_categories.FindIndex(current => current.Id == category.Id)] = category;
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(string id, CancellationToken cancellationToken)
+    {
+        _categories.RemoveAll(category => category.Id == id);
+        return Task.CompletedTask;
+    }
 }

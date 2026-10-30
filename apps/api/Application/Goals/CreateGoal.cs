@@ -7,14 +7,15 @@ namespace Budgeter.Api.Application.Goals;
 public sealed class CreateGoal(IGoalRepository goals, ICategoryRepository categories)
 {
     /// <summary>
-    /// Validates the definition, checks the category exists and stores the goal with no progress.
+    /// Validates the definition, checks the category exists and stores the goal with no progress. A retry
+    /// answers with the stored goal and its progress around <paramref name="day"/>.
     /// </summary>
-    /// <example><code>await createGoal.ExecuteAsync(new GoalDefinition("g1", "study", "Study C#", GoalType.Frequency, GoalPeriod.Weekly, 5, null, null), ct);</code></example>
+    /// <example><code>await createGoal.ExecuteAsync(new GoalDefinition("g1", "study", "Study C#", GoalType.Frequency, GoalPeriod.Weekly, 5, null, null), day, ct);</code></example>
     public async Task<Creation<Goal>> ExecuteAsync(
-        GoalDefinition definition, CancellationToken cancellationToken)
+        GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
     {
         var goal = Goal.Create(definition);
-        var existing = await goals.FindAsync(goal.Id, cancellationToken);
+        var existing = await goals.FindAsync(goal.Id, day, cancellationToken);
         if (existing is not null) return new Creation<Goal>(existing, WasCreated: false);
 
         await RequireCategoryAsync(goal.CategoryId, cancellationToken);

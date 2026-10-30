@@ -90,6 +90,48 @@ public sealed class RoutineEndpointsTests : IDisposable
         (await _client.GetFromJsonAsync<RoutineResponse[]>("/routines")).ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task BlockOutcome_IsRecordedAndListedForItsDay()
+    {
+        await CreateLanguagesCategoryAsync();
+        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+
+        var response = await _client.PutAsJsonAsync(
+            "/routines/weekdays/days/2026-10-27/blocks/csharp", new { outcome = "skipped", at = "14:10" });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await _client.GetStringAsync("/block-outcomes?date=2026-10-27");
+        body.ShouldBe("""[{"routineId":"weekdays","blockId":"csharp","outcome":"skipped","at":"14:10"}]""");
+        (await _client.GetStringAsync("/block-outcomes?date=2026-10-28")).ShouldBe("[]");
+    }
+
+    [Fact]
+    public async Task BlockOutcome_UndoRemovesItAndRepeatsAsNoContent()
+    {
+        await CreateLanguagesCategoryAsync();
+        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+        const string path = "/routines/weekdays/days/2026-10-27/blocks/csharp";
+        await _client.PutAsJsonAsync(path, new { outcome = "done", at = "14:10" });
+
+        var first = await _client.DeleteAsync(path);
+        var retry = await _client.DeleteAsync(path);
+
+        (first.StatusCode, retry.StatusCode).ShouldBe((HttpStatusCode.NoContent, HttpStatusCode.NoContent));
+        (await _client.GetStringAsync("/block-outcomes?date=2026-10-27")).ShouldBe("[]");
+    }
+
+    [Fact]
+    public async Task BlockOutcome_ForAnUnknownBlockIsNotFound()
+    {
+        await CreateLanguagesCategoryAsync();
+        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+
+        var response = await _client.PutAsJsonAsync(
+            "/routines/weekdays/days/2026-10-27/blocks/missing", new { outcome = "done", at = "14:10" });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
     private async Task CreateLanguagesCategoryAsync()
     {
         var response = await _client.PostAsJsonAsync("/categories",
