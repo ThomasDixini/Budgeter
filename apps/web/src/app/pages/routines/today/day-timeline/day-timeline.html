@@ -11,12 +11,18 @@
       <li
         class="block-slot"
         [class.is-ended]="block.outcome !== undefined"
+        [class.shares-row-left]="block.width < 100 && block.left === 0"
+        [class.shares-row-right]="block.width < 100 && block.left > 0"
+        [class.shares-row-inner]="block.left > 0 && block.left + block.width < 100"
         [style.top.px]="block.top"
         [style.height.px]="block.height"
+        [style.left.%]="block.left"
+        [style.width.%]="block.width"
       >
         <div
           class="block"
           [class.is-now]="block.isNow"
+          [class.is-selected]="block.isSelected"
           [class.is-compact]="block.isCompact"
           [class.is-done]="block.outcome === 'done'"
           [class.is-skipped]="block.outcome === 'skipped'"
@@ -25,7 +31,13 @@
           [attr.aria-current]="block.isNow ? 'time' : null"
           [attr.title]="block.isCompact ? block.summary : null"
         >
-          <div class="block-text">
+          <button
+            class="block-text block-select"
+            type="button"
+            [attr.aria-pressed]="block.isSelected"
+            [attr.aria-label]="'Show tasks for ' + block.name"
+            (click)="pick.emit(block.blockId)"
+          >
             <span class="block-name">
               @if (block.outcome === 'done') {
                 <svg
@@ -61,7 +73,7 @@
               {{ block.name }}
             </span>
             <span class="block-range ui-tabular">{{ block.range }}</span>
-          </div>
+          </button>
           <div class="block-badges">
             @if (block.isNow && !block.isCompact) {
               <span class="ui-badge-now">Now</span>
@@ -86,7 +98,50 @@
                 </span>
               }
             }
-            @if (block.outcome) {
+            @if (!block.outcome) {
+              <button
+                class="step complete-block"
+                type="button"
+                [attr.aria-label]="'Complete ' + block.name"
+                title="Complete"
+                (click)="complete.emit(block.blockId)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+                </svg>
+              </button>
+              <button
+                class="step skip-block"
+                type="button"
+                [attr.aria-label]="'Skip ' + block.name"
+                title="Skip"
+                (click)="skip.emit(block.blockId)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 5l9 7-9 7V5zM19 5v14"></path>
+                </svg>
+              </button>
+            } @else {
               <button
                 class="undo"
                 type="button"

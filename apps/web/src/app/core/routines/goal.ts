@@ -3,19 +3,48 @@ import { formatDate } from '@angular/common';
 export type GoalType = 'frequency' | 'objective';
 export type GoalPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
 
-/** Something to repeat (frequency) or reach (objective) within a period. */
+/**
+ * Something to repeat (frequency) or reach (objective) within a period. A frequency goal counts the
+ * routine blocks of its category completed in the period; an objective is marked achieved by hand.
+ */
 export interface Goal {
   readonly id: string;
   readonly categoryId: string;
   readonly title: string;
   readonly type: GoalType;
   readonly period: GoalPeriod;
+  /**
+   * Blocks completed in the period of the day asked for (it may go past the target); for an
+   * objective, the target once achieved and zero before.
+   */
   readonly done: number;
   readonly target: number;
-  /** What an objective counts, e.g. "books". */
+  /** What an objective counts, e.g. "books"; kept from goals set before objectives were marked by hand. */
   readonly unit?: string;
   /** ISO date (`YYYY-MM-DD`) closing a custom period. */
   readonly deadline?: string;
+  /** ISO date an objective was marked achieved; absent while it is pending. */
+  readonly achievedOn?: string;
+}
+
+/** What can be edited on a goal: everything except its type and category. */
+export type GoalChanges = Pick<Goal, 'title' | 'period' | 'target' | 'unit' | 'deadline'>;
+
+/**
+ * Whether a goal is met in its period: enough blocks for a frequency goal, marked for an objective.
+ * @example isGoalMet({ type: 'frequency', done: 6, target: 5 }) // true
+ */
+export function isGoalMet(goal: Pick<Goal, 'type' | 'done' | 'target' | 'achievedOn'>): boolean {
+  if (goal.type === 'objective') return goal.achievedOn !== undefined;
+  return goal.done >= goal.target;
+}
+
+/**
+ * Repetitions beyond the target, zero until it is passed.
+ * @example goalExtra({ done: 7, target: 5 }) // 2
+ */
+export function goalExtra(goal: Pick<Goal, 'done' | 'target'>): number {
+  return Math.max(0, goal.done - goal.target);
 }
 
 export interface GoalPeriodInfo {
@@ -85,21 +114,28 @@ export function goalTag(goal: Pick<Goal, 'type' | 'period'>): string {
 }
 
 /**
- * Progress spelled out, e.g. "3 of 5 times" or "4 of 12 modules".
- * @example goalValueLabel({ type: 'objective', done: 4, target: 12, unit: 'modules' }) // '4 of 12 modules'
+ * Progress spelled out: blocks done against the target, or whether an objective was achieved.
+ * @example goalValueLabel({ type: 'frequency', done: 7, target: 5 }) // '7 of 5 times'
  */
-export function goalValueLabel(goal: Pick<Goal, 'type' | 'done' | 'target' | 'unit'>): string {
-  if (goal.type === 'objective') return `${goal.done} of ${goal.target} ${goal.unit ?? ''}`.trim();
+export function goalValueLabel(
+  goal: Pick<Goal, 'type' | 'done' | 'target' | 'achievedOn'>,
+): string {
+  if (goal.type === 'objective') {
+    return goal.achievedOn === undefined
+      ? 'Not achieved yet'
+      : `Achieved on ${shortDate(parseIsoDate(goal.achievedOn))}`;
+  }
   return `${goal.done} of ${goal.target} ${goal.target === 1 ? 'time' : 'times'}`;
 }
 
 /**
- * When the goal renews or ends, or "Completed" once reached.
+ * When the goal renews or ends, or "Completed" once met (with what was done beyond the target).
  * @example goalFooter({ ...goal, period: 'weekly' }, today) // 'Renews on Sunday'
  */
 export function goalFooter(goal: Goal, today: Date): string {
-  if (goal.done >= goal.target) return 'Completed';
-  return periodFooter(goal.period, today, goal.deadline);
+  if (!isGoalMet(goal)) return periodFooter(goal.period, today, goal.deadline);
+  const extra = goal.type === 'frequency' ? goalExtra(goal) : 0;
+  return extra > 0 ? `Completed · ${extra} extra` : 'Completed';
 }
 
 /**

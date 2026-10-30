@@ -1,6 +1,9 @@
 namespace Budgeter.Api.Application.Tasks;
 
-/// <summary>Reads and records which tasks were done on a day.</summary>
+/// <summary>
+/// Reads and records which tasks were done on a day. Tasks do not feed goals: only completed routine
+/// blocks do.
+/// </summary>
 public sealed class TaskCompletions(ITaskRepository tasks)
 {
     /// <summary>

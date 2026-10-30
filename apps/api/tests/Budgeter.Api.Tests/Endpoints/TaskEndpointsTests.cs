@@ -32,7 +32,7 @@ public sealed class TaskEndpointsTests : IDisposable
     [Fact]
     public async Task Put_OnceWithoutDateIsBadRequest()
     {
-        var response = await _client.PutAsJsonAsync("/tasks/t1", new SaveTaskRequest("Call", TaskRepeat.Once));
+        var response = await _client.PutAsJsonAsync("/tasks/t1", new { title = "Call", repeat = "once" });
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
     }
@@ -40,7 +40,7 @@ public sealed class TaskEndpointsTests : IDisposable
     [Fact]
     public async Task Completions_MarkUnmarkAndListByDate()
     {
-        await _client.PutAsJsonAsync("/tasks/t1", new SaveTaskRequest("Read", TaskRepeat.Daily));
+        await _client.PutAsJsonAsync("/tasks/t1", new { title = "Read", repeat = "daily" });
 
         var marked = await _client.PutAsync("/tasks/t1/completions/2026-10-27", null);
         var done = await _client.GetFromJsonAsync<string[]>("/task-completions?date=2026-10-27");
@@ -62,7 +62,7 @@ public sealed class TaskEndpointsTests : IDisposable
     [Fact]
     public async Task Delete_RemovesTheTask()
     {
-        await _client.PutAsJsonAsync("/tasks/t1", new SaveTaskRequest("Read", TaskRepeat.Daily));
+        await _client.PutAsJsonAsync("/tasks/t1", new { title = "Read", repeat = "daily" });
 
         var response = await _client.DeleteAsync("/tasks/t1");
 

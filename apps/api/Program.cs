@@ -15,7 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     // Enums travel as the web app spells them ("frequency", "weekly") and absent optionals are omitted.
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    // Numbers are not accepted for enums: "tracking": 7 would be stored and silently never match anything.
+    options.SerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
     options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     options.SerializerOptions.RespectNullableAnnotations = true;
     options.SerializerOptions.RespectRequiredConstructorParameters = true;
@@ -25,9 +27,14 @@ builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
 builder.Services.AddSqlitePersistence();
 builder.Services.AddScoped<ListCategories>();
 builder.Services.AddScoped<CreateCategory>();
+builder.Services.AddScoped<UpdateCategory>();
+builder.Services.AddScoped<DeleteCategory>();
 builder.Services.AddScoped<ListGoals>();
 builder.Services.AddScoped<CreateGoal>();
-builder.Services.AddScoped<LogGoalProgress>();
+builder.Services.AddScoped<SetGoalAchievement>();
+builder.Services.AddScoped<UpdateGoal>();
+builder.Services.AddScoped<DeleteGoal>();
+builder.Services.AddScoped<GoalCredits>();
 builder.Services.AddScoped<ListRoutines>();
 builder.Services.AddScoped<SaveRoutine>();
 builder.Services.AddScoped<DeleteRoutine>();

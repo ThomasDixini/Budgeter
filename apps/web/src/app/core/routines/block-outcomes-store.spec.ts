@@ -6,6 +6,7 @@ import { BlockOutcomesGateway } from './block-outcomes-gateway';
 import { BlockOutcomesStore } from './block-outcomes-store';
 import { BlockOutcome } from './day-plan';
 import { FakeBlockOutcomesGateway } from './fake-block-outcomes-gateway';
+import { FakeGoalsGateway, provideFakeRoutinesGateways } from './fake-routines-gateways';
 
 const TODAY = new Date(2026, 9, 27, 20, 40);
 const GYM_DONE: BlockOutcome = {
@@ -24,20 +25,25 @@ class RecordingErrorHandler extends ErrorHandler {
   }
 }
 
-function createStore(gateway = new FakeBlockOutcomesGateway([GYM_DONE])): {
+function createStore(
+  gateway = new FakeBlockOutcomesGateway([GYM_DONE]),
+  goals = new FakeGoalsGateway(),
+): {
   store: BlockOutcomesStore;
   gateway: FakeBlockOutcomesGateway;
+  goals: FakeGoalsGateway;
   errors: RecordingErrorHandler;
 } {
   const errors = new RecordingErrorHandler();
   TestBed.configureTestingModule({
     providers: [
+      ...provideFakeRoutinesGateways(undefined, goals),
       { provide: BlockOutcomesGateway, useValue: gateway },
       { provide: Clock, useValue: new FixedClock(TODAY) },
       { provide: ErrorHandler, useValue: errors },
     ],
   });
-  return { store: TestBed.inject(BlockOutcomesStore), gateway, errors };
+  return { store: TestBed.inject(BlockOutcomesStore), gateway, goals, errors };
 }
 
 describe('BlockOutcomesStore', () => {
@@ -61,6 +67,24 @@ describe('BlockOutcomesStore', () => {
     store.record('weekdays', 'gym', 'skipped', 19 * 60);
 
     expect(store.outcomes()).toEqual([{ ...GYM_DONE, outcome: 'skipped' }]);
+  });
+
+  it('reloads the goals after recording or undoing, since blocks can count toward them', () => {
+    const { store, goals } = createStore();
+
+    store.record('weekdays', 'project', 'done', 20 * 60 + 40);
+    store.undo('weekdays', 'project');
+
+    expect(goals.listedDays).toHaveLength(3);
+  });
+
+  it('does not reload the goals when recording failed', () => {
+    const { store, gateway, goals } = createStore();
+    gateway.failure = new Error('offline');
+
+    store.record('weekdays', 'project', 'done', 20 * 60 + 40);
+
+    expect(goals.listedDays).toHaveLength(1);
   });
 
   it('undoes an outcome through the gateway', () => {
@@ -91,5 +115,25 @@ describe('BlockOutcomesStore', () => {
 
     expect(store.outcomes()).toEqual([GYM_DONE]);
     expect(errors.errors).toEqual([gateway.failure]);
+  });
+});
+
+describe('BlockOutcomesStore showDay', () => {
+  it('loads another day and records on it', () => {
+    const { store, gateway } = createStore();
+
+    store.showDay('2026-10-26');
+    store.record('night', 'patrol', 'done', 23 * 60);
+
+    expect(gateway.listedDays).toEqual(['2026-10-27', '2026-10-26']);
+    expect(gateway.recorded.at(-1)?.isoDay).toBe('2026-10-26');
+  });
+
+  it('does not reload the day already shown', () => {
+    const { store, gateway } = createStore();
+
+    store.showDay('2026-10-27');
+
+    expect(gateway.listedDays).toEqual(['2026-10-27']);
   });
 });

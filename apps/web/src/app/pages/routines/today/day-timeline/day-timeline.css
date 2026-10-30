@@ -29,7 +29,7 @@
   border-top: var(--border-hairline) solid var(--color-border-subtle);
 }
 
-/* Blocks sit right of the hour labels, each on its own full-width row. */
+/* Blocks sit right of the hour labels; blocks at the same time share the width side by side. */
 .blocks {
   list-style: none;
   position: absolute;
@@ -44,6 +44,19 @@
   box-sizing: border-box;
 }
 
+/* Short ended blocks sit side by side in one row, with a small gap between them. */
+.block-slot.shares-row-left {
+  padding-right: 3px;
+}
+
+.block-slot.shares-row-right {
+  padding-left: 3px;
+}
+
+.block-slot.shares-row-inner {
+  padding-right: 3px;
+}
+
 /* An ended block may grow over the past part of an earlier one; it stays on top to be read. */
 .block-slot.is-ended {
   z-index: 1;
@@ -53,13 +66,16 @@
   height: 100%;
   box-sizing: border-box;
   border-radius: 14px;
-  padding: 12px 16px;
+  padding: 12px;
+  padding-left: 16px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
   overflow: hidden;
   border: var(--border-hairline) solid;
+  /* Holds the select button's hit area, which covers the whole block. */
+  position: relative;
 }
 
 .block.is-now {
@@ -71,6 +87,47 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+}
+
+.block-select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  align-self: stretch;
+  flex: 1;
+  align-items: flex-start;
+}
+
+/* The whole block picks it, not just its name: the button's hit area stretches over the block. */
+.block-select::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.block-select:focus-visible {
+  outline: none;
+}
+
+.block-select:focus-visible::after {
+  outline: 2px solid var(--color-mint);
+  outline-offset: -2px;
+  border-radius: 14px;
+}
+
+.block:hover {
+  filter: brightness(1.15);
+}
+
+.block.is-selected {
+  box-shadow: 0 0 0 1px var(--color-mint);
 }
 
 .block-name {
@@ -86,8 +143,17 @@
 .block-badges {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: 6px;
+  /* Badges let clicks through to the block; their buttons stay on top and keep their own action. */
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.block-badges button {
+  pointer-events: auto;
 }
 
 /* Completed today: mint card with a check. */
@@ -121,9 +187,10 @@
   color: var(--color-text-faint);
 }
 
-.undo {
-  width: 26px;
-  height: 26px;
+.undo,
+.step {
+  width: 24px;
+  height: 24px;
   flex: none;
   border: 0;
   border-radius: var(--radius-control);
@@ -136,14 +203,11 @@
 }
 
 .undo:hover,
+.step:hover,
+.step:focus-visible,
 .undo:focus-visible {
   color: var(--color-text);
   background: rgba(255, 255, 255, 0.08);
-}
-
-.block.is-compact .undo {
-  width: 20px;
-  height: 20px;
 }
 
 .outcome-label {
@@ -241,4 +305,21 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-mint);
   background: var(--color-bg);
+}
+
+.block.is-compact .block-select {
+  align-self: center;
+}
+
+/* On a narrow timeline the shared row drops the check and category dot so the name stays readable. */
+.timeline {
+  container-type: inline-size;
+}
+
+@container (max-width: 520px) {
+  .block-slot.is-ended[class*='shares-row'] .done-check,
+  .block-slot.is-ended[class*='shares-row'] .block-range,
+  .block-slot.is-ended[class*='shares-row'] .ui-dot {
+    display: none;
+  }
 }

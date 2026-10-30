@@ -13,4 +13,13 @@ public interface ICategoryRepository
 
     /// <summary>Stores a new category.</summary>
     Task AddAsync(Category category, CancellationToken cancellationToken);
+
+    /// <summary>Replaces the name and color of the stored category with the same id.</summary>
+    Task UpdateAsync(Category category, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Removes the category and its goals; blocks and tasks that used it lose their category.
+    /// An unknown id is ignored.
+    /// </summary>
+    Task DeleteAsync(string id, CancellationToken cancellationToken);
 }

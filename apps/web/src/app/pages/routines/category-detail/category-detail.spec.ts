@@ -60,7 +60,45 @@ describe('CategoryDetail', () => {
       (value) => value.textContent,
     );
 
-    expect(values).toEqual(['3', '64%', '7h30']);
+    expect(values).toEqual(['3', '53%', '7h30']);
+  });
+
+  it('edits the category name and color', async () => {
+    const page = await openCategory('/routines/categories/study');
+    click(page, '.hero-top button', 0);
+    const name = page.element.querySelector<HTMLInputElement>(
+      'form[aria-label="Edit category"] input',
+    );
+    if (name === null) throw new Error('Expected the category name input, found none');
+    name.value = 'Learning';
+    name.dispatchEvent(new Event('input'));
+    click(page, '.swatch', 2);
+
+    page.element
+      .querySelector('form[aria-label="Edit category"]')
+      ?.dispatchEvent(new Event('submit'));
+    page.render();
+
+    expect(TestBed.inject(RoutinesStore).categories()[0]).toEqual({
+      id: 'study',
+      name: 'Learning',
+      color: '#F0ABFC',
+    });
+    expect(page.element.querySelector('#category-title')?.textContent).toBe('Learning');
+  });
+
+  it('deletes the category after confirming', async () => {
+    const page = await openCategory('/routines/categories/study');
+
+    click(page, '.hero-top button', 1);
+    expect(TestBed.inject(RoutinesStore).categories()).toHaveLength(4);
+    click(page, '[aria-label="Confirm deletion"] button', 0);
+
+    expect(
+      TestBed.inject(RoutinesStore)
+        .categories()
+        .map((category) => category.id),
+    ).not.toContain('study');
   });
 
   it('lists the routine blocks of the category', async () => {
@@ -82,12 +120,16 @@ describe('CategoryDetail', () => {
     expect(page.element.querySelector('.no-goals')).not.toBeNull();
   });
 
-  it('logs progress with +1', async () => {
+  it('marks an objective achieved from its card', async () => {
     const page = await openCategory('/routines/categories/study');
 
-    click(page, '.increment', 0);
+    click(page, '.achieve', 0);
 
-    expect(TestBed.inject(RoutinesStore).goals()[0].done).toBe(4);
+    expect(
+      TestBed.inject(RoutinesStore)
+        .goals()
+        .find((goal) => goal.id === 'g2')?.achievedOn,
+    ).toBe('2026-10-26');
   });
 
   it('opens the goal form when arriving from a new category', async () => {
@@ -108,6 +150,64 @@ describe('CategoryDetail', () => {
 
     expect(page.element.querySelector('app-goal-form')).toBeNull();
     expect(goalTitles(page)).toContain('Read before bed');
+  });
+
+  function nameInForm(page: Page): string | undefined {
+    return page.element.querySelector<HTMLInputElement>('app-goal-form .name-input')?.value;
+  }
+
+  function editButton(page: Page, title: string): HTMLButtonElement {
+    return page.element.querySelector<HTMLButtonElement>(`[aria-label="Edit ${title}"]`)!;
+  }
+
+  // Regression: opening another goal's form kept the first one's values, and saving overwrote it.
+  it('fills the form with the goal clicked, even when another goal was already being edited', async () => {
+    const page = await openCategory('/routines/categories/study');
+
+    editButton(page, 'Study C# 5x a week').click();
+    page.render();
+    editButton(page, 'Finish the C# course').click();
+    page.render();
+
+    expect(nameInForm(page)).toBe('Finish the C# course');
+    expect(page.element.querySelectorAll('app-goal-form')).toHaveLength(1);
+  });
+
+  it('saves the edit onto the goal that was clicked', async () => {
+    const goals = new FakeGoalsGateway();
+    const page = await openCategory('/routines/categories/study', goals);
+    editButton(page, 'Study C# 5x a week').click();
+    page.render();
+    editButton(page, 'Review notes every day').click();
+    page.render();
+    const name = page.element.querySelector<HTMLInputElement>('app-goal-form .name-input')!;
+    name.value = 'Review notes twice a day';
+    name.dispatchEvent(new Event('input'));
+
+    page.element.querySelector('app-goal-form form')?.dispatchEvent(new Event('submit'));
+    page.render();
+
+    expect(goals.updated.map((update) => update.goalId)).toEqual(['g3']);
+    expect(goalTitles(page)).toContain('Review notes twice a day');
+    expect(goalTitles(page)).toContain('Study C# 5x a week');
+  });
+
+  it('deletes a goal from its card after confirming', async () => {
+    const goals = new FakeGoalsGateway();
+    const page = await openCategory('/routines/categories/study', goals);
+
+    page.element
+      .querySelector<HTMLButtonElement>('[aria-label="Delete Review notes every day"]')!
+      .click();
+    page.render();
+    const confirm = page.element.querySelector<HTMLElement>('.confirm')!;
+    [...confirm.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Delete')!
+      .click();
+    page.render();
+
+    expect(goals.deleted).toEqual(['g3']);
+    expect(goalTitles(page)).not.toContain('Review notes every day');
   });
 
   it('explains when the category does not exist', async () => {
