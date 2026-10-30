@@ -196,6 +196,85 @@
   gap: 18px;
 }
 
+.focus-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.see-all {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-mint);
+  cursor: pointer;
+}
+
+.see-all:hover,
+.see-all:focus-visible {
+  text-decoration: underline;
+}
+
+/* "All goals": how many are met, then the goals grouped and scrolling inside the card. */
+.goal-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  background: rgba(var(--color-mint-rgb), 0.06);
+  border: var(--border-hairline) solid rgba(var(--color-mint-rgb), 0.18);
+}
+
+.goal-summary-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+}
+
+.goal-summary-count {
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-mint);
+}
+
+.goal-summary-fill {
+  background: var(--color-mint);
+}
+
+.all-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+.goal-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.goal-group span {
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+  letter-spacing: 0;
+}
+
 .focus-goal {
   display: flex;
   flex-direction: column;
@@ -204,12 +283,17 @@
 
 .focus-goal-header {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
+}
+
+.goal-dot {
+  width: 8px;
+  height: 8px;
 }
 
 .focus-goal-text {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -229,6 +313,34 @@
 .focus-goal-value {
   flex: none;
   font-size: var(--font-size-sm);
+  color: var(--color-text-soft);
+}
+
+.goal-track {
+  margin-left: 18px;
+}
+
+/* Met goals step back so the ones still to do stand out. */
+.focus-goal.is-met .focus-goal-title {
+  color: var(--color-text-muted);
+}
+
+.objective-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
+}
+
+.objective-pill.is-achieved {
+  color: var(--color-mint);
+  background: rgba(var(--color-mint-rgb), 0.08);
+  border-color: rgba(var(--color-mint-rgb), 0.35);
 }
 
 /* Tasks that are not due today: smaller, muted rows that stay reachable on a narrow screen. */

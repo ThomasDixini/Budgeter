@@ -10,6 +10,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { Clock } from '../../../core/calendar/clock';
@@ -70,12 +71,13 @@ interface FocusGoalView {
   readonly value: string;
   readonly percent: number;
   readonly color: string;
+  readonly isMet: boolean;
 }
 
 /** Module landing page: today's timeline, the block happening now, tasks and goals in focus. */
 @Component({
   selector: 'app-routines-today',
-  imports: [RouterLink, PageHeading, DayTimeline, NowCard, TaskForm],
+  imports: [NgTemplateOutlet, RouterLink, PageHeading, DayTimeline, NowCard, TaskForm],
   templateUrl: './today.html',
   styleUrl: './today.css',
 })
@@ -167,12 +169,26 @@ export class Today {
       })),
   );
   protected readonly doneCount = computed(() => this.tasks().filter((item) => item.isDone).length);
-  protected readonly focusGoals = computed(() =>
+  /** Whether "See all" opened the card to every goal, instead of the first few still pending. */
+  protected readonly isShowingAllGoals = signal(false);
+  protected readonly goalCount = computed(() => this.store.goals().length);
+  protected readonly pendingGoals = computed(() =>
     this.store
       .goals()
       .filter((goal) => !isGoalMet(goal))
-      .slice(0, FOCUS_GOAL_COUNT)
       .map((goal) => this.toFocusGoal(goal)),
+  );
+  protected readonly metGoals = computed(() =>
+    this.store
+      .goals()
+      .filter(isGoalMet)
+      .map((goal) => this.toFocusGoal(goal)),
+  );
+  /** The first goals still pending, shown while the card is closed. */
+  protected readonly focusGoals = computed(() => this.pendingGoals().slice(0, FOCUS_GOAL_COUNT));
+  /** Share of goals met in their current period, for the summary bar of "All goals". */
+  protected readonly metPercent = computed(() =>
+    this.goalCount() === 0 ? 0 : Math.round((this.metGoals().length / this.goalCount()) * 100),
   );
 
   constructor() {
@@ -300,10 +316,10 @@ export class Today {
       meta: [GOAL_TYPE_LABELS[goal.type], goalPeriodInfo(goal.period).label, category?.name]
         .filter((part) => part !== undefined)
         .join(' · '),
-      // Objectives in focus are never achieved, so they read "Not achieved yet".
       value: goal.type === 'objective' ? goalValueLabel(goal) : `${goal.done}/${goal.target}`,
       percent: goalProgress(goal),
       color: category?.color ?? 'var(--color-mint)',
+      isMet: isGoalMet(goal),
     };
   }
 }

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { Clock } from '../../core/calendar/clock';
@@ -36,6 +36,12 @@ function clickButton(element: HTMLElement, label: string): void {
 
 function text(element: HTMLElement, selector: string): string | undefined {
   return element.querySelector(selector)?.textContent?.trim();
+}
+
+function focusTitles(element: HTMLElement): string[] {
+  return [...element.querySelectorAll('.focus-goal-title')].map(
+    (title) => title.textContent?.trim() ?? '',
+  );
 }
 
 describe('Routines & Goals routes', () => {
@@ -91,15 +97,52 @@ describe('Today page', () => {
   it('lists the first three pending goals in focus', async () => {
     const element = await openPage('/routines');
 
-    const titles = [...element.querySelectorAll('.focus-goal-title')].map(
-      (title) => title.textContent,
-    );
-
-    expect(titles).toEqual([
+    expect(focusTitles(element)).toEqual([
       'Study C# 5x a week',
       'Finish the C# course',
       '10 new contacts this month',
     ]);
+  });
+
+  it('opens every goal with its progress from "See all", pending ones first, without leaving Today', async () => {
+    const element = await openPage('/routines');
+
+    clickButton(element, 'See all (7)');
+
+    expect(focusTitles(element)).toEqual([
+      'Study C# 5x a week',
+      'Finish the C# course',
+      '10 new contacts this month',
+      'Attend 1 event',
+      'Work out 3x a week',
+      'Review notes every day',
+      'Read 12 books in 2026',
+    ]);
+    expect(text(element, '#goals-title')).toBe('All goals');
+    expect(element.querySelectorAll('.focus-goal.is-met')).toHaveLength(2);
+    expect(TestBed.inject(Router).url).toBe('/routines');
+  });
+
+  it('shows each goal with its progress once opened', async () => {
+    const element = await openPage('/routines');
+
+    clickButton(element, 'See all (7)');
+
+    const values = [...element.querySelectorAll('.focus-goal-value')].map((value) =>
+      value.textContent?.trim(),
+    );
+    expect(values).toContain('3/5');
+    expect(values).toContain('Achieved on Oct 20');
+  });
+
+  it('goes back to the goals in focus with "Show less"', async () => {
+    const element = await openPage('/routines');
+    clickButton(element, 'See all (7)');
+
+    clickButton(element, 'Show less');
+
+    expect(focusTitles(element)).toHaveLength(3);
+    expect(text(element, '#goals-title')).toBe('Goals in focus');
   });
 
   it('completes the running block and moves the rest of the day earlier', async () => {

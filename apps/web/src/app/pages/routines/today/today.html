@@ -269,29 +269,112 @@
 
       <section class="ui-card side-card goals-card" aria-labelledby="goals-title">
         <div class="card-header centered">
-          <h2 id="goals-title" class="ui-card-title">Goals in focus</h2>
-          <a class="ui-link" routerLink="/routines/categories">See all</a>
+          <h2 id="goals-title" class="ui-card-title">
+            {{ isShowingAllGoals() ? 'All goals' : 'Goals in focus' }}
+          </h2>
+          @if (goalCount() > 0) {
+            <button
+              class="ui-link see-all"
+              type="button"
+              aria-controls="focus-goals"
+              [attr.aria-expanded]="isShowingAllGoals()"
+              (click)="isShowingAllGoals.set(!isShowingAllGoals())"
+            >
+              {{ isShowingAllGoals() ? 'Show less' : 'See all (' + goalCount() + ')' }}
+            </button>
+          }
         </div>
-        @for (item of focusGoals(); track item.goal.id) {
-          <div class="focus-goal">
+        @if (isShowingAllGoals()) {
+          <div class="goal-summary">
+            <div class="goal-summary-text">
+              <span class="goal-summary-count ui-tabular">{{ metGoals().length }}</span>
+              <span class="ui-muted">of {{ goalCount() }} goals met this period</span>
+            </div>
+            <div class="ui-track goal-summary-track" aria-hidden="true">
+              <div class="ui-fill goal-summary-fill" [style.width.%]="metPercent()"></div>
+            </div>
+          </div>
+          <div id="focus-goals" class="all-goals">
+            @if (pendingGoals().length > 0) {
+              <h3 class="goal-group">
+                In progress <span class="ui-tabular">{{ pendingGoals().length }}</span>
+              </h3>
+              @for (item of pendingGoals(); track item.goal.id) {
+                <ng-container *ngTemplateOutlet="goalRow; context: { $implicit: item }" />
+              }
+            }
+            @if (metGoals().length > 0) {
+              <h3 class="goal-group">
+                Met <span class="ui-tabular">{{ metGoals().length }}</span>
+              </h3>
+              @for (item of metGoals(); track item.goal.id) {
+                <ng-container *ngTemplateOutlet="goalRow; context: { $implicit: item }" />
+              }
+            }
+          </div>
+        } @else {
+          <div id="focus-goals" class="focus-goals">
+            @for (item of focusGoals(); track item.goal.id) {
+              <ng-container *ngTemplateOutlet="goalRow; context: { $implicit: item }" />
+            } @empty {
+              <p class="ui-muted">
+                {{ goalCount() === 0 ? 'No goals yet.' : 'Every goal is complete. Nice work!' }}
+              </p>
+            }
+          </div>
+        }
+
+        <ng-template #goalRow let-item>
+          <div class="focus-goal" [class.is-met]="item.isMet">
             <div class="focus-goal-header">
+              <span
+                class="ui-dot goal-dot"
+                aria-hidden="true"
+                [style.background]="item.color"
+              ></span>
               <div class="focus-goal-text">
                 <span class="focus-goal-title">{{ item.goal.title }}</span>
                 <span class="focus-goal-meta">{{ item.meta }}</span>
               </div>
-              <span class="focus-goal-value ui-tabular">{{ item.value }}</span>
+              @if (item.goal.type === 'objective') {
+                <span class="focus-goal-value objective-pill" [class.is-achieved]="item.isMet">
+                  @if (item.isMet) {
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12.5l4.5 4.5L19 7.5"></path>
+                    </svg>
+                  }
+                  {{ item.isMet ? item.value : 'Pending' }}
+                </span>
+              } @else {
+                <span
+                  class="focus-goal-value ui-tabular"
+                  [style.color]="item.isMet ? item.color : null"
+                >
+                  {{ item.value }}
+                </span>
+              }
             </div>
-            <div class="ui-track" aria-hidden="true">
-              <div
-                class="ui-fill"
-                [style.width.%]="item.percent"
-                [style.background]="item.color"
-              ></div>
-            </div>
+            @if (item.goal.type === 'frequency') {
+              <div class="ui-track goal-track" aria-hidden="true">
+                <div
+                  class="ui-fill"
+                  [style.width.%]="item.percent"
+                  [style.background]="item.color"
+                ></div>
+              </div>
+            }
           </div>
-        } @empty {
-          <p class="ui-muted">Every goal is complete. Nice work!</p>
-        }
+        </ng-template>
       </section>
     </div>
   </div>
