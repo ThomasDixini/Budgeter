@@ -1,4 +1,5 @@
 using Budgeter.Api.Application;
+using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Tasks;
 using Budgeter.Api.Domain.Categories;
 using Budgeter.Api.Domain.Tasks;
@@ -12,6 +13,7 @@ public class TaskUseCaseTests
     private static readonly DateOnly Today = new(2026, 10, 27);
     private readonly InMemoryCategoryRepository _categories = new(Category.Create("reading", "Reading", "#FBBF24"));
     private readonly InMemoryTaskRepository _tasks = new();
+    private readonly InMemoryGoalRepository _goals = new();
 
     private static SaveTaskCommand ReadDaily(string? categoryId = "reading") =>
         new("t1", "Read 20 pages", categoryId, TaskRepeat.Daily, [], null);

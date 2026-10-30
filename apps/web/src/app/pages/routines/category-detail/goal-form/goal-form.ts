@@ -1,9 +1,11 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, input, output, signal } from '@angular/core';
 import { formatDate } from '@angular/common';
 import { withAlpha } from '../../../../core/routines/category';
 import {
   GOAL_PERIODS,
   GOAL_TYPE_LABELS,
+  Goal,
+  GoalChanges,
   GoalPeriod,
   GoalType,
   goalPeriodInfo,
@@ -26,9 +28,13 @@ const GOAL_TYPE_OPTIONS: readonly {
   {
     value: 'frequency',
     label: 'By frequency',
-    description: 'Repeat an action X times in the period.',
+    description: 'Complete blocks of this category X times in the period.',
   },
-  { value: 'objective', label: 'By objective', description: 'Reach a value or milestone.' },
+  {
+    value: 'objective',
+    label: 'By objective',
+    description: 'A specific milestone you mark as achieved.',
+  },
 ];
 
 /** Inline form to define a goal for a category, with a live preview of the resulting card. */
@@ -37,11 +43,14 @@ const GOAL_TYPE_OPTIONS: readonly {
   templateUrl: './goal-form.html',
   styleUrl: './goal-form.css',
 })
-export class GoalForm {
+export class GoalForm implements OnInit {
   readonly categoryId = input.required<string>();
   readonly color = input.required<string>();
   readonly today = input.required<Date>();
+  /** The goal being edited; leave unset to set a new one. */
+  readonly goal = input<Goal | undefined>(undefined);
   readonly create = output<GoalDraft>();
+  readonly save = output<GoalChanges>();
   readonly dismiss = output();
 
   protected readonly typeOptions = GOAL_TYPE_OPTIONS;
@@ -50,10 +59,9 @@ export class GoalForm {
   protected readonly type = signal<GoalType>('frequency');
   protected readonly period = signal<GoalPeriod>('weekly');
   protected readonly times = signal(3);
-  protected readonly target = signal(10);
-  protected readonly unit = signal('');
   protected readonly from = signal('');
   protected readonly to = signal('');
+  protected readonly isEditing = computed(() => this.goal() !== undefined);
 
   protected readonly ring = computed(() => withAlpha(this.color(), 0.4));
   protected readonly selectedTint = computed(() => withAlpha(this.color(), 0.08));
@@ -73,7 +81,7 @@ export class GoalForm {
   protected readonly previewValue = computed(() =>
     this.type() === 'frequency'
       ? `0 of ${this.times()} ${this.times() === 1 ? 'time' : 'times'}`
-      : `0 of ${this.target()} ${this.unit()}`.trim(),
+      : 'Not achieved yet',
   );
   protected readonly previewFooter = computed(() => {
     if (this.period() !== 'custom') return periodFooter(this.period(), this.today());
@@ -85,11 +93,33 @@ export class GoalForm {
     () => this.to() || this.isoDate(DEFAULT_CUSTOM_PERIOD_DAYS),
   );
 
+  /** Fills the fields from the goal being edited; a new goal keeps the defaults. */
+  ngOnInit(): void {
+    const goal = this.goal();
+    if (goal === undefined) return;
+    this.name.set(goal.title);
+    this.type.set(goal.type);
+    this.period.set(goal.period);
+    if (goal.type === 'frequency') this.times.set(goal.target);
+    this.to.set(goal.deadline ?? '');
+  }
+
   protected submit(event: SubmitEvent): void {
     event.preventDefault();
     const title = this.name().trim();
     if (title === '') return;
-    this.create.emit(this.toDraft(title));
+    const draft = this.toDraft(title);
+    if (!this.isEditing()) {
+      this.create.emit(draft);
+      return;
+    }
+    this.save.emit({
+      title: draft.title,
+      period: draft.period,
+      target: draft.target,
+      unit: draft.unit,
+      deadline: draft.deadline,
+    });
   }
 
   protected textOf(event: Event): string {
@@ -101,15 +131,15 @@ export class GoalForm {
     return Math.max(1, Number.parseInt(this.textOf(event), 10) || 1);
   }
 
+  /** An objective has no count: it is achieved or not, so it is stored with a target of one. */
   private toDraft(title: string): GoalDraft {
-    const isFrequency = this.type() === 'frequency';
     return {
       categoryId: this.categoryId(),
       title,
       type: this.type(),
       period: this.period(),
-      target: isFrequency ? this.times() : this.target(),
-      unit: isFrequency ? undefined : this.unit().trim() || undefined,
+      target: this.type() === 'frequency' ? this.times() : 1,
+      unit: undefined,
       deadline: this.period() === 'custom' ? this.customTo() : undefined,
     };
   }

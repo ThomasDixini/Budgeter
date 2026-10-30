@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BlockOutcomeKind } from '../../../../core/routines/day-plan';
 import { Routine } from '../../../../core/routines/routine';
 import { SAMPLE_CATEGORIES } from '../../../../core/routines/sample-routines';
 import { DayTimeline } from './day-timeline';
@@ -17,11 +18,14 @@ const MORNING: Routine = {
 /** 06:10, during the run. */
 const DURING_RUN = 6 * 60 + 10;
 
-function createTimeline(): ComponentFixture<DayTimeline> {
+function createTimeline(
+  outcomes: ReadonlyMap<string, BlockOutcomeKind> = new Map(),
+): ComponentFixture<DayTimeline> {
   const fixture = TestBed.createComponent(DayTimeline);
   fixture.componentRef.setInput('routine', MORNING);
   fixture.componentRef.setInput('categories', SAMPLE_CATEGORIES);
   fixture.componentRef.setInput('nowMinutes', DURING_RUN);
+  fixture.componentRef.setInput('outcomes', outcomes);
   fixture.detectChanges();
   return fixture;
 }
@@ -30,7 +34,7 @@ function blockNamed(fixture: ComponentFixture<DayTimeline>, name: string): HTMLE
   const blocks = [
     ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.block'),
   ];
-  return blocks.find((block) => block.querySelector('.block-name')?.textContent === name)!;
+  return blocks.find((block) => block.querySelector('.block-name')?.textContent?.trim() === name)!;
 }
 
 describe('DayTimeline', () => {
@@ -56,5 +60,34 @@ describe('DayTimeline', () => {
     expect(study.classList).not.toContain('is-compact');
     expect(study.title).toBe('');
     expect(study.querySelector('.category-badge')?.textContent).toContain('Study');
+  });
+
+  it('marks a completed block with a check and "Done", and it is no longer "now"', () => {
+    const run = blockNamed(createTimeline(new Map([['run', 'done']])), 'Morning run');
+
+    expect(run.classList).toContain('is-done');
+    expect(run.querySelector('.done-check')).not.toBeNull();
+    expect(run.querySelector('.outcome-label')?.textContent?.trim()).toBe('Done');
+    expect(run.getAttribute('aria-current')).toBeNull();
+  });
+
+  it('crosses out a skipped block with its own mark, unlike a done one', () => {
+    const study = blockNamed(createTimeline(new Map([['study', 'skipped']])), 'C# study');
+
+    expect(study.classList).toContain('is-skipped');
+    expect(study.querySelector('.done-check')).toBeNull();
+    expect(study.querySelector('.skip-mark')).not.toBeNull();
+    expect(study.querySelector('.outcome-label')?.textContent?.trim()).toBe('Skipped');
+  });
+
+  it('offers to undo an ended block', () => {
+    const fixture = createTimeline(new Map([['run', 'done']]));
+    const undone: string[] = [];
+    fixture.componentInstance.undo.subscribe((blockId) => undone.push(blockId));
+
+    blockNamed(fixture, 'Morning run').querySelector<HTMLButtonElement>('.undo')!.click();
+
+    expect(undone).toEqual(['run']);
+    expect(blockNamed(fixture, 'C# study').querySelector('.undo')).toBeNull();
   });
 });

@@ -11,4 +11,10 @@ export abstract class CategoriesGateway {
 
   /** Saves a category built on the client; answers with the stored (normalized) version. */
   abstract create(category: Category): Observable<Category>;
+
+  /** Renames and recolors a category; answers with the stored (normalized) version. */
+  abstract update(category: Category): Observable<Category>;
+
+  /** Deletes a category and its goals; its blocks and tasks stay, without a category. */
+  abstract delete(categoryId: string): Observable<void>;
 }

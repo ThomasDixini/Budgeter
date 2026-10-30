@@ -77,31 +77,68 @@ public class GoalTests
         Should.Throw<DomainRuleException>(() => Goal.Create(definition));
     }
 
-    [Fact]
-    public void LogProgress_AddsOneRepetition()
+    [Theory]
+    [InlineData(GoalTracking.Manual)]
+    [InlineData(GoalTracking.Tasks)]
+    public void Create_FeedsAFrequencyGoalFromBlocksWhateverTrackingIsSent(GoalTracking sent)
     {
-        var goal = Goal.Restore(GoalDefinitions.WeeklyStudy(), done: 3);
+        var goal = Goal.Create(GoalDefinitions.WeeklyStudy() with { Tracking = sent });
 
-        goal.LogProgress();
-
-        goal.Done.ShouldBe(4);
+        goal.Definition.Tracking.ShouldBe(GoalTracking.Blocks);
     }
 
     [Fact]
-    public void LogProgress_StopsAtTarget()
+    public void Create_MarksAnObjectiveByHand()
     {
-        var goal = Goal.Restore(GoalDefinitions.WeeklyStudy(), done: 5);
+        var goal = Goal.Create(GoalDefinitions.CourseObjective() with { Tracking = GoalTracking.Blocks });
 
-        goal.LogProgress();
+        goal.Definition.Tracking.ShouldBe(GoalTracking.Manual);
+    }
 
-        goal.Done.ShouldBe(5);
+    [Theory]
+    [InlineData("study", true)]
+    [InlineData("reading", false)]
+    public void AcceptsBlockOf_OnlyItsOwnCategory(string categoryId, bool expected)
+    {
+        Goal.Create(GoalDefinitions.WeeklyStudy()).AcceptsBlockOf(categoryId).ShouldBe(expected);
     }
 
     [Fact]
-    public void Restore_ClampsStoredProgressToTarget()
+    public void AcceptsBlockOf_NeverForAnObjective()
+    {
+        Goal.Create(GoalDefinitions.CourseObjective()).AcceptsBlockOf("study").ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData(3, 0, 3)]
+    [InlineData(-2, 1, 1)]
+    [InlineData(4, 3, 7)]
+    public void Progress_FloorsManualEntriesAtZeroAndNeverCapsTheTotal(int manual, int automatic, int expected)
+    {
+        GoalProgress.Compute(manual, automatic).ShouldBe(expected);
+    }
+
+    [Fact]
+    public void Restore_KeepsProgressBeyondTheTarget()
     {
         var goal = Goal.Restore(GoalDefinitions.WeeklyStudy(), done: 9);
 
-        goal.Done.ShouldBe(5);
+        goal.Done.ShouldBe(9);
+    }
+
+    [Fact]
+    public void RestoreObjective_ShowsTheTargetDoneOnceAchieved()
+    {
+        var goal = Goal.RestoreObjective(GoalDefinitions.CourseObjective(), TestDays.Today);
+
+        (goal.Done, goal.AchievedOn).ShouldBe((12, TestDays.Today));
+    }
+
+    [Fact]
+    public void RestoreObjective_ShowsNothingDoneWhilePending()
+    {
+        var goal = Goal.RestoreObjective(GoalDefinitions.CourseObjective(), achievedOn: null);
+
+        (goal.Done, goal.AchievedOn).ShouldBe((0, (DateOnly?)null));
     }
 }

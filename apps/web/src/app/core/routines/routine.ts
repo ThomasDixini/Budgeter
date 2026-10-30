@@ -25,6 +25,8 @@ export interface Routine {
   readonly blocks: readonly RoutineBlock[];
 }
 
+const DAYS_PER_WEEK = 7;
+
 export const WEEKDAY_LABELS: readonly string[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 /**
@@ -118,4 +120,33 @@ export function routineForWeekday(
   weekday: number,
 ): Routine | undefined {
   return routines.find((routine) => routine.days.includes(weekday));
+}
+
+/** The routine running at a moment, and whether it began the evening before. */
+export interface ActiveRoutine {
+  readonly routine: Routine;
+  readonly startedYesterday: boolean;
+}
+
+/**
+ * The routine running at a moment. Before the end of a routine that began yesterday and runs past
+ * midnight (a night shift), that one is still running; otherwise it is the one of today's weekday.
+ * @example activeRoutine(routines, 1, 120)?.routine.name // 'Night shift' (Tuesday 02:00, started Monday)
+ */
+export function activeRoutine(
+  routines: readonly Routine[],
+  weekday: number,
+  nowMinutes: number,
+): ActiveRoutine | undefined {
+  const carriedOver = routineForWeekday(routines, (weekday + DAYS_PER_WEEK - 1) % DAYS_PER_WEEK);
+  if (carriedOver !== undefined && runsPastMidnight(carriedOver, nowMinutes)) {
+    return { routine: carriedOver, startedYesterday: true };
+  }
+  const today = routineForWeekday(routines, weekday);
+  return today === undefined ? undefined : { routine: today, startedYesterday: false };
+}
+
+function runsPastMidnight(routine: Routine, nowMinutes: number): boolean {
+  const end = toMinutes(routine.end);
+  return end <= toMinutes(routine.start) && nowMinutes < end;
 }

@@ -228,3 +228,46 @@
   font-size: 14px;
   color: var(--color-text-muted);
 }
+
+.hero-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swatch {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: var(--border-hairline) solid var(--color-border-card);
+}
+
+.swatch[aria-pressed='true'] {
+  border-color: var(--color-text);
+}
+
+.swatch-color {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+.danger-text {
+  color: var(--color-danger);
+}
