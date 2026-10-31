@@ -6,8 +6,9 @@ namespace Budgeter.Api.Application.Goals;
 public sealed record SetGoalAchievementCommand(string GoalId, DateOnly Day, bool IsAchieved);
 
 /// <summary>
-/// Marks an objective achieved on a day, or takes the mark back. Marking it twice keeps the first day;
-/// taking back a mark that is not there succeeds, so retries are harmless.
+/// Marks an objective achieved on a day, or takes the mark back, for the period around that day only:
+/// the next period starts pending. Marking it twice in a period keeps the first day; taking back a
+/// mark that is not there succeeds, so retries are harmless.
 /// </summary>
 public sealed class SetGoalAchievement(IGoalRepository goals, IGoalProgressLedger ledger)
 {
@@ -20,18 +21,18 @@ public sealed class SetGoalAchievement(IGoalRepository goals, IGoalProgressLedge
         var goal = await goals.FindAsync(command.GoalId, command.Day, cancellationToken)
             ?? throw ResourceNotFoundException.For("goal", command.GoalId);
         RequireObjective(goal);
-        var entryId = GoalAchievement.EntryId(goal.Id);
-        if (command.IsAchieved)
-        {
-            await ledger.RecordAsync(
-                new GoalProgressEvent(entryId, goal.Id, command.Day, 1, GoalSource.Manual, GoalAchievement.SourceRef),
-                cancellationToken);
-        }
-        else
-        {
-            await ledger.RemoveAsync(entryId, cancellationToken);
-        }
+        var window = GoalWindow.For(goal.Definition.Period, command.Day, goal.Definition.Deadline);
+        if (command.IsAchieved) await MarkAsync(goal, command.Day, window, cancellationToken);
+        else await ledger.RemoveAchievementsAsync(goal.Id, window, cancellationToken);
         return await goals.FindAsync(goal.Id, command.Day, cancellationToken) ?? goal;
+    }
+
+    private Task MarkAsync(Goal goal, DateOnly day, GoalWindow window, CancellationToken cancellationToken)
+    {
+        var entryId = GoalAchievement.EntryId(goal.Id, window.Start);
+        return ledger.RecordAsync(
+            new GoalProgressEvent(entryId, goal.Id, day, 1, GoalSource.Manual, GoalAchievement.SourceRef),
+            cancellationToken);
     }
 
     private static void RequireObjective(Goal goal)

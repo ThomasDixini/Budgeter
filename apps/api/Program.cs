@@ -10,7 +10,13 @@ using Budgeter.Api.Infrastructure.Sqlite;
 
 [assembly: InternalsVisibleTo("Budgeter.Api.Tests")]
 
+// Bodies are small JSON documents (a full routine is a few KB); the cap keeps an oversized one from
+// being read, validated and stored row by row.
+const long maxRequestBodyBytes = 256 * 1024;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxRequestBodyBytes);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

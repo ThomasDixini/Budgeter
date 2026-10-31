@@ -53,7 +53,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task Post_OmitsAbsentOptionalFields()
     {
-        await PostGoalAsync(WeeklyGoal("g1"));
+        await CreateGoalAsync(WeeklyGoal("g1"));
 
         var goal = (await _client.GetFromJsonAsync<JsonArray>("/goals?date=2026-10-28"))!.Single()!.AsObject();
 
@@ -97,7 +97,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task PutAchievement_MarksAnObjectiveAchievedOnTheDay()
     {
-        await PostGoalAsync(CourseObjective());
+        await CreateGoalAsync(CourseObjective());
 
         var response = await _client.PutAsJsonAsync("/goals/g2/achievement", new { date = "2026-10-28", achieved = true });
 
@@ -109,8 +109,9 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task PutAchievement_TakesTheMarkBack()
     {
-        await PostGoalAsync(CourseObjective());
-        await _client.PutAsJsonAsync("/goals/g2/achievement", new { date = "2026-10-28", achieved = true });
+        await CreateGoalAsync(CourseObjective());
+        (await _client.PutAsJsonAsync("/goals/g2/achievement", new { date = "2026-10-28", achieved = true }))
+            .EnsureSuccessStatusCode();
 
         var response = await _client.PutAsJsonAsync("/goals/g2/achievement", new { date = "2026-10-28", achieved = false });
 
@@ -121,7 +122,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task PutAchievement_OnAFrequencyGoalIsBadRequest()
     {
-        await PostGoalAsync(WeeklyGoal("g1"));
+        await CreateGoalAsync(WeeklyGoal("g1"));
 
         var response = await _client.PutAsJsonAsync("/goals/g1/achievement", new { date = "2026-10-28", achieved = true });
 
@@ -139,7 +140,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task PostProgress_IsGone()
     {
-        await PostGoalAsync(WeeklyGoal("g1"));
+        await CreateGoalAsync(WeeklyGoal("g1"));
 
         var response = await _client.PostAsJsonAsync(
             "/goals/g1/progress", new { eventId = "e1", date = "2026-10-28", amount = 1 });
@@ -150,7 +151,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task Put_EditsTheGoalButNotItsTypeOrCategory()
     {
-        await PostGoalAsync(WeeklyGoal("g1"));
+        await CreateGoalAsync(WeeklyGoal("g1"));
 
         var response = await _client.PutAsJsonAsync("/goals/g1?date=2026-10-28", new
         {
@@ -171,7 +172,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task Put_BrokenRuleIsBadRequestAndUnknownGoalIsNotFound()
     {
-        await PostGoalAsync(WeeklyGoal("g1"));
+        await CreateGoalAsync(WeeklyGoal("g1"));
         var edit = new { title = "Study", period = "weekly", target = 0 };
 
         var broken = await _client.PutAsJsonAsync("/goals/g1?date=2026-10-28", edit);
@@ -204,7 +205,7 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task Delete_RemovesTheGoalAndRepeatsAsNoContent()
     {
-        await PostGoalAsync(WeeklyGoal("g1"));
+        await CreateGoalAsync(WeeklyGoal("g1"));
 
         var first = await _client.DeleteAsync("/goals/g1");
         var retry = await _client.DeleteAsync("/goals/g1");
@@ -213,7 +214,33 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
         (await _client.GetFromJsonAsync<JsonArray>("/goals?date=2026-10-28"))!.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task PutAchievement_CountsForTheWeekOfTheDayOnly()
+    {
+        await CreateGoalAsync(new
+        {
+            id = "g5",
+            categoryId = "study",
+            title = "Ship a side project",
+            type = "objective",
+            period = "weekly",
+            target = 1,
+        });
+        (await _client.PutAsJsonAsync("/goals/g5/achievement", new { date = "2026-10-28", achieved = true }))
+            .EnsureSuccessStatusCode();
+
+        var nextWeek = (await _client.GetFromJsonAsync<JsonArray>("/goals?date=2026-11-02"))!.Single()!.AsObject();
+
+        (nextWeek.ContainsKey("achievedOn"), nextWeek["done"]!.GetValue<int>()).ShouldBe((false, 0));
+    }
+
     private Task<HttpResponseMessage> PostGoalAsync(object body) => _client.PostAsJsonAsync("/goals?date=2026-10-28", body);
+
+    /// <summary>
+    /// Stores a goal, failing the test right away if that does not work: deletes answer 204 and unknown
+    /// goals 404 even when nothing was saved, so the tests built on it would pass anyway.
+    /// </summary>
+    private async Task CreateGoalAsync(object body) => (await PostGoalAsync(body)).EnsureSuccessStatusCode();
 
     private static object WeeklyGoal(string id, string categoryId = "study") => new
     {

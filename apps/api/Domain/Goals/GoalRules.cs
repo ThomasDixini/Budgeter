@@ -40,7 +40,7 @@ internal static class GoalRules
         if (type != GoalType.Objective)
         {
             throw new DomainRuleException(
-                $"Expected no unit on a {type} goal (units belong to objectives), received \"{unit}\"");
+                $"Expected no unit on a {type} goal (units belong to objectives), received {ReceivedValue.Quote(unit)}");
         }
         return RequiredText.Require(unit, Goal.MaxUnitLength, "goal unit");
     }

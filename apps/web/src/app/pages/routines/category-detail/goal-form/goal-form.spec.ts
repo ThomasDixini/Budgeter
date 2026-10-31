@@ -57,6 +57,19 @@ const STUDY_GOAL: Goal = {
   target: 5,
 };
 
+/** An objective set before objectives were marked by hand: it still counts modules. */
+const COURSE_OBJECTIVE: Goal = {
+  id: 'g2',
+  categoryId: 'study',
+  title: 'Finish the C# course',
+  type: 'objective',
+  period: 'custom',
+  done: 0,
+  target: 12,
+  unit: 'modules',
+  deadline: '2026-12-15',
+};
+
 function editForm(goal: Goal): ComponentFixture<GoalForm> {
   const fixture = TestBed.createComponent(GoalForm);
   fixture.componentRef.setInput('categoryId', goal.categoryId);
@@ -186,5 +199,22 @@ describe('GoalForm', () => {
     const fixture = editForm(STUDY_GOAL);
 
     expect(submit(fixture)).toEqual([]);
+  });
+
+  // Regression: renaming an objective set before objectives were marked by hand reset it to 1 and
+  // dropped its unit.
+  it('keeps the target and unit of an objective when only its title changes', () => {
+    const fixture = editForm(COURSE_OBJECTIVE);
+    setField(fixture, '.name-input', 'Finish the C# course for real');
+
+    expect(submitEdit(fixture)).toEqual([
+      {
+        title: 'Finish the C# course for real',
+        period: 'custom',
+        target: 12,
+        unit: 'modules',
+        deadline: '2026-12-15',
+      },
+    ]);
   });
 });

@@ -131,15 +131,20 @@ export class GoalForm implements OnInit {
     return Math.max(1, Number.parseInt(this.textOf(event), 10) || 1);
   }
 
-  /** An objective has no count: it is achieved or not, so it is stored with a target of one. */
+  /**
+   * An objective has no count to fill in: it is achieved or not, so a new one is stored with a target
+   * of one. An edited objective keeps the target and unit it had (older ones count, say, 12 modules),
+   * since the form shows no field that could have changed them.
+   */
   private toDraft(title: string): GoalDraft {
+    const isFrequency = this.type() === 'frequency';
     return {
       categoryId: this.categoryId(),
       title,
       type: this.type(),
       period: this.period(),
-      target: this.type() === 'frequency' ? this.times() : 1,
-      unit: undefined,
+      target: isFrequency ? this.times() : (this.goal()?.target ?? 1),
+      unit: isFrequency ? undefined : this.goal()?.unit,
       deadline: this.period() === 'custom' ? this.customTo() : undefined,
     };
   }

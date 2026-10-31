@@ -12,8 +12,14 @@ function query<T extends Element>(fixture: ComponentFixture<Home>, selector: str
   return (fixture.nativeElement as HTMLElement).querySelector<T>(selector);
 }
 
+/**
+ * Clicks the button matching `selector`, failing the test when there is none: with `?.` a missing
+ * button was silently not clicked, and the test checking that the picker closed passed anyway.
+ */
 function clickAndRender(fixture: ComponentFixture<Home>, selector: string): void {
-  query<HTMLButtonElement>(fixture, selector)?.click();
+  const button = query<HTMLButtonElement>(fixture, selector);
+  if (button === null) throw new Error(`Expected a button matching ${selector}, found none`);
+  button.click();
   fixture.detectChanges();
 }
 

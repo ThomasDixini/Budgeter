@@ -5,7 +5,7 @@ import { Clock } from '../calendar/clock';
 import { FixedClock } from '../calendar/fixed-clock';
 import { IdGenerator } from '../ids/id-generator';
 import { SequentialIdGenerator } from '../ids/sequential-id-generator';
-import { FakeGoalsGateway, provideFakeRoutinesGateways } from './fake-routines-gateways';
+import { provideFakeRoutinesGateways } from './fake-routines-gateways';
 import { FakeTasksGateway } from './fake-tasks-gateway';
 import { Task } from './task';
 import { TasksGateway } from './tasks-gateway';
@@ -23,26 +23,42 @@ class RecordingErrorHandler extends ErrorHandler {
   }
 }
 
-function createStore(
-  gateway = new FakeTasksGateway(),
-  goals = new FakeGoalsGateway(),
-): {
+function createStore(gateway = new FakeTasksGateway()): {
   store: TasksStore;
   gateway: FakeTasksGateway;
-  goals: FakeGoalsGateway;
   errors: RecordingErrorHandler;
 } {
   const errors = new RecordingErrorHandler();
   TestBed.configureTestingModule({
     providers: [
-      ...provideFakeRoutinesGateways(undefined, goals),
+      ...provideFakeRoutinesGateways(),
       { provide: TasksGateway, useValue: gateway },
       { provide: Clock, useValue: new FixedClock(MONDAY) },
       { provide: IdGenerator, useValue: new SequentialIdGenerator() },
       { provide: ErrorHandler, useValue: errors },
     ],
   });
-  return { store: TestBed.inject(TasksStore), gateway, goals, errors };
+  return { store: TestBed.inject(TasksStore), gateway, errors };
+}
+
+/** Deletions that stay open until a test answers them, to play out a failure that comes late. */
+class ControlledDeleteTasksGateway extends FakeTasksGateway {
+  readonly pendingDeletes: Subject<void>[] = [];
+
+  override delete(taskId: string): Observable<void> {
+    this.deleted.push(taskId);
+    const reply = new Subject<void>();
+    this.pendingDeletes.push(reply);
+    return reply;
+  }
+}
+
+function allIds(store: TasksStore): string[] {
+  return store.tasks().map((task) => task.id);
+}
+
+function categoryOf(store: TasksStore, taskId: string): string | undefined {
+  return store.tasks().find((task) => task.id === taskId)?.categoryId;
 }
 
 /** Saves that stay open until a test answers them, to play out slow or reordered replies. */
@@ -79,14 +95,6 @@ describe('TasksStore', () => {
 
     expect(store.todayTasks()[0].isDone).toBe(true);
     expect(gateway.doneChanges).toEqual([{ taskId: 't1', isoDay: '2026-10-26', isDone: true }]);
-  });
-
-  it('leaves the goals alone when a task is checked: only completed blocks count toward them', () => {
-    const { store, goals } = createStore();
-
-    store.toggleDone('t1');
-
-    expect(goals.listedDays).toEqual([]);
   });
 
   it('unchecks a task done today', () => {
@@ -136,16 +144,93 @@ describe('TasksStore', () => {
     expect(store.tasks().map((task) => task.id)).toEqual(['t1', 't2', 't3', 't4', 't5']);
   });
 
-  it('deletes a task and puts it back if the gateway rejects it', () => {
+  it('deletes a task through the gateway', () => {
     const { store, gateway } = createStore();
 
     store.deleteTask('t1');
-    expect(todayIds(store)).toEqual(['t2', 't4', 't5']);
-    gateway.failure = new Error('offline');
-    store.deleteTask('t2');
 
     expect(todayIds(store)).toEqual(['t2', 't4', 't5']);
-    expect(gateway.deleted).toEqual(['t1', 't2']);
+    expect(gateway.deleted).toEqual(['t1']);
+  });
+
+  it('shows a task as deleted while its deletion is pending', () => {
+    const { store } = createStore(new ControlledDeleteTasksGateway());
+
+    store.deleteTask('t2');
+
+    expect(allIds(store)).toEqual(['t1', 't3', 't4', 't5']);
+  });
+
+  it('puts a deleted task back in its place when the gateway rejects it', () => {
+    const { store, gateway, errors } = createStore();
+    gateway.failure = new Error('offline');
+
+    store.deleteTask('t2');
+
+    expect(allIds(store)).toEqual(['t1', 't2', 't3', 't4', 't5']);
+    expect(errors.errors).toEqual([gateway.failure]);
+  });
+
+  // Regression: a failed deletion put back a copy of the whole list, dropping what was added meanwhile.
+  it('keeps a task added while a deletion was pending when that deletion fails', () => {
+    const gateway = new ControlledDeleteTasksGateway();
+    const { store } = createStore(gateway);
+    store.deleteTask('t2');
+    const added = store.addTask({ title: 'Call the bank', repeat: 'once', days: [] });
+
+    gateway.pendingDeletes[0].error(new Error('offline'));
+
+    expect(allIds(store)).toEqual(['t1', 't2', 't3', 't4', 't5', added.id]);
+  });
+
+  it('keeps another task deleted meanwhile out when an earlier deletion fails', () => {
+    const gateway = new ControlledDeleteTasksGateway();
+    const { store } = createStore(gateway);
+    store.deleteTask('t2');
+    store.deleteTask('t4');
+    gateway.pendingDeletes[1].next();
+
+    gateway.pendingDeletes[0].error(new Error('offline'));
+
+    expect(allIds(store)).toEqual(['t1', 't2', 't3', 't5']);
+  });
+
+  describe('detachCategory', () => {
+    it('takes a deleted category off the tasks that used it', () => {
+      const { store } = createStore();
+
+      store.detachCategory('study');
+
+      expect([categoryOf(store, 't2'), categoryOf(store, 't3'), categoryOf(store, 't4')]).toEqual([
+        undefined,
+        undefined,
+        'networking',
+      ]);
+    });
+
+    it('gives the category back to those tasks when asked, as after a rejected deletion', () => {
+      const { store } = createStore();
+      const reattach = store.detachCategory('study');
+
+      reattach();
+
+      expect([categoryOf(store, 't2'), categoryOf(store, 't3')]).toEqual(['study', 'study']);
+    });
+
+    it('leaves a task given another category since with that one', () => {
+      const { store } = createStore();
+      const reattach = store.detachCategory('study');
+      store.updateTask('t2', {
+        title: 'Review class notes',
+        categoryId: 'reading',
+        repeat: 'daily',
+        days: [],
+      });
+
+      reattach();
+
+      expect([categoryOf(store, 't2'), categoryOf(store, 't3')]).toEqual(['reading', 'study']);
+    });
   });
 
   it('sets a one-time task for the day the draft names, not always today', () => {

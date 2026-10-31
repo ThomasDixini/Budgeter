@@ -1,10 +1,11 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { NEVER, Observable, of } from 'rxjs';
+import { NEVER, Observable, Subject, of } from 'rxjs';
 import { Clock } from '../calendar/clock';
 import { FixedClock } from '../calendar/fixed-clock';
 import { Category } from './category';
-import { Goal } from './goal';
+import { Goal, GoalChanges } from './goal';
+import { Routine } from './routine';
 import {
   FakeCategoriesGateway,
   FakeGoalsGateway,
@@ -45,6 +46,58 @@ class NormalizingCategoriesGateway extends FakeCategoriesGateway {
   override create(category: Category): Observable<Category> {
     return of({ ...category, name: category.name.trim(), color: category.color.toUpperCase() });
   }
+}
+
+/** Edits and deletions that stay open until a test answers them, to play out slow or late replies. */
+class ControlledGoalsGateway extends FakeGoalsGateway {
+  readonly pendingUpdates: Subject<Goal>[] = [];
+  readonly pendingDeletes: Subject<void>[] = [];
+
+  override update(goalId: string, changes: GoalChanges): Observable<Goal> {
+    this.updated.push({ goalId, changes });
+    const reply = new Subject<Goal>();
+    this.pendingUpdates.push(reply);
+    return reply;
+  }
+
+  override delete(goalId: string): Observable<void> {
+    this.deleted.push(goalId);
+    const reply = new Subject<void>();
+    this.pendingDeletes.push(reply);
+    return reply;
+  }
+}
+
+/** Deletions that stay open until a test answers them. */
+class ControlledDeleteRoutinesGateway extends FakeRoutinesGateway {
+  readonly pendingDeletes: Subject<void>[] = [];
+
+  override delete(routineId: string): Observable<void> {
+    this.deleted.push(routineId);
+    const reply = new Subject<void>();
+    this.pendingDeletes.push(reply);
+    return reply;
+  }
+}
+
+/** Deletions that stay open until a test answers them. */
+class ControlledDeleteCategoriesGateway extends FakeCategoriesGateway {
+  readonly pendingDeletes: Subject<void>[] = [];
+
+  override delete(categoryId: string): Observable<void> {
+    this.deleted.push(categoryId);
+    const reply = new Subject<void>();
+    this.pendingDeletes.push(reply);
+    return reply;
+  }
+}
+
+function goalIds(store: RoutinesStore): string[] {
+  return store.goals().map((goal) => goal.id);
+}
+
+function titleOf(store: RoutinesStore, goalId: string): string | undefined {
+  return store.goals().find((goal) => goal.id === goalId)?.title;
 }
 
 interface StoreSetup {
@@ -170,16 +223,23 @@ describe('RoutinesStore', () => {
     expect(store.goals().find((goal) => goal.id === 'g1')?.title).toBe('Study C# 5x a week');
   });
 
-  it('deletes a goal and puts it back in place when that fails', () => {
+  it('deletes a goal through the gateway', () => {
     const { store, goals } = createStore();
 
     store.deleteGoal('g3');
-    expect(store.goals().map((goal) => goal.id)).not.toContain('g3');
+
+    expect(goalIds(store)).not.toContain('g3');
+    expect(goals.deleted).toEqual(['g3']);
+  });
+
+  it('puts a goal back in its place when deleting it fails', () => {
+    const { store, goals, errors } = createStore();
     goals.failure = new Error('offline');
+
     store.deleteGoal('g4');
 
-    expect(store.goals().map((goal) => goal.id)).toContain('g4');
-    expect(goals.deleted).toEqual(['g3', 'g4']);
+    expect(goalIds(store)).toEqual(['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7']);
+    expect(errors.errors).toEqual([goals.failure]);
   });
 
   it('follows the day when a page is left open: marks and reloads use the new day', () => {
@@ -410,6 +470,134 @@ describe('RoutinesStore', () => {
     await store.saveRoutine({ ...store.routines()[0], id: 'night' });
 
     expect(store.routines().map((routine) => routine.id)).toEqual(['weekdays', 'weekend']);
+  });
+
+  describe('while requests are in flight', () => {
+    const RENAME_FIRST = { title: 'First edit', period: 'weekly', target: 5 } as const;
+    const RENAME_SECOND = { title: 'Second edit', period: 'weekly', target: 5 } as const;
+    const READ_DOCS = {
+      categoryId: 'study',
+      title: 'Read the docs',
+      type: 'frequency',
+      period: 'weekly',
+      target: 2,
+    } as const;
+
+    function editedGoal(changes: GoalChanges): Goal {
+      const sample = new FakeGoalsGateway();
+      let goal: Goal | undefined;
+      sample.update('g1', changes).subscribe((saved) => (goal = saved));
+      if (goal === undefined) throw new Error('Expected the sample goal g1, found none');
+      return goal;
+    }
+
+    it('shows an edit right away, before the gateway answers', () => {
+      const { store } = createStore(undefined, new ControlledGoalsGateway());
+
+      store.updateGoal('g1', RENAME_FIRST);
+
+      expect(titleOf(store, 'g1')).toBe('First edit');
+    });
+
+    it('does not let a slow answer to an earlier edit overwrite a newer one', () => {
+      const goals = new ControlledGoalsGateway();
+      const { store } = createStore(undefined, goals);
+      store.updateGoal('g1', RENAME_FIRST);
+      store.updateGoal('g1', RENAME_SECOND);
+
+      goals.pendingUpdates[1].next(editedGoal(RENAME_SECOND));
+      goals.pendingUpdates[0].next(editedGoal(RENAME_FIRST));
+
+      expect(titleOf(store, 'g1')).toBe('Second edit');
+    });
+
+    // Regression: rolling back a failed edit put the old goal back over a newer edit that had worked.
+    it('does not undo a newer edit when an older one fails', () => {
+      const goals = new ControlledGoalsGateway();
+      const { store } = createStore(undefined, goals);
+      store.updateGoal('g1', RENAME_FIRST);
+      store.updateGoal('g1', RENAME_SECOND);
+
+      goals.pendingUpdates[1].next(editedGoal(RENAME_SECOND));
+      goals.pendingUpdates[0].error(new Error('offline'));
+
+      expect(titleOf(store, 'g1')).toBe('Second edit');
+    });
+
+    // Regression: a failed deletion put back a copy of the whole list, dropping what was added meanwhile.
+    it('keeps a goal added while a deletion was pending when that deletion fails', () => {
+      const goals = new ControlledGoalsGateway();
+      const { store } = createStore(undefined, goals);
+      store.deleteGoal('g3');
+      const added = store.addGoal(READ_DOCS);
+
+      goals.pendingDeletes[0].error(new Error('offline'));
+
+      expect(goalIds(store)).toEqual(['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', added.id]);
+    });
+
+    it('keeps another goal deleted meanwhile out when an earlier deletion fails', () => {
+      const goals = new ControlledGoalsGateway();
+      const { store } = createStore(undefined, goals);
+      store.deleteGoal('g3');
+      store.deleteGoal('g5');
+      goals.pendingDeletes[1].next();
+
+      goals.pendingDeletes[0].error(new Error('offline'));
+
+      expect(goalIds(store)).toEqual(['g1', 'g2', 'g3', 'g4', 'g6', 'g7']);
+    });
+
+    it('keeps a routine saved while a deletion was pending when that deletion fails', async () => {
+      const routines = new ControlledDeleteRoutinesGateway();
+      const { store } = createStore(undefined, undefined, routines);
+      const night: Routine = { ...store.routines()[0], id: 'night', name: 'Night shift', days: [] };
+      const deleted = store.deleteRoutine('weekend');
+      await store.saveRoutine(night);
+
+      routines.pendingDeletes[0].error(new Error('offline'));
+
+      expect(await deleted).toBe(false);
+      expect(store.routines().map((routine) => routine.id)).toEqual([
+        'weekdays',
+        'weekend',
+        'night',
+      ]);
+    });
+
+    it('keeps a goal added while a category deletion was pending when that deletion fails', async () => {
+      const categories = new ControlledDeleteCategoriesGateway();
+      const { store } = createStore(categories);
+      const deleted = store.deleteCategory('study');
+      const added = store.addGoal({ ...READ_DOCS, categoryId: 'reading' });
+
+      categories.pendingDeletes[0].error(new Error('offline'));
+
+      expect(await deleted).toBe(false);
+      expect(goalIds(store)).toEqual(['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', added.id]);
+      expect(store.categories().map((category) => category.id)).toContain('study');
+    });
+
+    it('gives the blocks their category back when a category deletion fails', () => {
+      const categories = new ControlledDeleteCategoriesGateway();
+      const { store } = createStore(categories);
+      store.deleteCategory('study');
+
+      categories.pendingDeletes[0].error(new Error('offline'));
+
+      const csharp = store.routines()[0].blocks.find((block) => block.id === 'csharp');
+      expect(csharp?.categoryId).toBe('study');
+    });
+
+    it('resolves a category deletion that went through to true', async () => {
+      const categories = new ControlledDeleteCategoriesGateway();
+      const { store } = createStore(categories);
+      const deleted = store.deleteCategory('study');
+
+      categories.pendingDeletes[0].next();
+
+      expect(await deleted).toBe(true);
+    });
   });
 
   it('sums weekly minutes of a category across routines', () => {

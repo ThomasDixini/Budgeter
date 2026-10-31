@@ -11,4 +11,7 @@ internal static class GoalDefinitions
     public static GoalDefinition CourseObjective(string id = "g2", string categoryId = "study") =>
         new(id, categoryId, "Finish the C# course", GoalType.Objective, GoalPeriod.Custom, 12, "modules",
             new DateOnly(2026, 12, 15));
+
+    public static GoalDefinition WeeklyObjective(string id = "g5", string categoryId = "study") =>
+        new(id, categoryId, "Ship one side project a week", GoalType.Objective, GoalPeriod.Weekly, 1, null, null);
 }

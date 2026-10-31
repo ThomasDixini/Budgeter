@@ -36,11 +36,13 @@ public sealed partial class Category
     {
         if (!HexColorPattern().IsMatch(color))
         {
-            throw new DomainRuleException($"Expected a color shaped like #RRGGBB, received \"{color}\"");
+            throw new DomainRuleException(
+                $"Expected a color shaped like #RRGGBB, received {ReceivedValue.Quote(color)}");
         }
         return color.ToUpperInvariant();
     }
 
-    [GeneratedRegex("^#[0-9A-Fa-f]{6}$")]
+    // \z, not $: in .NET "$" also matches before a final newline, and the web app cannot draw "#86EFAC\n".
+    [GeneratedRegex(@"^#[0-9A-Fa-f]{6}\z")]
     private static partial Regex HexColorPattern();
 }

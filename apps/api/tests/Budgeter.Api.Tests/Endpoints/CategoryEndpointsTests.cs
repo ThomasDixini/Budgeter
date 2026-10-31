@@ -31,10 +31,9 @@ public sealed class CategoryEndpointsTests : IDisposable
     [Fact]
     public async Task Post_RetryReturnsOkWithStoredCategory()
     {
-        var request = new CreateCategoryRequest("languages", "Languages", "#86EFAC");
-        await _client.PostAsJsonAsync("/categories", request);
+        await CreateLanguagesAsync();
 
-        var retry = await _client.PostAsJsonAsync("/categories", request);
+        var retry = await _client.PostAsJsonAsync("/categories", Languages);
 
         retry.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await _client.GetFromJsonAsync<CategoryResponse[]>("/categories"))!.Length.ShouldBe(1);
@@ -61,7 +60,7 @@ public sealed class CategoryEndpointsTests : IDisposable
     [Fact]
     public async Task Put_UpdatesTheCategory()
     {
-        await _client.PostAsJsonAsync("/categories", new CreateCategoryRequest("languages", "Languages", "#86EFAC"));
+        await CreateLanguagesAsync();
 
         var response = await _client.PutAsJsonAsync("/categories/languages", new UpdateCategoryRequest("Spanish", "#7DD3FC"));
 
@@ -81,7 +80,7 @@ public sealed class CategoryEndpointsTests : IDisposable
     [Fact]
     public async Task Delete_RemovesTheCategoryAndRetriesSucceed()
     {
-        await _client.PostAsJsonAsync("/categories", new CreateCategoryRequest("languages", "Languages", "#86EFAC"));
+        await CreateLanguagesAsync();
 
         var first = await _client.DeleteAsync("/categories/languages");
         var retry = await _client.DeleteAsync("/categories/languages");
@@ -89,5 +88,13 @@ public sealed class CategoryEndpointsTests : IDisposable
         first.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         retry.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await _client.GetFromJsonAsync<CategoryResponse[]>("/categories"))!.ShouldBeEmpty();
+    }
+
+    private static readonly CreateCategoryRequest Languages = new("languages", "Languages", "#86EFAC");
+
+    /// <summary>Stores the Languages category, failing the test right away if that does not work.</summary>
+    private async Task CreateLanguagesAsync()
+    {
+        (await _client.PostAsJsonAsync("/categories", Languages)).EnsureSuccessStatusCode();
     }
 }

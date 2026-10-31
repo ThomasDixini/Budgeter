@@ -105,10 +105,11 @@ export class CategoryDetail {
     this.isEditingCategory.set(false);
   }
 
-  protected deleteCategory(categoryId: string): void {
-    this.store.deleteCategory(categoryId);
-    this.tasksStore.detachCategory(categoryId);
+  /** Deletes the category and leaves its page; its tasks get it back if the deletion is rejected. */
+  protected async deleteCategory(categoryId: string): Promise<void> {
+    const reattachTasks = this.tasksStore.detachCategory(categoryId);
     void this.router.navigate(['/routines/categories']);
+    if (!(await this.store.deleteCategory(categoryId))) reattachTasks();
   }
 
   protected valueOf(event: Event): string {

@@ -108,17 +108,27 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
         return Goal.Restore(definition, GoalProgress.Compute(manual, automatic));
     }
 
-    /// <summary>An objective is achieved as of the day it was marked, so earlier days still show it pending.</summary>
+    /// <summary>
+    /// An objective is achieved in the period around the day once it was marked in that period: earlier
+    /// days still show it pending, and so does the next period.
+    /// </summary>
     private static async Task<Goal> WithAchievementAsync(
         SqliteConnection connection, GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
     {
+        var window = GoalWindow.For(definition.Period, day, definition.Deadline);
         var dates = await SqliteCommands.QueryAsync(
             connection,
-            "SELECT date FROM goal_progress WHERE event_id = $eventId AND date <= $day",
-            reader => DateOnly.ParseExact(reader.GetString(0), DateFormat, CultureInfo.InvariantCulture),
+            """
+            SELECT MIN(date) FROM goal_progress
+            WHERE goal_id = $id AND source_ref = $achievement AND date >= $start AND date <= $day
+            """,
+            reader => reader.IsDBNull(0)
+                ? (DateOnly?)null
+                : DateOnly.ParseExact(reader.GetString(0), DateFormat, CultureInfo.InvariantCulture),
             cancellationToken,
-            ("$eventId", GoalAchievement.EntryId(definition.Id)), ("$day", ToText(day)));
-        return Goal.RestoreObjective(definition, dates.Count == 0 ? null : dates[0]);
+            ("$id", definition.Id), ("$achievement", GoalAchievement.SourceRef),
+            ("$start", ToText(window.Start)), ("$day", ToText(day)));
+        return Goal.RestoreObjective(definition, dates[0]);
     }
 
     private static string ToText(DateOnly day) => day.ToString(DateFormat, CultureInfo.InvariantCulture);

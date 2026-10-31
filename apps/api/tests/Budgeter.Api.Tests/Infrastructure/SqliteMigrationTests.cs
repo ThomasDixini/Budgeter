@@ -1,3 +1,4 @@
+using System.Globalization;
 using Budgeter.Api.Domain.Goals;
 using Budgeter.Api.Infrastructure.Sqlite;
 using Microsoft.Data.Sqlite;
@@ -52,6 +53,20 @@ public sealed class SqliteMigrationTests : IDisposable
         return (await SqliteCommands.QueryAsync(connection, sql, reader => reader.GetInt64(0), CancellationToken.None))[0];
     }
 
+    /// <summary>
+    /// The day SQLite dated the legacy entry on. Read back instead of taken from the test's clock, so the
+    /// test cannot fail when midnight (or a Monday) falls between the migration and the check.
+    /// </summary>
+    private async Task<DateOnly> MigrationDayAsync()
+    {
+        await using var connection = await _connections.OpenAsync(CancellationToken.None);
+        var days = await SqliteCommands.QueryAsync(
+            connection, "SELECT date FROM goal_progress WHERE event_id = 'legacy:g1'",
+            reader => DateOnly.ParseExact(reader.GetString(0), "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            CancellationToken.None);
+        return days.Single();
+    }
+
     [Fact]
     public async Task OldGoals_KeepTheirProgressAsOneManualEntry_AndCountBlocksFromNowOn()
     {
@@ -60,8 +75,7 @@ public sealed class SqliteMigrationTests : IDisposable
         await MigrateAsync();
 
         var goals = new SqliteGoalRepository(_connections);
-        var today = DateOnly.FromDateTime(DateTime.Now);
-        var goal = (await goals.FindAsync("g1", today, CancellationToken.None))!;
+        var goal = (await goals.FindAsync("g1", await MigrationDayAsync(), CancellationToken.None))!;
         (goal.Definition.Tracking, goal.Done).ShouldBe((GoalTracking.Blocks, 3));
         (await CountAsync("SELECT COUNT(*) FROM goal_progress")).ShouldBe(1);
     }
@@ -81,7 +95,7 @@ public sealed class SqliteMigrationTests : IDisposable
 
         (await CountAsync("SELECT COUNT(*) FROM goal_progress")).ShouldBe(0);
         (await CountAsync("PRAGMA user_version")).ShouldBe(2);
-        (await goals.ListAsync(DateOnly.FromDateTime(DateTime.Now), CancellationToken.None))
+        (await goals.ListAsync(TestDays.Today, CancellationToken.None))
             .Select(goal => goal.Done).ShouldBe([0, 0]);
     }
 

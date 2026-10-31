@@ -42,7 +42,8 @@ public class GoalTests
 
         var exception = Should.Throw<DomainRuleException>(() => Goal.Create(definition));
 
-        exception.Message.ShouldContain(target.ToString());
+        // "received", since a bare "0" would also be found in the limit "100000".
+        exception.Message.ShouldContain($"received {target}");
     }
 
     [Fact]

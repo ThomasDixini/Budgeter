@@ -2,6 +2,7 @@ import { ErrorHandler, Injectable, computed, inject, signal } from '@angular/cor
 import { Clock } from '../calendar/clock';
 import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
+import { Positioned, positionOf, restoredAt, sameId } from './list-positions';
 import { NotTodayTask, Task, TaskDraft, occursOn, tasksNotToday } from './task';
 import { TasksGateway } from './tasks-gateway';
 
@@ -98,28 +99,31 @@ export class TasksStore {
   }
 
   /**
-   * Deletes a task and its history; puts it back in place if the gateway rejects it.
+   * Deletes a task and its history; puts it back in place if the gateway rejects it, keeping any task
+   * added or deleted in the meantime.
    * @example store.deleteTask('t3')
    */
   deleteTask(taskId: string): void {
-    const before = this.taskList();
+    const removed = positionOf(this.taskList(), (task) => task.id === taskId);
     this.removeTask(taskId);
     this.gateway.delete(taskId).subscribe({
-      error: (error: unknown) => this.rejected(error, () => this.taskList.set(before)),
+      error: (error: unknown) => this.rejected(error, () => this.putBack(removed)),
     });
   }
 
   /**
-   * Drops a deleted category from the tasks that used it. The API already did; this keeps the list
-   * from saving a task against a category that is gone.
-   * @example store.detachCategory('languages')
+   * Drops a deleted category from the tasks that used it. The API does the same; this keeps the list
+   * from saving a task against a category that is gone. Returns how to give the category back to those
+   * tasks, for when the deletion is rejected: a task given another category since keeps that one.
+   * @example const reattach = store.detachCategory('languages');
    */
-  detachCategory(categoryId: string): void {
-    this.taskList.update((tasks) =>
-      tasks.map((task) =>
-        task.categoryId === categoryId ? { ...task, categoryId: undefined } : task,
-      ),
-    );
+  detachCategory(categoryId: string): () => void {
+    const detachedIds = this.taskList()
+      .filter((task) => task.categoryId === categoryId)
+      .map((task) => task.id);
+    this.taskList.update((tasks) => withCategory(tasks, detachedIds, categoryId, undefined));
+    return () =>
+      this.taskList.update((tasks) => withCategory(tasks, detachedIds, undefined, categoryId));
   }
 
   /**
@@ -152,6 +156,10 @@ export class TasksStore {
     this.taskList.update((tasks) => tasks.filter((task) => task.id !== taskId));
   }
 
+  private putBack(removed: Positioned<Task> | undefined): void {
+    if (removed !== undefined) this.taskList.update((tasks) => restoredAt(tasks, removed, sameId));
+  }
+
   private rejected(error: unknown, rollback: () => void): void {
     rollback();
     this.errorHandler.handleError(error);
@@ -160,4 +168,16 @@ export class TasksStore {
 
 function replaceTask(tasks: readonly Task[], saved: Task): Task[] {
   return tasks.map((task) => (task.id === saved.id ? saved : task));
+}
+
+/** The tasks with `to` as the category of the listed ones that still have `from`. */
+function withCategory(
+  tasks: readonly Task[],
+  taskIds: readonly string[],
+  from: string | undefined,
+  to: string | undefined,
+): Task[] {
+  return tasks.map((task) =>
+    taskIds.includes(task.id) && task.categoryId === from ? { ...task, categoryId: to } : task,
+  );
 }

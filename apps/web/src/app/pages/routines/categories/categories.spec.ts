@@ -14,8 +14,21 @@ function element(fixture: ComponentFixture<Categories>): HTMLElement {
   return fixture.nativeElement as HTMLElement;
 }
 
+/**
+ * The element matching `selector`, failing the test when there is none: with `?.` a missing button
+ * was silently not clicked, and the tests checking that a form is gone passed anyway.
+ */
+function required<TElement extends Element>(
+  fixture: ComponentFixture<Categories>,
+  selector: string,
+): TElement {
+  const found = element(fixture).querySelector<TElement>(selector);
+  if (found === null) throw new Error(`Expected an element matching ${selector}, found none`);
+  return found;
+}
+
 function openForm(fixture: ComponentFixture<Categories>): void {
-  element(fixture).querySelector<HTMLButtonElement>('.new-category')?.click();
+  required<HTMLButtonElement>(fixture, '.new-category').click();
   fixture.detectChanges();
 }
 
@@ -27,7 +40,7 @@ function typeName(fixture: ComponentFixture<Categories>, name: string): void {
 }
 
 function submit(fixture: ComponentFixture<Categories>): void {
-  element(fixture).querySelector('form')?.dispatchEvent(new Event('submit'));
+  required(fixture, '.create-form').dispatchEvent(new Event('submit'));
   fixture.detectChanges();
 }
 
@@ -49,8 +62,9 @@ describe('Categories', () => {
   it('opens and cancels the new category form', () => {
     const fixture = createPage();
     openForm(fixture);
+    expect(element(fixture).querySelector('.create-form')).not.toBeNull();
 
-    element(fixture).querySelector<HTMLButtonElement>('.form-actions .ui-button-ghost')?.click();
+    required<HTMLButtonElement>(fixture, '.form-actions .ui-button-ghost').click();
     fixture.detectChanges();
 
     expect(element(fixture).querySelector('.create-form')).toBeNull();

@@ -15,7 +15,10 @@ public sealed class Goal
     /// </summary>
     public int Done { get; }
 
-    /// <summary>The day an objective was marked achieved; null for frequency goals and pending objectives.</summary>
+    /// <summary>
+    /// The day an objective was marked achieved in its current period; null for frequency goals and
+    /// pending objectives.
+    /// </summary>
     public DateOnly? AchievedOn { get; }
 
     public string Id => Definition.Id;

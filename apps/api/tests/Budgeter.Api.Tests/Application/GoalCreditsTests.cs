@@ -1,9 +1,7 @@
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Application.Tasks;
 using Budgeter.Api.Domain.Goals;
 using Budgeter.Api.Domain.Routines;
-using Budgeter.Api.Domain.Tasks;
 using Budgeter.Api.Tests.Fakes;
 using Shouldly;
 
@@ -152,13 +150,6 @@ public class GoalCreditsTests
         _goals.Events.ShouldBeEmpty();
     }
 
-    [Fact]
-    public async Task CheckingATaskOff_DoesNotFeedGoals()
-    {
-        var tasks = new InMemoryTaskRepository(TaskItem.Create("t1", "Read", "study", TaskRepeat.Daily, [], null));
-
-        await new TaskCompletions(tasks).SetAsync("t1", Today, isDone: true, CancellationToken.None);
-
-        _goals.Events.ShouldBeEmpty();
-    }
+    // That checking a task off feeds no goal is covered over HTTP by GoalCreditEndpointsTests: the use case
+    // has no access to goals, so a unit test here could not fail.
 }

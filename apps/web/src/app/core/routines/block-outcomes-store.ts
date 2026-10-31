@@ -4,6 +4,7 @@ import { isoDate } from '../calendar/date-label';
 import { formatClock } from '../calendar/time-of-day';
 import { BlockOutcomesGateway } from './block-outcomes-gateway';
 import { BlockOutcome, BlockOutcomeKind } from './day-plan';
+import { Positioned, positionOf, restoredAt } from './list-positions';
 import { RoutinesStore } from './routines-store';
 
 /**
@@ -58,12 +59,14 @@ export class BlockOutcomesStore {
       outcome: kind,
       at: formatClock(nowMinutes),
     };
-    const before = this.outcomeList();
-    this.outcomeList.set([...before.filter((current) => !isSameBlock(current, outcome)), outcome]);
-    this.gateway.record(this.day(), outcome).subscribe({
+    const day = this.day();
+    const replaced = this.takeOut(outcome);
+    this.outcomeList.update((outcomes) => [...outcomes, outcome]);
+    this.gateway.record(day, outcome).subscribe({
       // The API counts (or takes back) the block for goals tracked from blocks, so reload them.
       complete: () => this.goals.refreshGoals(),
-      error: (error: unknown) => this.rejected(error, before),
+      error: (error: unknown) =>
+        this.rejected(error, day, () => this.undoRecord(outcome, replaced)),
     });
   }
 
@@ -72,17 +75,46 @@ export class BlockOutcomesStore {
    * @example store.undo('weekdays', 'project')
    */
   undo(routineId: string, blockId: string): void {
-    const before = this.outcomeList();
-    const target = { routineId, blockId };
-    this.outcomeList.set(before.filter((current) => !isSameBlock(current, target)));
-    this.gateway.undo(this.day(), routineId, blockId).subscribe({
+    const day = this.day();
+    const removed = this.takeOut({ routineId, blockId });
+    this.gateway.undo(day, routineId, blockId).subscribe({
       complete: () => this.goals.refreshGoals(),
-      error: (error: unknown) => this.rejected(error, before),
+      error: (error: unknown) => this.rejected(error, day, () => this.putBack(removed)),
     });
   }
 
-  private rejected(error: unknown, before: readonly BlockOutcome[]): void {
-    this.outcomeList.set(before);
+  /** Removes the block's outcome from the list and tells where it was, if it had one. */
+  private takeOut(
+    block: Pick<BlockOutcome, 'routineId' | 'blockId'>,
+  ): Positioned<BlockOutcome> | undefined {
+    const removed = positionOf(this.outcomeList(), (current) => isSameBlock(current, block));
+    this.outcomeList.update((outcomes) =>
+      outcomes.filter((current) => !isSameBlock(current, block)),
+    );
+    return removed;
+  }
+
+  /**
+   * Drops a rejected outcome, unless a newer one of the block replaced it, and puts back the one it
+   * replaced.
+   */
+  private undoRecord(failed: BlockOutcome, replaced: Positioned<BlockOutcome> | undefined): void {
+    if (!this.outcomeList().includes(failed)) return;
+    this.outcomeList.update((outcomes) => outcomes.filter((current) => current !== failed));
+    this.putBack(replaced);
+  }
+
+  private putBack(removed: Positioned<BlockOutcome> | undefined): void {
+    if (removed === undefined) return;
+    this.outcomeList.update((outcomes) => restoredAt(outcomes, removed, isSameBlock));
+  }
+
+  /**
+   * Rolls back only while the same day is shown: the list of another day must not get this one's
+   * outcomes.
+   */
+  private rejected(error: unknown, day: string, rollback: () => void): void {
+    if (this.day() === day) rollback();
     this.errorHandler.handleError(error);
   }
 }

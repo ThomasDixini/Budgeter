@@ -129,8 +129,12 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
         (await DoneOn(TestDays.Today)).ShouldBe(3);
     }
 
+    /// <summary>Marks the custom-period objective g2, whose single period starts at the dawn of time.</summary>
     private Task Achieve(DateOnly day) =>
-        Log(GoalAchievement.EntryId("g2"), day, goalId: "g2", sourceRef: GoalAchievement.SourceRef);
+        Log(GoalAchievement.EntryId("g2", DateOnly.MinValue), day, goalId: "g2", sourceRef: GoalAchievement.SourceRef);
+
+    private Task AchieveWeekly(DateOnly day) =>
+        Log(GoalAchievement.EntryId("g5", day), day, goalId: "g5", sourceRef: GoalAchievement.SourceRef);
 
     [Fact]
     public async Task Objective_IsAchievedFromTheDayItWasMarked()
@@ -153,14 +157,64 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
         (await DoneOn(TestDays.Today, "g2")).ShouldBe(0);
     }
 
+    // Regression: a weekly objective marked once stayed achieved in every later week.
     [Fact]
-    public async Task Remove_DeletesOnlyThatEntry()
+    public async Task Objective_StartsPendingAgainInTheNextPeriod()
+    {
+        await AddGoalAsync(GoalDefinitions.WeeklyObjective());
+        await AchieveWeekly(TestDays.MondayOfThisWeek);
+
+        var nextWeek = await _goals.FindAsync("g5", TestDays.MondayOfThisWeek.AddDays(7), CancellationToken.None);
+
+        nextWeek!.AchievedOn.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Objective_IsAchievedAgainWhenMarkedInTheNextPeriod()
+    {
+        await AddGoalAsync(GoalDefinitions.WeeklyObjective());
+        var nextMonday = TestDays.MondayOfThisWeek.AddDays(7);
+        await AchieveWeekly(TestDays.MondayOfThisWeek);
+
+        await AchieveWeekly(nextMonday);
+
+        (await _goals.FindAsync("g5", nextMonday, CancellationToken.None))!.AchievedOn.ShouldBe(nextMonday);
+    }
+
+    [Fact]
+    public async Task Objective_ReadsAMarkLoggedBeforePeriodsAppliedToObjectives()
+    {
+        await AddGoalAsync(GoalDefinitions.WeeklyObjective());
+        await Log("g5:achievement", TestDays.Today, goalId: "g5", sourceRef: GoalAchievement.SourceRef);
+
+        (await _goals.FindAsync("g5", TestDays.Today, CancellationToken.None))!.AchievedOn.ShouldBe(TestDays.Today);
+    }
+
+    [Fact]
+    public async Task RemoveAchievements_TakesBackOnlyTheMarksInsideTheWindow()
+    {
+        await AddGoalAsync(GoalDefinitions.WeeklyObjective());
+        var nextMonday = TestDays.MondayOfThisWeek.AddDays(7);
+        await AchieveWeekly(TestDays.MondayOfThisWeek);
+        await AchieveWeekly(nextMonday);
+
+        await _ledger.RemoveAchievementsAsync(
+            "g5", GoalWindow.For(GoalPeriod.Weekly, nextMonday, null), CancellationToken.None);
+
+        (await CountEntriesAsync()).ShouldBe(1);
+        (await _goals.FindAsync("g5", TestDays.Today, CancellationToken.None))!.AchievedOn
+            .ShouldBe(TestDays.MondayOfThisWeek);
+    }
+
+    [Fact]
+    public async Task RemoveAchievements_LeavesOtherEntriesOfTheGoal()
     {
         await AddGoalAsync(GoalDefinitions.CourseObjective());
         await Achieve(TestDays.Today);
         await Log("other", TestDays.Today, goalId: "g2");
 
-        await _ledger.RemoveAsync(GoalAchievement.EntryId("g2"), CancellationToken.None);
+        await _ledger.RemoveAchievementsAsync(
+            "g2", GoalWindow.For(GoalPeriod.Custom, TestDays.Today, new DateOnly(2026, 12, 15)), CancellationToken.None);
 
         (await CountEntriesAsync()).ShouldBe(1);
         (await DoneOn(TestDays.Today, "g2")).ShouldBe(0);
