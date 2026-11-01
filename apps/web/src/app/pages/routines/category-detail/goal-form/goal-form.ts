@@ -9,9 +9,7 @@ import {
   GoalPeriod,
   GoalType,
   goalPeriodInfo,
-  parseIsoDate,
   periodFooter,
-  shortDate,
   usesDots,
 } from '../../../../core/routines/goal';
 import { GoalDraft } from '../../../../core/routines/routines-store';
@@ -59,7 +57,6 @@ export class GoalForm implements OnInit {
   protected readonly type = signal<GoalType>('frequency');
   protected readonly period = signal<GoalPeriod>('weekly');
   protected readonly times = signal(3);
-  protected readonly from = signal('');
   protected readonly to = signal('');
   protected readonly isEditing = computed(() => this.goal() !== undefined);
 
@@ -83,12 +80,11 @@ export class GoalForm implements OnInit {
       ? `0 of ${this.times()} ${this.times() === 1 ? 'time' : 'times'}`
       : 'Not achieved yet',
   );
-  protected readonly previewFooter = computed(() => {
-    if (this.period() !== 'custom') return periodFooter(this.period(), this.today());
-    return `${shortDate(parseIsoDate(this.customFrom()))} – ${shortDate(parseIsoDate(this.customTo()))}`;
-  });
+  /** A custom period only has an end: the API counts everything up to its deadline. */
+  protected readonly previewFooter = computed(() =>
+    periodFooter(this.period(), this.today(), this.customTo()),
+  );
 
-  protected readonly customFrom = computed(() => this.from() || this.isoDate(0));
   protected readonly customTo = computed(
     () => this.to() || this.isoDate(DEFAULT_CUSTOM_PERIOD_DAYS),
   );

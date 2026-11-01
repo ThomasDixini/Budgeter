@@ -226,6 +226,27 @@ export function currentBlock(
 }
 
 /**
+ * The first block still ahead in the routine day, counted from the day's start so a day running past
+ * midnight finds its blocks after 00:00. Before the day starts it is the day's first block; once the
+ * day is over there is none.
+ * @example blockAhead(nightShift, 23 * 60 + 30)?.start // '01:00', although 01:00 reads earlier than 23:30
+ */
+export function blockAhead(
+  routine: Pick<Routine, 'start' | 'end' | 'blocks'>,
+  nowMinutes: number,
+): RoutineBlock | undefined {
+  const nowOffset = offsetInDay(nowMinutes, routine);
+  const isOutsideDay = nowOffset > routineSpan(routine);
+  if (isOutsideDay && nowMinutes > toMinutes(routine.start)) return undefined;
+  const from = isOutsideDay ? -1 : nowOffset;
+  return routine.blocks
+    .map((block) => ({ block, offset: offsetInDay(toMinutes(block.start), routine) }))
+    .filter(({ offset }) => offset > from)
+    .sort((first, second) => first.offset - second.offset)
+    .at(0)?.block;
+}
+
+/**
  * Elapsed share of a running block, 0 to 100; works for blocks that cross midnight.
  * @example blockElapsed({ start: '13:30', end: '15:00' }, 850) // 44
  */

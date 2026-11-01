@@ -62,16 +62,7 @@
       @if (period() === 'custom') {
         <div class="inline-fields custom-dates">
           <label class="ui-field">
-            From
-            <input
-              class="ui-input"
-              type="date"
-              [value]="customFrom()"
-              (change)="from.set(textOf($event))"
-            />
-          </label>
-          <label class="ui-field">
-            To
+            Ends on
             <input
               class="ui-input"
               type="date"

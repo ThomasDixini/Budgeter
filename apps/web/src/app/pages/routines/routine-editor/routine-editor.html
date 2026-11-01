@@ -226,6 +226,8 @@
 
       <app-routine-summary class="summary" [routine]="draft" [categories]="categories()" />
     </div>
+  } @else if (hasLoadFailed()) {
+    <app-load-failed class="empty" message="Couldn't load your routines." (retry)="reload()" />
   } @else {
     <p class="ui-muted empty">
       {{

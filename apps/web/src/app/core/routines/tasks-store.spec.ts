@@ -5,6 +5,7 @@ import { Clock } from '../calendar/clock';
 import { FixedClock } from '../calendar/fixed-clock';
 import { IdGenerator } from '../ids/id-generator';
 import { SequentialIdGenerator } from '../ids/sequential-id-generator';
+import { CategoryCreations } from './category-creations';
 import { provideFakeRoutinesGateways } from './fake-routines-gateways';
 import { FakeTasksGateway } from './fake-tasks-gateway';
 import { Task } from './task';
@@ -23,7 +24,21 @@ class RecordingErrorHandler extends ErrorHandler {
   }
 }
 
-function createStore(gateway = new FakeTasksGateway()): {
+/** A clock a test can move, like a page left open while the day changes. */
+class MovableClock extends Clock {
+  constructor(public moment: Date) {
+    super();
+  }
+
+  override now(): Date {
+    return new Date(this.moment);
+  }
+}
+
+function createStore(
+  gateway = new FakeTasksGateway(),
+  clock: Clock = new FixedClock(MONDAY),
+): {
   store: TasksStore;
   gateway: FakeTasksGateway;
   errors: RecordingErrorHandler;
@@ -33,7 +48,7 @@ function createStore(gateway = new FakeTasksGateway()): {
     providers: [
       ...provideFakeRoutinesGateways(),
       { provide: TasksGateway, useValue: gateway },
-      { provide: Clock, useValue: new FixedClock(MONDAY) },
+      { provide: Clock, useValue: clock },
       { provide: IdGenerator, useValue: new SequentialIdGenerator() },
       { provide: ErrorHandler, useValue: errors },
     ],
@@ -80,6 +95,55 @@ function todayIds(store: TasksStore): string[] {
 describe('TasksStore', () => {
   it('lists only the tasks that repeat on today', () => {
     expect(todayIds(createStore().store)).toEqual(['t1', 't2', 't4', 't5']);
+  });
+
+  it('asks which tasks were done on today, not another day', () => {
+    const { gateway } = createStore();
+
+    expect(gateway.askedDays).toEqual(['2026-10-26']);
+  });
+
+  describe('followClock', () => {
+    // Regression: the store fixed its day when it started, so past midnight the checkboxes kept
+    // marking the day before.
+    it('moves the list and the done marks on to the new day', () => {
+      const gateway = new FakeTasksGateway(undefined, ['t1']);
+      gateway.completedOnDay.set('2026-10-27', ['t3']);
+      const clock = new MovableClock(new Date(2026, 9, 26, 23, 59));
+      const { store } = createStore(gateway, clock);
+
+      clock.moment = new Date(2026, 9, 27, 0, 1);
+      store.followClock();
+
+      expect(todayIds(store)).toContain('t3');
+      expect(
+        store
+          .todayTasks()
+          .filter(({ isDone }) => isDone)
+          .map(({ task }) => task.id),
+      ).toEqual(['t3']);
+    });
+
+    it('checks tasks off on the new day once it moved on', () => {
+      const clock = new MovableClock(new Date(2026, 9, 26, 23, 59));
+      const { store, gateway } = createStore(new FakeTasksGateway(), clock);
+      clock.moment = new Date(2026, 9, 27, 0, 1);
+      store.followClock();
+
+      store.toggleDone('t1');
+
+      expect(gateway.doneChanges.at(-1)?.isoDay).toBe('2026-10-27');
+    });
+
+    it('asks for nothing again within the same day', () => {
+      const clock = new MovableClock(new Date(2026, 9, 26, 9, 0));
+      const { store, gateway } = createStore(new FakeTasksGateway(), clock);
+
+      clock.moment = new Date(2026, 9, 26, 18, 0);
+      store.followClock();
+
+      expect(gateway.askedDays).toEqual(['2026-10-26']);
+    });
   });
 
   it('marks the tasks already done today', () => {
@@ -355,5 +419,61 @@ describe('TasksStore', () => {
     const { store } = createStore();
 
     expect(store.notToday().map((item) => item.task.id)).toEqual(['t3']);
+  });
+
+  describe('a task of a category still being created', () => {
+    const LANGUAGES = { id: 'languages', name: 'Languages', color: '#86EFAC' };
+    const PRACTICE = {
+      title: 'Practice',
+      categoryId: 'languages',
+      repeat: 'daily',
+      days: [],
+    } as const;
+
+    function createWithPendingCategory(): {
+      store: TasksStore;
+      gateway: FakeTasksGateway;
+      category: Subject<typeof LANGUAGES>;
+    } {
+      const setup = createStore();
+      const category = new Subject<typeof LANGUAGES>();
+      TestBed.inject(CategoryCreations)
+        .track('languages', category)
+        .subscribe({
+          error: () => undefined,
+        });
+      return { ...setup, category };
+    }
+
+    // Regression: the task could reach the API before its new category and be refused with 404.
+    it('is saved only once the category is', () => {
+      const { store, gateway, category } = createWithPendingCategory();
+      store.addTask(PRACTICE);
+      expect(gateway.saved).toEqual([]);
+
+      category.next(LANGUAGES);
+      category.complete();
+
+      expect(gateway.saved.map((task) => task.title)).toEqual(['Practice']);
+    });
+
+    it('is dropped, unsent, when saving the category fails', () => {
+      const { store, gateway, category } = createWithPendingCategory();
+      const task = store.addTask(PRACTICE);
+
+      category.error(new Error('offline'));
+
+      expect(gateway.saved).toEqual([]);
+      expect(allIds(store)).not.toContain(task.id);
+    });
+
+    it('puts an edited task back as it was when saving the category fails', () => {
+      const { store, category } = createWithPendingCategory();
+      store.updateTask('t5', PRACTICE);
+
+      category.error(new Error('offline'));
+
+      expect(store.tasks().find((task) => task.id === 't5')?.categoryId).toBe('reading');
+    });
   });
 });

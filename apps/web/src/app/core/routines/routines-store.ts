@@ -1,21 +1,11 @@
 import { ErrorHandler, Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
-import {
-  Observable,
-  catchError,
-  concatMap,
-  filter,
-  finalize,
-  map,
-  of,
-  shareReplay,
-  take,
-  tap,
-} from 'rxjs';
+import { Observer } from 'rxjs';
 import { Clock } from '../calendar/clock';
 import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
 import { CategoriesGateway } from './categories-gateway';
 import { Category } from './category';
+import { CategoryCreations } from './category-creations';
 import { Goal, GoalChanges } from './goal';
 import { GoalsGateway } from './goals-gateway';
 import {
@@ -70,8 +60,9 @@ export class RoutinesStore {
   private readonly categoriesLoaded = signal(false);
   private readonly goalsLoaded = signal(false);
   private readonly routinesLoaded = signal(false);
-  /** Categories whose creation is still in flight, by id, telling whether it was saved once it answers. */
-  private readonly categoryCreations = new Map<string, Observable<boolean>>();
+  /** The local day the goals on screen were last read for. */
+  private goalsDay = this.today();
+  private readonly categoryCreations = inject(CategoryCreations);
 
   readonly categories = this.categoryList.asReadonly();
   readonly routines = this.routineList.asReadonly();
@@ -80,20 +71,51 @@ export class RoutinesStore {
   readonly isLoaded = computed(
     () => this.categoriesLoaded() && this.goalsLoaded() && this.routinesLoaded(),
   );
+  private readonly loadFailed = signal(false);
+  /** Whether loading failed with nothing on its way, so a page can offer to try again. */
+  readonly hasLoadFailed = this.loadFailed.asReadonly();
 
   constructor() {
-    this.categoriesGateway.list().subscribe({
-      next: (categories) => this.loaded(this.categoryList, this.categoriesLoaded, categories),
-      error: (error: unknown) => this.errorHandler.handleError(error),
-    });
-    this.goalsGateway.list(this.today()).subscribe({
-      next: (goals) => this.loaded(this.goalList, this.goalsLoaded, goals),
-      error: (error: unknown) => this.errorHandler.handleError(error),
-    });
-    this.routinesGateway.list().subscribe({
-      next: (routines) => this.loaded(this.routineList, this.routinesLoaded, routines),
-      error: (error: unknown) => this.errorHandler.handleError(error),
-    });
+    this.loadMissing();
+  }
+
+  /**
+   * Loads again whatever did not arrive, after a failed load; what did arrive is kept.
+   * @example store.reload()
+   */
+  reload(): void {
+    this.loadFailed.set(false);
+    this.loadMissing();
+  }
+
+  private loadMissing(): void {
+    if (!this.categoriesLoaded()) {
+      this.categoriesGateway
+        .list()
+        .subscribe(this.loadInto(this.categoryList, this.categoriesLoaded));
+    }
+    if (!this.goalsLoaded()) {
+      this.goalsDay = this.today();
+      this.goalsGateway
+        .list(this.goalsDay)
+        .subscribe(this.loadInto(this.goalList, this.goalsLoaded));
+    }
+    if (!this.routinesLoaded()) {
+      this.routinesGateway.list().subscribe(this.loadInto(this.routineList, this.routinesLoaded));
+    }
+  }
+
+  private loadInto<TRecord>(
+    list: WritableSignal<readonly TRecord[]>,
+    flag: WritableSignal<boolean>,
+  ): Partial<Observer<readonly TRecord[]>> {
+    return {
+      next: (records) => this.loaded(list, flag, records),
+      error: (error: unknown) => {
+        this.loadFailed.set(true);
+        this.errorHandler.handleError(error);
+      },
+    };
   }
 
   /**
@@ -143,11 +165,21 @@ export class RoutinesStore {
   }
 
   /**
+   * Reloads the goals when the clock moved to another day since they were read, e.g. on a page left
+   * open past midnight (or past Sunday), so their progress is the one of the new period.
+   * @example store.followClock()
+   */
+  followClock(): void {
+    if (this.today() !== this.goalsDay) this.refreshGoals();
+  }
+
+  /**
    * Reloads every goal's progress, for after a block was completed, skipped or taken back.
    * @example store.refreshGoals()
    */
   refreshGoals(): void {
-    this.goalsGateway.list(this.today()).subscribe({
+    this.goalsDay = this.today();
+    this.goalsGateway.list(this.goalsDay).subscribe({
       next: (fresh) => this.goalList.update((current) => withFreshProgress(current, fresh)),
       error: (error: unknown) => this.errorHandler.handleError(error),
     });
@@ -162,13 +194,11 @@ export class RoutinesStore {
     const goal: Goal = { ...draft, id: this.ids.next(), done: 0 };
     const today = this.today();
     this.goalList.update((goals) => [...goals, goal]);
-    this.categorySaved(goal.categoryId)
-      .pipe(
-        tap((isSaved) => {
-          if (!isSaved) removeIfShown(this.goalList, goal);
-        }),
-        filter((isSaved) => isSaved),
-        concatMap(() => this.goalsGateway.create(goal, today)),
+    this.categoryCreations
+      .whenSaved(
+        [goal.categoryId],
+        () => this.goalsGateway.create(goal, today),
+        () => removeIfShown(this.goalList, goal),
       )
       .subscribe({
         next: (saved) => replaceIfShown(this.goalList, goal, saved),
@@ -184,15 +214,7 @@ export class RoutinesStore {
   addCategory(name: string, color: string): Category {
     const category: Category = { id: this.ids.next(), name, color };
     this.categoryList.update((categories) => [...categories, category]);
-    const creation = this.categoriesGateway.create(category).pipe(shareReplay(1));
-    this.categoryCreations.set(
-      category.id,
-      creation.pipe(
-        map(() => true),
-        catchError(() => of(false)),
-      ),
-    );
-    creation.pipe(finalize(() => this.categoryCreations.delete(category.id))).subscribe({
+    this.categoryCreations.track(category.id, this.categoriesGateway.create(category)).subscribe({
       next: (saved) => replaceIfShown(this.categoryList, category, saved),
       error: (error: unknown) =>
         this.rejected(error, () => removeIfShown(this.categoryList, category)),
@@ -236,14 +258,21 @@ export class RoutinesStore {
   }
 
   /**
-   * Saves a routine: replaces the stored one with the same id, or adds it when it is new.
-   * Resolves to whether the gateway accepted it, so the editor knows when its draft is safe to drop.
+   * Saves a routine: replaces the stored one with the same id, or adds it when it is new. Blocks of a
+   * category still being created are sent once it is saved. Resolves to whether the gateway accepted
+   * it, so the editor knows when its draft is safe to drop.
    * @example const saved = await store.saveRoutine({ ...weekdays, end: '18:00' })
    */
   saveRoutine(routine: Routine): Promise<boolean> {
     const restore = this.applyRoutine(routine);
+    const categoryIds = routine.blocks.map((block) => block.categoryId);
     return new Promise((resolve) => {
-      this.routinesGateway.save(routine).subscribe({
+      const dropped = (): void => {
+        restore();
+        resolve(false);
+      };
+      const save = () => this.routinesGateway.save(routine);
+      this.categoryCreations.whenSaved(categoryIds, save, dropped).subscribe({
         next: (saved) => {
           replaceIfShown(this.routineList, routine, saved);
           resolve(true);
@@ -348,11 +377,6 @@ export class RoutinesStore {
     putBack(this.categoryList, removal.category);
     this.goalList.update((goals) => restoredAllAt(goals, removal.goals, sameId));
     this.routineList.update((routines) => routines.map((r) => withCategoryBack(r, removal)));
-  }
-
-  /** Whether the category is saved: at once for a stored one, once its creation answers for a new one. */
-  private categorySaved(categoryId: string): Observable<boolean> {
-    return (this.categoryCreations.get(categoryId) ?? of(true)).pipe(take(1));
   }
 
   private rejected(error: unknown, rollback: () => void): void {

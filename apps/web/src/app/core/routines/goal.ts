@@ -130,7 +130,7 @@ export function goalValueLabel(
 
 /**
  * When the goal renews or ends, or "Completed" once met (with what was done beyond the target).
- * @example goalFooter({ ...goal, period: 'weekly' }, today) // 'Renews on Sunday'
+ * @example goalFooter({ ...goal, period: 'weekly' }, today) // 'Renews on Monday'
  */
 export function goalFooter(goal: Goal, today: Date): string {
   if (!isGoalMet(goal)) return periodFooter(goal.period, today, goal.deadline);
@@ -147,7 +147,7 @@ export function periodFooter(period: GoalPeriod, today: Date, deadline?: string)
     case 'daily':
       return 'Renews every day';
     case 'weekly':
-      return 'Renews on Sunday';
+      return 'Renews on Monday';
     case 'monthly':
       return `Renews on ${shortDate(new Date(today.getFullYear(), today.getMonth() + 1, 1))}`;
     case 'yearly':

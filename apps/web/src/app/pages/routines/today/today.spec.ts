@@ -86,6 +86,24 @@ describe('Today clock', () => {
     expect(text(element, '#now-title')).toBe('Networking');
   });
 
+  // Regression: past midnight the task list stayed on the day the page was opened.
+  it('moves the task list on to the new day past midnight, without a reload', async () => {
+    vi.useFakeTimers();
+    const clock = new MovableClock(new Date(2026, 9, 26, 23, 59));
+    const element = await openToday(clock);
+    const titles = (): string[] =>
+      [...element.querySelectorAll('.tasks:not(.not-today) .task-title')].map(
+        (title) => title.textContent?.trim() ?? '',
+      );
+    expect(titles()).not.toContain('Do the LINQ exercises');
+
+    clock.moveTo(new Date(2026, 9, 27, 0, 1));
+    vi.advanceTimersByTime(30_000);
+    TestBed.tick();
+
+    expect(titles()).toContain('Do the LINQ exercises');
+  });
+
   it('stops ticking when the page goes away', async () => {
     vi.useFakeTimers();
     await openToday(new MovableClock(new Date(2026, 9, 26, 14, 10)));

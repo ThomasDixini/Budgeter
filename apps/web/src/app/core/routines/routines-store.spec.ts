@@ -267,6 +267,26 @@ describe('RoutinesStore', () => {
     expect(goals.listedDays).toEqual(['2026-11-01', '2026-11-02']);
   });
 
+  it('reloads the goals once the clock moved to another day', () => {
+    const sunday = new MovableClock(new Date(2026, 10, 1, 23, 50));
+    const { store, goals } = createStore(undefined, undefined, undefined, sunday);
+
+    sunday.moment = new Date(2026, 10, 2, 0, 10);
+    store.followClock();
+
+    expect(goals.listedDays).toEqual(['2026-11-01', '2026-11-02']);
+  });
+
+  it('does not reload the goals within the same day', () => {
+    const clock = new MovableClock(new Date(2026, 10, 1, 9, 0));
+    const { store, goals } = createStore(undefined, undefined, undefined, clock);
+
+    clock.moment = new Date(2026, 10, 1, 18, 0);
+    store.followClock();
+
+    expect(goals.listedDays).toEqual(['2026-11-01']);
+  });
+
   it('keeps a goal that is still being created when the reload answers without it', () => {
     const { store } = createStore(undefined, new SlowCreateGoalsGateway());
     const goal = store.addGoal({
@@ -419,6 +439,28 @@ describe('RoutinesStore', () => {
 
     expect(store.isLoaded()).toBe(false);
     expect(errors.errors).toEqual([routines.failure]);
+  });
+
+  it('says the load failed, so a page can offer to try again', () => {
+    const routines = new FakeRoutinesGateway();
+    routines.failure = new Error('offline');
+
+    const { store } = createStore(undefined, undefined, routines);
+
+    expect(store.hasLoadFailed()).toBe(true);
+  });
+
+  // Regression: a failed first load left every page loading for good.
+  it('loads what was missing when asked to try again, and only that', () => {
+    const routines = new FakeRoutinesGateway();
+    routines.failure = new Error('offline');
+    const { store, goals } = createStore(undefined, undefined, routines);
+    routines.failure = undefined;
+
+    store.reload();
+
+    expect([store.isLoaded(), store.hasLoadFailed()]).toEqual([true, false]);
+    expect(goals.listedDays).toHaveLength(1);
   });
 
   it('saves an edited routine through the gateway', async () => {
@@ -623,6 +665,39 @@ describe('RoutinesStore', () => {
       categories.pendingCreates[0].complete();
 
       expect(goals.saved.map((goal) => goal.title)).toEqual(['Read the docs']);
+    });
+
+    it('saves a routine with a block of a new category only once the category is saved', async () => {
+      const categories = new ControlledCreateCategoriesGateway();
+      const { store, routines } = createStore(categories);
+      const category = store.addCategory('Languages', '#86EFAC');
+      const weekdays = store.routines()[0];
+      const block = { ...weekdays.blocks[0], categoryId: category.id };
+      const saved = store.saveRoutine({ ...weekdays, blocks: [block] });
+      expect(routines.saved).toEqual([]);
+
+      categories.pendingCreates[0].next(category);
+      categories.pendingCreates[0].complete();
+
+      expect(await saved).toBe(true);
+      expect(routines.saved).toHaveLength(1);
+    });
+
+    it('puts the routine back, unsent, when its new category could not be saved', async () => {
+      const categories = new ControlledCreateCategoriesGateway();
+      const { store, routines } = createStore(categories);
+      const category = store.addCategory('Languages', '#86EFAC');
+      const weekdays = store.routines()[0];
+      const saved = store.saveRoutine({
+        ...weekdays,
+        blocks: [{ ...weekdays.blocks[0], categoryId: category.id }],
+      });
+
+      categories.pendingCreates[0].error(new Error('offline'));
+
+      expect(await saved).toBe(false);
+      expect(routines.saved).toEqual([]);
+      expect(store.routines()[0]).toEqual(weekdays);
     });
 
     it('drops a goal of a new category whose saving failed, without sending it', () => {

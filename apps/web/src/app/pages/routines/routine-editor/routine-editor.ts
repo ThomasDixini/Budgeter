@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { IdGenerator } from '../../../core/ids/id-generator';
 import { findCategory } from '../../../core/routines/category';
@@ -23,14 +24,15 @@ const SAVE_STATE_MESSAGES: Readonly<Record<SaveState, string>> = {
   idle: '',
   saving: 'Saving…',
   saved: 'All changes saved',
-  failed: "Couldn't save. Check the routine and block names, then try again.",
+  // The notice at the bottom of the screen gives the reason, e.g. a weekday another routine uses.
+  failed: "Couldn't save the routine. Fix what the message below says, then try again.",
   'delete-failed': "Couldn't delete the routine. Try again.",
 };
 
 /** Lets the user pick a day template, its weekdays and hours, and split the day into blocks. */
 @Component({
   selector: 'app-routine-editor',
-  imports: [PageHeading, RoutinePartition, RoutineSummary],
+  imports: [PageHeading, RoutinePartition, RoutineSummary, LoadFailed],
   templateUrl: './routine-editor.html',
   styleUrl: './routine-editor.css',
 })
@@ -45,6 +47,7 @@ export class RoutineEditor {
   protected readonly weekdayLabels = WEEKDAY_LABELS;
   protected readonly categories = this.store.categories;
   protected readonly isLoaded = this.store.isLoaded;
+  protected readonly hasLoadFailed = this.store.hasLoadFailed;
   /** Stored routines with their unsaved edits, then routines created here and not saved yet. */
   protected readonly routines = computed(() => {
     const stored = this.store.routines();
@@ -71,6 +74,10 @@ export class RoutineEditor {
       dotColor: findCategory(this.categories(), block.categoryId)?.color ?? UNCATEGORIZED_COLOR,
     })),
   );
+
+  protected reload(): void {
+    this.store.reload();
+  }
 
   protected selectRoutine(routineId: string | undefined): void {
     this.selectedId.set(routineId);

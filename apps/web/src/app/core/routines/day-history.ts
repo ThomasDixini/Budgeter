@@ -1,5 +1,7 @@
 import { formatDate } from '@angular/common';
+import { toMinutes } from '../calendar/time-of-day';
 import { Category, findCategory } from './category';
+import { MINUTES_PER_DAY } from './day-clock';
 import { BlockOutcome, BlockOutcomeKind } from './day-plan';
 import { Goal, GoalPeriod, isGoalMet, parseIsoDate, shortDate } from './goal';
 import { Routine } from './routine';
@@ -18,8 +20,8 @@ export interface HistoryBlock {
 }
 
 /**
- * The blocks completed or skipped on a day, in the order they ended. A block or routine deleted
- * since then is still listed, by name if known.
+ * The blocks completed or skipped on a day, in the order they ended; a night shift's 00:30 comes after
+ * its 23:50. A block or routine deleted since then is still listed, by name if known.
  * @example historyBlocks(outcomes, routines, categories)[0].name // 'C# study'
  */
 export function historyBlocks(
@@ -27,8 +29,9 @@ export function historyBlocks(
   routines: readonly Routine[],
   categories: readonly Category[],
 ): HistoryBlock[] {
+  const endedAt = (outcome: BlockOutcome): number => endedOffset(outcome, routines);
   return [...outcomes]
-    .sort((first, second) => first.at.localeCompare(second.at))
+    .sort((first, second) => endedAt(first) - endedAt(second))
     .map((outcome) => {
       const routine = routines.find((candidate) => candidate.id === outcome.routineId);
       const block = routine?.blocks.find((candidate) => candidate.id === outcome.blockId);
@@ -41,6 +44,19 @@ export function historyBlocks(
         category: findCategory(categories, block?.categoryId),
       };
     });
+}
+
+/**
+ * Minutes from the midnight that opens the day, past 24:00 for what a routine running past midnight
+ * ended after it (its routine's start is the only hint, so a deleted routine's outcomes read as is).
+ */
+function endedOffset(outcome: BlockOutcome, routines: readonly Routine[]): number {
+  const at = toMinutes(outcome.at);
+  const routine = routines.find((candidate) => candidate.id === outcome.routineId);
+  if (routine === undefined) return at;
+  const start = toMinutes(routine.start);
+  const runsPastMidnight = toMinutes(routine.end) <= start;
+  return runsPastMidnight && at < start ? at + MINUTES_PER_DAY : at;
 }
 
 /**

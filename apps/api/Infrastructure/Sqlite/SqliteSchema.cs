@@ -76,6 +76,10 @@ internal static class SqliteSchema
             PRIMARY KEY (routine_id, block_id, date)
         );
         CREATE INDEX IF NOT EXISTS ix_block_outcomes_date ON block_outcomes (date);
+        CREATE TABLE IF NOT EXISTS sample_seed (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
         """;
 
     /// <summary>

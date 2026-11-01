@@ -97,8 +97,8 @@
         @if (isAddingTask()) {
           <app-task-form
             [categories]="categories()"
-            [weekday]="weekday"
-            [today]="todayIso"
+            [weekday]="weekday()"
+            [today]="todayIso()"
             (save)="addTask($event)"
             (dismiss)="closeTaskForm()"
           />
@@ -106,8 +106,8 @@
         @for (task of editingTasks(); track task.id) {
           <app-task-form
             [categories]="categories()"
-            [weekday]="weekday"
-            [today]="todayIso"
+            [weekday]="weekday()"
+            [today]="todayIso()"
             [task]="task"
             (save)="saveTask(task.id, $event)"
             (dismiss)="closeTaskForm()"

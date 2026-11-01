@@ -239,6 +239,22 @@ describe('CategoryDetail', () => {
     expect(page.element.textContent).toContain('This category does not exist anymore.');
   });
 
+  // Regression: a failed load left the page empty for good, with no way but reloading the app.
+  it('offers to try again when loading failed, and shows the category once it loads', async () => {
+    const categories = new FakeCategoriesGateway();
+    categories.failure = new Error('offline');
+    const page = await openCategory('/routines/categories/study', undefined, categories);
+    expect(page.element.textContent).toContain("Couldn't load this category.");
+    categories.failure = undefined;
+
+    [...page.element.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Try again')!
+      .click();
+    page.render();
+
+    expect(page.element.querySelector('#category-title')?.textContent).toBe('Study');
+  });
+
   // Regression: the tasks lost the category for good even when the API refused to delete it.
   it('gives its tasks the category back when deleting it fails', async () => {
     const categories = new FakeCategoriesGateway();

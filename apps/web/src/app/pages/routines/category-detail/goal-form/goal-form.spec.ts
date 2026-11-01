@@ -97,7 +97,7 @@ describe('GoalForm', () => {
       'Frequency · Weekly',
       'Your goal name',
       '0 of 3 times',
-      'Renews on Sunday',
+      'Renews on Monday',
     ]) {
       expect(text).toContain(part);
     }
@@ -144,6 +144,21 @@ describe('GoalForm', () => {
     });
     expect(element(fixture).querySelector('.number-input')).toBeNull();
     expect(preview(fixture)).toContain('Not achieved yet');
+  });
+
+  // Regression: a "From" date was shown and previewed but never saved; the period only has an end.
+  it('asks a custom period for its end only, and previews and saves that day', () => {
+    const fixture = createForm();
+    setField(fixture, '.name-input', 'Finish the book');
+    click(fixture, '.periods .ui-chip', 4);
+    const dates = element(fixture).querySelectorAll<HTMLInputElement>('.custom-dates input');
+    setField(fixture, '.custom-dates input', '2026-12-20', 'change');
+
+    const [draft] = submit(fixture);
+
+    expect(dates).toHaveLength(1);
+    expect(preview(fixture)).toContain('until Dec 20');
+    expect(draft.deadline).toBe('2026-12-20');
   });
 
   it('does not emit without a name', () => {

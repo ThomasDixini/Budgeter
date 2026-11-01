@@ -36,8 +36,14 @@ export class FakeTasksGateway extends TasksGateway {
     return this.answer(undefined);
   }
 
-  override completedOn(): Observable<readonly string[]> {
-    return this.answer(this.completed);
+  /** Days `completedOn` was asked for, in order. */
+  readonly askedDays: string[] = [];
+  /** Tasks done on given days, answered by `completedOn` for those days instead of the default ones. */
+  readonly completedOnDay = new Map<string, readonly string[]>();
+
+  override completedOn(isoDay: string): Observable<readonly string[]> {
+    this.askedDays.push(isoDay);
+    return this.answer(this.completedOnDay.get(isoDay) ?? this.completed);
   }
 
   override setDone(taskId: string, isoDay: string, isDone: boolean): Observable<void> {

@@ -11,6 +11,7 @@ import {
   withAlpha,
 } from '../../../core/routines/category';
 import { Goal, GoalChanges, averageProgress } from '../../../core/routines/goal';
+import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { GoalDraft, RoutinesStore } from '../../../core/routines/routines-store';
 import { TasksStore } from '../../../core/routines/tasks-store';
 import { GoalCard } from './goal-card/goal-card';
@@ -26,7 +27,7 @@ import {
 /** One category: its headline numbers, routine blocks and goals, with filters and a new-goal form. */
 @Component({
   selector: 'app-category-detail',
-  imports: [RouterLink, GoalCard, GoalForm],
+  imports: [RouterLink, GoalCard, GoalForm, LoadFailed],
   templateUrl: './category-detail.html',
   styleUrl: './category-detail.css',
 })
@@ -48,6 +49,7 @@ export class CategoryDetail {
   /** Id of the goal whose form is open for editing. */
   protected readonly editingGoalId = signal<string | undefined>(undefined);
   protected readonly isLoaded = this.store.isLoaded;
+  protected readonly hasLoadFailed = this.store.hasLoadFailed;
   protected readonly swatches = CATEGORY_SWATCHES;
   protected readonly isEditingCategory = signal(false);
   protected readonly isConfirmingDelete = signal(false);
@@ -118,6 +120,10 @@ export class CategoryDetail {
 
   protected toggleAchieved(goal: Goal): void {
     this.store.setAchieved(goal.id, goal.achievedOn === undefined);
+  }
+
+  protected reload(): void {
+    this.store.reload();
   }
 
   protected startEditing(goalId: string): void {

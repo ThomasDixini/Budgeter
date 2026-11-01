@@ -90,10 +90,8 @@ export class Today {
   private opener: HTMLElement | undefined;
   private readonly outcomesStore = inject(BlockOutcomesStore);
   private readonly clock = inject(Clock);
-  /** The day the task lists are about, fixed when the page opens (see `TasksStore`). */
-  private readonly now = this.clock.now();
   private readonly locale = inject(LOCALE_ID);
-  private readonly moment = signal(this.now);
+  private readonly moment = signal(this.clock.now());
 
   /** Ticks with the clock, so the timeline and the Now card move on without a reload. */
   protected readonly nowMinutes = computed(() => minutesOfDay(this.moment()));
@@ -131,9 +129,9 @@ export class Today {
     const routine = this.routine();
     return routine === undefined ? 0 : dayProgress(routine, this.nowMinutes());
   });
-  protected readonly weekday = weekdayIndex(this.now);
+  protected readonly weekday = computed(() => weekdayIndex(this.moment()));
   protected readonly isAddingTask = signal(false);
-  protected readonly todayIso = isoDate(this.now);
+  protected readonly todayIso = computed(() => isoDate(this.moment()));
   /** Id of the task whose form is open for editing. */
   protected readonly editingTaskId = signal<string | undefined>(undefined);
   /** The task being edited as a list of at most one: tracked by id, so another task's form is rebuilt. */
@@ -149,7 +147,7 @@ export class Today {
       task,
       group,
       category: this.categoryOf(task),
-      repeat: repeatLabel(task, this.todayIso),
+      repeat: repeatLabel(task, this.todayIso()),
     })),
   );
   /** The block picked on the timeline to filter today's tasks by; none shows every task. */
@@ -165,7 +163,7 @@ export class Today {
         task,
         isDone,
         category: this.categoryOf(task),
-        repeat: repeatLabel(task, this.todayIso),
+        repeat: repeatLabel(task, this.todayIso()),
       })),
   );
   protected readonly doneCount = computed(() => this.tasks().filter((item) => item.isDone).length);
@@ -192,9 +190,16 @@ export class Today {
   );
 
   constructor() {
-    const timer = setInterval(() => this.moment.set(this.clock.now()), CLOCK_TICK_MS);
+    const timer = setInterval(() => this.tick(), CLOCK_TICK_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
     effect(() => this.outcomesStore.showDay(this.routineDay()));
+  }
+
+  /** Catches up with the clock; past midnight the tasks and goals move on to the new day too. */
+  private tick(): void {
+    this.moment.set(this.clock.now());
+    this.tasksStore.followClock();
+    this.store.followClock();
   }
 
   /** The day the running routine began on: yesterday for a night shift still going. */
@@ -303,7 +308,7 @@ export class Today {
    * open "Not today" and mark it so it is easy to find.
    */
   private revealIfNotToday(task: Task): void {
-    const isToday = occursOn(task, this.now, this.todayIso);
+    const isToday = occursOn(task, this.moment(), this.todayIso());
     this.highlightedTaskId.set(isToday ? undefined : task.id);
     if (!isToday) this.isNotTodayOpen.set(true);
   }

@@ -1,9 +1,13 @@
 import { Component, computed, input, output } from '@angular/core';
 import { BlockOutcomeKind } from '../../../../core/routines/day-plan';
-import { toMinutes } from '../../../../core/calendar/time-of-day';
 import { Category, findCategory } from '../../../../core/routines/category';
-import { blockElapsed, currentBlock, minutesLeft } from '../../../../core/routines/day-timeline';
-import { Routine, RoutineBlock, sortBlocks } from '../../../../core/routines/routine';
+import {
+  blockAhead,
+  blockElapsed,
+  currentBlock,
+  minutesLeft,
+} from '../../../../core/routines/day-timeline';
+import { Routine, RoutineBlock } from '../../../../core/routines/routine';
 
 /** A block completed or skipped today, as the Now card names it for undo. */
 export interface EndedBlock {
@@ -50,15 +54,14 @@ export class NowCard {
     return block === undefined ? undefined : this.toView(block);
   });
   protected readonly nextBlock = computed(() =>
-    sortBlocks(this.pendingRoutine().blocks).find(
-      (block) => toMinutes(block.start) > this.nowMinutes(),
-    ),
+    blockAhead(this.pendingRoutine(), this.nowMinutes()),
   );
 
   /** The routine without the blocks that already ended today. */
-  private readonly pendingRoutine = computed((): Pick<Routine, 'blocks'> => {
-    const blocks = this.routine()?.blocks ?? [];
-    return { blocks: blocks.filter((block) => !this.outcomes().has(block.id)) };
+  private readonly pendingRoutine = computed((): Pick<Routine, 'start' | 'end' | 'blocks'> => {
+    const routine = this.routine();
+    const blocks = (routine?.blocks ?? []).filter((block) => !this.outcomes().has(block.id));
+    return { start: routine?.start ?? '00:00', end: routine?.end ?? '00:00', blocks };
   });
 
   private toView(block: RoutineBlock): CurrentBlockView {

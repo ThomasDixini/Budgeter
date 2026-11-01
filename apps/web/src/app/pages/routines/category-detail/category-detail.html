@@ -235,5 +235,7 @@
     </section>
   } @else if (isLoaded()) {
     <p class="ui-muted">This category does not exist anymore.</p>
+  } @else if (hasLoadFailed()) {
+    <app-load-failed message="Couldn't load this category." (retry)="reload()" />
   }
 </div>
