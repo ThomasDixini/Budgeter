@@ -1,3 +1,4 @@
+using Budgeter.Api.Application;
 using Budgeter.Api.Application.Categories;
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Routines;
@@ -19,6 +20,7 @@ public static class SqlitePersistenceRegistration
         services.AddSingleton(provider => SqliteOptions.FromConfiguration(provider.GetRequiredService<IConfiguration>()));
         services.AddSingleton(provider =>
             new SqliteConnectionFactory(provider.GetRequiredService<SqliteOptions>().ConnectionString));
+        services.AddSingleton<IUnitOfWork, SqliteUnitOfWork>();
         services.AddSingleton<ICategoryRepository, SqliteCategoryRepository>();
         services.AddSingleton<IGoalRepository, SqliteGoalRepository>();
         services.AddSingleton<IGoalProgressLedger, SqliteGoalProgressLedger>();

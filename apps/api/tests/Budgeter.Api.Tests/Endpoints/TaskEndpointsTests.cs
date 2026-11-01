@@ -60,6 +60,17 @@ public sealed class TaskEndpointsTests : IDisposable
     }
 
     [Fact]
+    public async Task Completions_UnmarkingADeletedTaskIsNoContent()
+    {
+        await SaveDailyReadAsync();
+        (await _client.DeleteAsync("/tasks/t1")).EnsureSuccessStatusCode();
+
+        var response = await _client.DeleteAsync("/tasks/t1/completions/2026-10-27");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
     public async Task Delete_RemovesTheTask()
     {
         await SaveDailyReadAsync();

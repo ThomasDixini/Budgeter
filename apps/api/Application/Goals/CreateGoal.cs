@@ -3,7 +3,10 @@ using Budgeter.Api.Domain.Goals;
 
 namespace Budgeter.Api.Application.Goals;
 
-/// <summary>Sets a goal on an existing category; retrying with the same id returns the stored goal.</summary>
+/// <summary>
+/// Sets a goal on an existing category; retrying with the same id and definition returns the stored
+/// goal, while the same id with another definition is a conflict.
+/// </summary>
 public sealed class CreateGoal(IGoalRepository goals, ICategoryRepository categories)
 {
     /// <summary>
@@ -15,17 +18,24 @@ public sealed class CreateGoal(IGoalRepository goals, ICategoryRepository catego
         GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
     {
         var goal = Goal.Create(definition);
-        var existing = await goals.FindAsync(goal.Id, day, cancellationToken);
-        if (existing is not null) return new Creation<Goal>(existing, WasCreated: false);
-
         await RequireCategoryAsync(goal.CategoryId, cancellationToken);
-        await goals.AddAsync(goal, cancellationToken);
-        return new Creation<Goal>(goal, WasCreated: true);
+        if (await goals.AddAsync(goal, cancellationToken)) return new Creation<Goal>(goal, WasCreated: true);
+
+        var stored = await goals.FindAsync(goal.Id, day, cancellationToken)
+            ?? throw ResourceNotFoundException.For("goal", goal.Id);
+        RequireSameDefinition(stored, goal);
+        return new Creation<Goal>(stored, WasCreated: false);
     }
 
     private async Task RequireCategoryAsync(string categoryId, CancellationToken cancellationToken)
     {
         var category = await categories.FindAsync(categoryId, cancellationToken);
         if (category is null) throw ResourceNotFoundException.For("category", categoryId);
+    }
+
+    private static void RequireSameDefinition(Goal stored, Goal received)
+    {
+        if (stored.HasSameDefinitionAs(received)) return;
+        throw ConflictException.For("goal", stored.Id, stored.Definition.ToString(), received.Definition.ToString());
     }
 }

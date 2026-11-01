@@ -1,6 +1,7 @@
 using Budgeter.Api.Application;
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Tasks;
+using Budgeter.Api.Domain;
 using Budgeter.Api.Domain.Categories;
 using Budgeter.Api.Domain.Tasks;
 using Budgeter.Api.Tests.Fakes;
@@ -63,6 +64,21 @@ public class TaskUseCaseTests
     {
         await Should.ThrowAsync<ResourceNotFoundException>(() =>
             new TaskCompletions(_tasks).SetAsync("missing", Today, isDone: true, CancellationToken.None));
+    }
+
+    // Regression: unmarking a task deleted in the meantime answered 404, so a replayed request failed.
+    [Fact]
+    public async Task Completions_UnmarkingATaskThatIsGoneSucceeds()
+    {
+        await Should.NotThrowAsync(() =>
+            new TaskCompletions(_tasks).SetAsync("deleted", Today, isDone: false, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Completions_RejectAMalformedTaskId()
+    {
+        await Should.ThrowAsync<DomainRuleException>(() =>
+            new TaskCompletions(_tasks).SetAsync("has spaces", Today, isDone: false, CancellationToken.None));
     }
 
     [Fact]

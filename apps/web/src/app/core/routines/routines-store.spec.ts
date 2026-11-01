@@ -80,6 +80,18 @@ class ControlledDeleteRoutinesGateway extends FakeRoutinesGateway {
   }
 }
 
+/** Creations that stay open until a test answers them, as over a slow phone connection. */
+class ControlledCreateCategoriesGateway extends FakeCategoriesGateway {
+  readonly pendingCreates: Subject<Category>[] = [];
+
+  override create(category: Category): Observable<Category> {
+    this.saved.push(category);
+    const reply = new Subject<Category>();
+    this.pendingCreates.push(reply);
+    return reply;
+  }
+}
+
 /** Deletions that stay open until a test answers them. */
 class ControlledDeleteCategoriesGateway extends FakeCategoriesGateway {
   readonly pendingDeletes: Subject<void>[] = [];
@@ -597,6 +609,44 @@ describe('RoutinesStore', () => {
       categories.pendingDeletes[0].next();
 
       expect(await deleted).toBe(true);
+    });
+
+    // Regression: the goal's request could reach the API before its category's and be refused with 404.
+    it('sends a goal of a new category only once the category is saved', () => {
+      const categories = new ControlledCreateCategoriesGateway();
+      const { store, goals } = createStore(categories);
+      const category = store.addCategory('Languages', '#86EFAC');
+      store.addGoal({ ...READ_DOCS, categoryId: category.id });
+      expect(goals.saved).toEqual([]);
+
+      categories.pendingCreates[0].next(category);
+      categories.pendingCreates[0].complete();
+
+      expect(goals.saved.map((goal) => goal.title)).toEqual(['Read the docs']);
+    });
+
+    it('drops a goal of a new category whose saving failed, without sending it', () => {
+      const categories = new ControlledCreateCategoriesGateway();
+      const { store, goals, errors } = createStore(categories);
+      const category = store.addCategory('Languages', '#86EFAC');
+      const goal = store.addGoal({ ...READ_DOCS, categoryId: category.id });
+
+      categories.pendingCreates[0].error(new Error('offline'));
+
+      expect(goals.saved).toEqual([]);
+      expect(goalIds(store)).not.toContain(goal.id);
+      expect(errors.errors).toHaveLength(1);
+    });
+
+    it('saves a new category once, however many goals wait for it', () => {
+      const categories = new ControlledCreateCategoriesGateway();
+      const { store } = createStore(categories);
+      const category = store.addCategory('Languages', '#86EFAC');
+
+      store.addGoal({ ...READ_DOCS, categoryId: category.id });
+      store.addGoal({ ...READ_DOCS, title: 'Speak daily', categoryId: category.id });
+
+      expect(categories.saved).toHaveLength(1);
     });
   });
 

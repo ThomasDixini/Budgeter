@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Diagnostics;
 namespace Budgeter.Api.Endpoints;
 
 /// <summary>
-/// Turns malformed requests and broken business rules into 400 and missing records into 404 problem
+/// Turns malformed requests and broken business rules into 400, missing records into 404 and creates
+/// that clash with a stored record into 409 problem
 /// responses (in Development, minimal APIs throw on malformed bodies instead of answering 400 themselves).
 /// </summary>
 internal sealed class BusinessExceptionHandler(
@@ -40,6 +41,7 @@ internal sealed class BusinessExceptionHandler(
     {
         DomainRuleException => StatusCodes.Status400BadRequest,
         ResourceNotFoundException => StatusCodes.Status404NotFound,
+        ConflictException => StatusCodes.Status409Conflict,
         BadHttpRequestException badRequest => badRequest.StatusCode,
         _ => null,
     };

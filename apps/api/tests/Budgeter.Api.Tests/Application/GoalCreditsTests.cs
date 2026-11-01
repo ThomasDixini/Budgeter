@@ -34,7 +34,7 @@ public class GoalCreditsTests
     private GoalCredits Credits => new(_goals, _goals);
 
     private Task CompleteBlock(string blockId, DateOnly day, BlockOutcomeKind kind = BlockOutcomeKind.Done) =>
-        new RecordBlockOutcome(_outcomes, _routines, Credits)
+        new RecordBlockOutcome(_outcomes, _routines, Credits, new ImmediateUnitOfWork())
             .ExecuteAsync(new("weekdays", blockId, day, kind, "14:00"), CancellationToken.None);
 
     private Task CompleteBlock(string blockId, BlockOutcomeKind kind = BlockOutcomeKind.Done) =>
@@ -137,7 +137,7 @@ public class GoalCreditsTests
     {
         await CompleteBlock("csharp");
 
-        await new UndoBlockOutcome(_outcomes, Credits).ExecuteAsync("weekdays", "csharp", Today, CancellationToken.None);
+        await new UndoBlockOutcome(_outcomes, Credits, new ImmediateUnitOfWork()).ExecuteAsync("weekdays", "csharp", Today, CancellationToken.None);
 
         (await DoneByGoal())["weekly"].ShouldBe(0);
     }

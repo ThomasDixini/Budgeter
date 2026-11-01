@@ -3,8 +3,8 @@ using Budgeter.Api.Domain.Goals;
 namespace Budgeter.Api.Application.Goals;
 
 /// <summary>
-/// Turns completed routine blocks into goal progress. The block outcome is saved first and the credit
-/// second; both writes are idempotent, so a retry repairs whichever one failed.
+/// Turns completed routine blocks into goal progress. Callers store the block outcome and its credit in
+/// one unit of work; both writes are also idempotent, so a retried request counts once.
 /// </summary>
 public sealed class GoalCredits(IGoalRepository goals, IGoalProgressLedger ledger)
 {

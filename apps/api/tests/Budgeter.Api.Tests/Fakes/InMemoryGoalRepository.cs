@@ -36,11 +36,12 @@ internal sealed class InMemoryGoalRepository : IGoalRepository, IGoalProgressLed
         return Task.FromResult(definition is null ? null : Restore(definition, day));
     }
 
-    public Task AddAsync(Goal goal, CancellationToken cancellationToken)
+    public Task<bool> AddAsync(Goal goal, CancellationToken cancellationToken)
     {
+        if (_definitions.Exists(stored => stored.Id == goal.Id)) return Task.FromResult(false);
         _definitions.Add(goal.Definition);
         AddCount++;
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
     public Task UpdateAsync(GoalDefinition definition, CancellationToken cancellationToken)

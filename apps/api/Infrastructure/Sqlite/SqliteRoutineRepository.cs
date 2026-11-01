@@ -17,7 +17,8 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
 
     public async Task<IReadOnlyList<Routine>> ListAsync(CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         var blocks = await SqliteCommands.QueryAsync(
             connection,
             "SELECT routine_id, id, name, start_time, end_time, category_id FROM routine_blocks ORDER BY routine_id, position",
@@ -33,15 +34,14 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
 
     public async Task SaveAsync(Routine routine, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        await using var transaction = connection.BeginTransaction();
-        await WriteAsync(connection, routine, cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        await lease.RunInTransactionAsync(() => WriteAsync(lease.Connection, routine, cancellationToken), cancellationToken);
     }
 
     public async Task DeleteAsync(string routineId, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         // Blocks go with it through ON DELETE CASCADE (foreign keys are enforced per connection).
         await SqliteCommands.ExecuteAsync(
             connection, "DELETE FROM routines WHERE id = $id", cancellationToken, ("$id", routineId));
@@ -88,7 +88,7 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
 
     private static BlockRow ToBlockRow(SqliteDataReader reader)
     {
-        var block = RoutineBlock.Create(
+        var block = RoutineBlock.Restore(
             reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetString(4),
             reader.IsDBNull(5) ? null : reader.GetString(5));
         return new BlockRow(reader.GetString(0), block);
@@ -97,7 +97,7 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
     private static Routine ToRoutine(SqliteDataReader reader, ILookup<string, RoutineBlock> blocksByRoutine)
     {
         var id = reader.GetString(0);
-        return Routine.Create(
+        return Routine.Restore(
             id, reader.GetString(1), ParseDays(reader.GetString(2)), reader.GetString(3), reader.GetString(4),
             blocksByRoutine[id]);
     }

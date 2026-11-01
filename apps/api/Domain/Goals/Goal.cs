@@ -41,23 +41,31 @@ public sealed class Goal
     }
 
     /// <summary>
-    /// Rebuilds a stored frequency goal with the blocks completed in its period.
+    /// Rebuilds a stored frequency goal with the blocks completed in its period. The definition is read as
+    /// it was saved, without today's rules, so a stricter rule never makes an old goal unreadable.
     /// </summary>
     /// <example><code>Goal.Restore(definition, done: 7).Done; // 7, even with a target of 5</code></example>
     public static Goal Restore(GoalDefinition definition, int done)
     {
-        return new Goal(GoalRules.Normalize(definition), Math.Max(0, done), null);
+        return new Goal(GoalRules.WithDerivedTracking(definition), Math.Max(0, done), null);
     }
 
     /// <summary>
-    /// Rebuilds a stored objective, achieved on <paramref name="achievedOn"/> or still pending when null.
+    /// Rebuilds a stored objective, achieved on <paramref name="achievedOn"/> or still pending when null,
+    /// reading its definition as it was saved.
     /// </summary>
     /// <example><code>Goal.RestoreObjective(definition, new DateOnly(2026, 10, 28)).Done; // the target</code></example>
     public static Goal RestoreObjective(GoalDefinition definition, DateOnly? achievedOn)
     {
-        var normalized = GoalRules.Normalize(definition);
-        return new Goal(normalized, achievedOn is null ? 0 : normalized.Target, achievedOn);
+        var restored = GoalRules.WithDerivedTracking(definition);
+        return new Goal(restored, achievedOn is null ? 0 : restored.Target, achievedOn);
     }
+
+    /// <summary>
+    /// Whether the other goal was set with the same definition, as a retried create must be.
+    /// </summary>
+    /// <example><code>stored.HasSameDefinitionAs(Goal.Create(definition)); // true</code></example>
+    public bool HasSameDefinitionAs(Goal other) => Definition == other.Definition;
 
     /// <summary>
     /// Whether a completed routine block of a category counts toward this goal: only a frequency goal

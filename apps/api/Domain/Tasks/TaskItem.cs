@@ -47,6 +47,15 @@ public sealed class TaskItem
             RequireDate(repeat, date));
     }
 
+    /// <summary>
+    /// Rebuilds a stored task as it was saved, without today's rules, so a stricter rule never makes an
+    /// old task unreadable.
+    /// </summary>
+    /// <example><code>TaskItem.Restore("t1", "Read 20 pages", "reading", TaskRepeat.Daily, [], null);</code></example>
+    internal static TaskItem Restore(
+        string id, string title, string? categoryId, TaskRepeat repeat, IEnumerable<int> days, DateOnly? date) =>
+        new(id, title, categoryId, repeat, days.ToList(), date);
+
     private static List<int> RequireDays(TaskRepeat repeat, IEnumerable<int> days)
     {
         var sorted = days.Distinct().Order().ToList();

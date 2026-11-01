@@ -49,6 +49,15 @@ public sealed class Routine
             blockList);
     }
 
+    /// <summary>
+    /// Rebuilds a stored routine as it was saved, without today's rules, so a stricter rule never makes
+    /// an old routine unreadable.
+    /// </summary>
+    /// <example><code>Routine.Restore("weekdays", "Weekdays", [0, 1, 2, 3, 4], "08:00", "17:00", blocks);</code></example>
+    internal static Routine Restore(
+        string id, string name, IEnumerable<int> days, string start, string end, IEnumerable<RoutineBlock> blocks) =>
+        new(id, name, days.ToList(), start, end, blocks.ToList());
+
     private static List<int> RequireWeekdays(IEnumerable<int> days)
     {
         var sorted = days.Distinct().Order().ToList();

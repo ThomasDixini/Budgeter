@@ -6,17 +6,17 @@ namespace Budgeter.Api.Infrastructure.Sqlite;
 internal static class SqliteCommands
 {
     /// <summary>
-    /// Runs a statement that returns no rows.
+    /// Runs a statement that returns no rows and tells how many rows it changed.
     /// </summary>
-    /// <example><code>await SqliteCommands.ExecuteAsync(connection, "DELETE FROM goals WHERE id = $id", ct, ("$id", "g1"));</code></example>
-    public static async Task ExecuteAsync(
+    /// <example><code>await SqliteCommands.ExecuteAsync(connection, "DELETE FROM goals WHERE id = $id", ct, ("$id", "g1")); // 1</code></example>
+    public static async Task<int> ExecuteAsync(
         SqliteConnection connection,
         string sql,
         CancellationToken cancellationToken,
         params (string Name, object? Value)[] parameters)
     {
         await using var command = Create(connection, sql, parameters);
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        return await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     /// <summary>

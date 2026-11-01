@@ -17,7 +17,7 @@ public class BlockOutcomeTests
     private readonly InMemoryGoalRepository _goals = new();
     private GoalCredits Credits => new(_goals, _goals);
 
-    private RecordBlockOutcome Record() => new(_outcomes, _routines, Credits);
+    private RecordBlockOutcome Record() => new(_outcomes, _routines, Credits, new ImmediateUnitOfWork());
 
     [Fact]
     public async Task Record_StoresTheOutcomeForTheDay()
@@ -54,7 +54,7 @@ public class BlockOutcomeTests
     public async Task Undo_RemovesTheOutcomeAndIgnoresOneAlreadyGone()
     {
         await Record().ExecuteAsync(new("weekdays", "work", Today, BlockOutcomeKind.Done, "11:20"), CancellationToken.None);
-        var undo = new UndoBlockOutcome(_outcomes, Credits);
+        var undo = new UndoBlockOutcome(_outcomes, Credits, new ImmediateUnitOfWork());
 
         await undo.ExecuteAsync("weekdays", "work", Today, CancellationToken.None);
         await undo.ExecuteAsync("weekdays", "work", Today, CancellationToken.None);

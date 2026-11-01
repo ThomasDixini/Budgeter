@@ -1,4 +1,16 @@
 import { ErrorHandler, Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
+import {
+  Observable,
+  catchError,
+  concatMap,
+  filter,
+  finalize,
+  map,
+  of,
+  shareReplay,
+  take,
+  tap,
+} from 'rxjs';
 import { Clock } from '../calendar/clock';
 import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
@@ -58,6 +70,8 @@ export class RoutinesStore {
   private readonly categoriesLoaded = signal(false);
   private readonly goalsLoaded = signal(false);
   private readonly routinesLoaded = signal(false);
+  /** Categories whose creation is still in flight, by id, telling whether it was saved once it answers. */
+  private readonly categoryCreations = new Map<string, Observable<boolean>>();
 
   readonly categories = this.categoryList.asReadonly();
   readonly routines = this.routineList.asReadonly();
@@ -140,16 +154,26 @@ export class RoutinesStore {
   }
 
   /**
-   * Adds a goal with no progress yet.
+   * Adds a goal with no progress yet. A goal of a category still being created is sent once the
+   * category is saved (the API rejects a goal of an unknown category), and dropped if saving it fails.
    * @example store.addGoal({ categoryId: 'study', title: 'Read docs', type: 'frequency', period: 'weekly', target: 3 })
    */
   addGoal(draft: GoalDraft): Goal {
     const goal: Goal = { ...draft, id: this.ids.next(), done: 0 };
+    const today = this.today();
     this.goalList.update((goals) => [...goals, goal]);
-    this.goalsGateway.create(goal, this.today()).subscribe({
-      next: (saved) => replaceIfShown(this.goalList, goal, saved),
-      error: (error: unknown) => this.rejected(error, () => removeIfShown(this.goalList, goal)),
-    });
+    this.categorySaved(goal.categoryId)
+      .pipe(
+        tap((isSaved) => {
+          if (!isSaved) removeIfShown(this.goalList, goal);
+        }),
+        filter((isSaved) => isSaved),
+        concatMap(() => this.goalsGateway.create(goal, today)),
+      )
+      .subscribe({
+        next: (saved) => replaceIfShown(this.goalList, goal, saved),
+        error: (error: unknown) => this.rejected(error, () => removeIfShown(this.goalList, goal)),
+      });
     return goal;
   }
 
@@ -160,7 +184,15 @@ export class RoutinesStore {
   addCategory(name: string, color: string): Category {
     const category: Category = { id: this.ids.next(), name, color };
     this.categoryList.update((categories) => [...categories, category]);
-    this.categoriesGateway.create(category).subscribe({
+    const creation = this.categoriesGateway.create(category).pipe(shareReplay(1));
+    this.categoryCreations.set(
+      category.id,
+      creation.pipe(
+        map(() => true),
+        catchError(() => of(false)),
+      ),
+    );
+    creation.pipe(finalize(() => this.categoryCreations.delete(category.id))).subscribe({
       next: (saved) => replaceIfShown(this.categoryList, category, saved),
       error: (error: unknown) =>
         this.rejected(error, () => removeIfShown(this.categoryList, category)),
@@ -316,6 +348,11 @@ export class RoutinesStore {
     putBack(this.categoryList, removal.category);
     this.goalList.update((goals) => restoredAllAt(goals, removal.goals, sameId));
     this.routineList.update((routines) => routines.map((r) => withCategoryBack(r, removal)));
+  }
+
+  /** Whether the category is saved: at once for a stored one, once its creation answers for a new one. */
+  private categorySaved(categoryId: string): Observable<boolean> {
+    return (this.categoryCreations.get(categoryId) ?? of(true)).pipe(take(1));
   }
 
   private rejected(error: unknown, rollback: () => void): void {

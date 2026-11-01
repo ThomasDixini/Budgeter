@@ -17,7 +17,8 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
 
     public async Task<IReadOnlyList<Goal>> ListAsync(DateOnly day, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         var definitions = await SqliteCommands.QueryAsync(
             connection, $"{SelectColumns} ORDER BY rowid", ToDefinition, cancellationToken);
         var goals = new List<Goal>(definitions.Count);
@@ -27,21 +28,23 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
 
     public async Task<Goal?> FindAsync(string id, DateOnly day, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         var rows = await SqliteCommands.QueryAsync(
             connection, $"{SelectColumns} WHERE id = $id", ToDefinition, cancellationToken, ("$id", id));
         return rows.Count == 0 ? null : await WithProgressAsync(connection, rows[0], day, cancellationToken);
     }
 
-    public async Task AddAsync(Goal goal, CancellationToken cancellationToken)
+    public async Task<bool> AddAsync(Goal goal, CancellationToken cancellationToken)
     {
         var definition = goal.Definition;
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        await SqliteCommands.ExecuteAsync(
-            connection,
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var inserted = await SqliteCommands.ExecuteAsync(
+            lease.Connection,
             """
             INSERT INTO goals (id, category_id, title, type, period, target, unit, deadline, tracking)
             VALUES ($id, $categoryId, $title, $type, $period, $target, $unit, $deadline, $tracking)
+            ON CONFLICT (id) DO NOTHING
             """,
             cancellationToken,
             ("$id", definition.Id), ("$categoryId", definition.CategoryId), ("$title", definition.Title),
@@ -49,11 +52,13 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
             ("$target", definition.Target), ("$unit", definition.Unit),
             ("$deadline", definition.Deadline?.ToString(DateFormat, CultureInfo.InvariantCulture)),
             ("$tracking", ToText(definition.Tracking)));
+        return inserted > 0;
     }
 
     public async Task UpdateAsync(GoalDefinition definition, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
             """
@@ -70,7 +75,8 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
 
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         // The progress entries go with it through ON DELETE CASCADE.
         await SqliteCommands.ExecuteAsync(
             connection, "DELETE FROM goals WHERE id = $id", cancellationToken, ("$id", id));

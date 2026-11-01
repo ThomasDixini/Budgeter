@@ -40,6 +40,17 @@ public sealed class CategoryEndpointsTests : IDisposable
     }
 
     [Fact]
+    public async Task Post_SameIdWithOtherContentsIsConflict()
+    {
+        await CreateLanguagesAsync();
+
+        var clash = await _client.PostAsJsonAsync("/categories", Languages with { Name = "Spanish" });
+
+        clash.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await clash.Content.ReadAsStringAsync()).ShouldContain("Spanish");
+    }
+
+    [Fact]
     public async Task Post_InvalidColorIsBadRequestNamingTheValue()
     {
         var response = await _client.PostAsJsonAsync("/categories",

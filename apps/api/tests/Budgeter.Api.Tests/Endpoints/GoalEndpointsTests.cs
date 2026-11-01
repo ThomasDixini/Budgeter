@@ -70,6 +70,34 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task Post_RetryOfTheSameGoalIsOk()
+    {
+        await CreateGoalAsync(WeeklyGoal("g1"));
+
+        var retry = await PostGoalAsync(WeeklyGoal("g1"));
+
+        retry.StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Post_SameIdWithAnotherDefinitionIsConflict()
+    {
+        await CreateGoalAsync(WeeklyGoal("g1"));
+
+        var clash = await PostGoalAsync(new
+        {
+            id = "g1",
+            categoryId = "study",
+            title = "Study twice a week",
+            type = "frequency",
+            period = "weekly",
+            target = 2,
+        });
+
+        clash.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
     public async Task Post_BrokenRuleIsBadRequest()
     {
         var response = await PostGoalAsync(new

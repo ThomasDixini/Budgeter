@@ -11,32 +11,36 @@ public sealed class SqliteCategoryRepository(SqliteConnectionFactory connections
 
     public async Task<IReadOnlyList<Category>> ListAsync(CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         return await SqliteCommands.QueryAsync(
             connection, $"{SelectColumns} ORDER BY rowid", ToCategory, cancellationToken);
     }
 
     public async Task<Category?> FindAsync(string id, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         var rows = await SqliteCommands.QueryAsync(
             connection, $"{SelectColumns} WHERE id = $id", ToCategory, cancellationToken, ("$id", id));
         return rows.FirstOrDefault();
     }
 
-    public async Task AddAsync(Category category, CancellationToken cancellationToken)
+    public async Task<bool> AddAsync(Category category, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        await SqliteCommands.ExecuteAsync(
-            connection,
-            "INSERT INTO categories (id, name, color) VALUES ($id, $name, $color)",
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var inserted = await SqliteCommands.ExecuteAsync(
+            lease.Connection,
+            "INSERT INTO categories (id, name, color) VALUES ($id, $name, $color) ON CONFLICT (id) DO NOTHING",
             cancellationToken,
             ("$id", category.Id), ("$name", category.Name), ("$color", category.Color));
+        return inserted > 0;
     }
 
     public async Task UpdateAsync(Category category, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
             "UPDATE categories SET name = $name, color = $color WHERE id = $id",
@@ -46,14 +50,17 @@ public sealed class SqliteCategoryRepository(SqliteConnectionFactory connections
 
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-        // Goals go first (their progress cascades); blocks and tasks only lose the reference.
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        await lease.RunInTransactionAsync(() => DeleteAllOfAsync(lease.Connection, id, cancellationToken), cancellationToken);
+    }
+
+    // Goals go first (their progress cascades); blocks and tasks only lose the reference.
+    private static async Task DeleteAllOfAsync(SqliteConnection connection, string id, CancellationToken cancellationToken)
+    {
         foreach (var sql in DeleteStatements)
         {
             await SqliteCommands.ExecuteAsync(connection, sql, cancellationToken, ("$id", id));
         }
-        await transaction.CommitAsync(cancellationToken);
     }
 
     private static readonly string[] DeleteStatements =
@@ -66,6 +73,6 @@ public sealed class SqliteCategoryRepository(SqliteConnectionFactory connections
 
     private static Category ToCategory(SqliteDataReader reader)
     {
-        return Category.Create(reader.GetString(0), reader.GetString(1), reader.GetString(2));
+        return Category.Restore(reader.GetString(0), reader.GetString(1), reader.GetString(2));
     }
 }
