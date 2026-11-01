@@ -44,7 +44,7 @@ public sealed class RecordBlockOutcome(
 
     private async Task<RoutineBlock> RequireBlockAsync(BlockOutcome outcome, CancellationToken cancellationToken)
     {
-        var routine = (await routines.ListAsync(cancellationToken)).FirstOrDefault(stored => stored.Id == outcome.RoutineId)
+        var routine = await routines.FindAsync(outcome.RoutineId, cancellationToken)
             ?? throw ResourceNotFoundException.For("routine", outcome.RoutineId);
         return routine.Blocks.FirstOrDefault(block => block.Id == outcome.BlockId)
             ?? throw ResourceNotFoundException.For($"block of routine \"{routine.Id}\"", outcome.BlockId);

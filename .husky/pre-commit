@@ -1,14 +1,30 @@
 #!/bin/sh
 
-echo "[pre-commit] Formatting .NET code..."
-dotnet format Budgeter.slnx --no-restore || exit 1
+# Only what is staged is formatted and staged again: formatting must never pull other work in
+# progress into the commit (a plain "git add -u" here used to commit every modified file).
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+[ -z "$staged" ] && exit 0
 
-echo "[pre-commit] Formatting and linting web code..."
-if [ -d "apps/web/node_modules" ]; then
-  (cd apps/web && npm run format) || exit 1
-  (cd apps/web && npm run lint) || exit 1
-else
-  echo "[pre-commit] apps/web/node_modules missing, skipping web checks."
+dotnet_files="$(printf '%s\n' "$staged" | grep '\.cs$')"
+if [ -n "$dotnet_files" ]; then
+  echo "[pre-commit] Formatting staged .NET code..."
+  # shellcheck disable=SC2086 # one argument per file
+  dotnet format Budgeter.slnx --no-restore --include $dotnet_files || exit 1
 fi
 
-git add -u
+web_files="$(printf '%s\n' "$staged" | grep '^apps/web/' | sed 's#^apps/web/##')"
+if [ -n "$web_files" ]; then
+  if [ -d "apps/web/node_modules" ]; then
+    echo "[pre-commit] Formatting staged web code and linting..."
+    # shellcheck disable=SC2086 # one argument per file
+    (cd apps/web && npx prettier --write --ignore-unknown $web_files) || exit 1
+    (cd apps/web && npm run lint) || exit 1
+  else
+    echo "[pre-commit] apps/web/node_modules missing, skipping web checks."
+  fi
+fi
+
+printf '%s\n' "$staged" | while IFS= read -r file; do
+  [ -f "$file" ] && git add -- "$file"
+done
+exit 0

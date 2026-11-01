@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { fieldValue } from '../../../core/forms/field-value';
 import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { IdGenerator } from '../../../core/ids/id-generator';
@@ -157,9 +158,7 @@ export class RoutineEditor {
     this.saveState.set(this.hasChanges() ? 'idle' : 'saved');
   }
 
-  protected valueOf(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLSelectElement).value;
-  }
+  protected readonly valueOf = fieldValue;
 
   private edit(change: (routine: Routine) => Routine): void {
     const draft = this.draft();

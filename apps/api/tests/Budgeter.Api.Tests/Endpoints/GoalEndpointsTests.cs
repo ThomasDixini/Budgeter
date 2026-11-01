@@ -198,15 +198,23 @@ public sealed class GoalEndpointsTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Put_BrokenRuleIsBadRequestAndUnknownGoalIsNotFound()
+    public async Task Put_BrokenRuleIsBadRequest()
     {
         await CreateGoalAsync(WeeklyGoal("g1"));
-        var edit = new { title = "Study", period = "weekly", target = 0 };
 
-        var broken = await _client.PutAsJsonAsync("/goals/g1?date=2026-10-28", edit);
-        var unknown = await _client.PutAsJsonAsync("/goals/missing?date=2026-10-28", edit with { target = 3 });
+        var broken = await _client.PutAsJsonAsync(
+            "/goals/g1?date=2026-10-28", new { title = "Study", period = "weekly", target = 0 });
 
-        (broken.StatusCode, unknown.StatusCode).ShouldBe((HttpStatusCode.BadRequest, HttpStatusCode.NotFound));
+        broken.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Put_UnknownGoalIsNotFound()
+    {
+        var unknown = await _client.PutAsJsonAsync(
+            "/goals/missing?date=2026-10-28", new { title = "Study", period = "weekly", target = 3 });
+
+        unknown.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Theory]

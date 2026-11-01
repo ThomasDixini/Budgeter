@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { fieldValue } from '../../../core/forms/field-value';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -114,9 +115,7 @@ export class CategoryDetail {
     if (!(await this.store.deleteCategory(categoryId))) reattachTasks();
   }
 
-  protected valueOf(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly valueOf = fieldValue;
 
   protected toggleAchieved(goal: Goal): void {
     this.store.setAchieved(goal.id, goal.achievedOn === undefined);

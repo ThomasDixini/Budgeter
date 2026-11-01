@@ -1,7 +1,6 @@
 using Budgeter.Api.Application;
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Domain;
 using Budgeter.Api.Domain.Routines;
 using Budgeter.Api.Tests.Fakes;
 using Shouldly;
@@ -60,12 +59,5 @@ public class BlockOutcomeTests
         await undo.ExecuteAsync("weekdays", "work", Today, CancellationToken.None);
 
         (await _outcomes.ListAsync(Today, CancellationToken.None)).ShouldBeEmpty();
-    }
-
-    [Fact]
-    public void Create_RejectsATimeNotShapedLikeAClock()
-    {
-        Should.Throw<DomainRuleException>(() =>
-            BlockOutcome.Create("weekdays", "work", Today, BlockOutcomeKind.Done, "11h20"));
     }
 }

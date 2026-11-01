@@ -10,7 +10,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { Clock } from '../../../core/calendar/clock';
@@ -19,14 +18,6 @@ import { minutesOfDay, toMinutes, weekdayIndex } from '../../../core/calendar/ti
 import { Category, findCategory } from '../../../core/routines/category';
 import { isHappening } from '../../../core/routines/day-clock';
 import { dayProgress } from '../../../core/routines/day-timeline';
-import {
-  GOAL_TYPE_LABELS,
-  Goal,
-  goalPeriodInfo,
-  goalProgress,
-  goalValueLabel,
-  isGoalMet,
-} from '../../../core/routines/goal';
 import { activeRoutine } from '../../../core/routines/routine';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { NotTodayGroup, Task, TaskDraft, occursOn, repeatLabel } from '../../../core/routines/task';
@@ -36,12 +27,10 @@ import { BlockOutcomeKind, planDay } from '../../../core/routines/day-plan';
 import { DayTimeline } from './day-timeline/day-timeline';
 import { EndedBlock, NowCard } from './now-card/now-card';
 import { TaskForm } from './task-form/task-form';
+import { TodayGoals } from './today-goals/today-goals';
 
 /** How often the "now" line and the Now card catch up with the clock. */
 const CLOCK_TICK_MS = 30_000;
-
-/** Goals shown in the "Goals in focus" card. */
-const FOCUS_GOAL_COUNT = 3;
 
 interface NotTodayView {
   readonly task: Task;
@@ -65,19 +54,10 @@ interface TaskView {
   readonly repeat: string;
 }
 
-interface FocusGoalView {
-  readonly goal: Goal;
-  readonly meta: string;
-  readonly value: string;
-  readonly percent: number;
-  readonly color: string;
-  readonly isMet: boolean;
-}
-
 /** Module landing page: today's timeline, the block happening now, tasks and goals in focus. */
 @Component({
   selector: 'app-routines-today',
-  imports: [NgTemplateOutlet, RouterLink, PageHeading, DayTimeline, NowCard, TaskForm],
+  imports: [RouterLink, PageHeading, DayTimeline, NowCard, TaskForm, TodayGoals],
   templateUrl: './today.html',
   styleUrl: './today.css',
 })
@@ -167,28 +147,6 @@ export class Today {
       })),
   );
   protected readonly doneCount = computed(() => this.tasks().filter((item) => item.isDone).length);
-  /** Whether "See all" opened the card to every goal, instead of the first few still pending. */
-  protected readonly isShowingAllGoals = signal(false);
-  protected readonly goalCount = computed(() => this.store.goals().length);
-  protected readonly pendingGoals = computed(() =>
-    this.store
-      .goals()
-      .filter((goal) => !isGoalMet(goal))
-      .map((goal) => this.toFocusGoal(goal)),
-  );
-  protected readonly metGoals = computed(() =>
-    this.store
-      .goals()
-      .filter(isGoalMet)
-      .map((goal) => this.toFocusGoal(goal)),
-  );
-  /** The first goals still pending, shown while the card is closed. */
-  protected readonly focusGoals = computed(() => this.pendingGoals().slice(0, FOCUS_GOAL_COUNT));
-  /** Share of goals met in their current period, for the summary bar of "All goals". */
-  protected readonly metPercent = computed(() =>
-    this.goalCount() === 0 ? 0 : Math.round((this.metGoals().length / this.goalCount()) * 100),
-  );
-
   constructor() {
     const timer = setInterval(() => this.tick(), CLOCK_TICK_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
@@ -242,14 +200,6 @@ export class Today {
   private isRelatedToSelectedBlock(task: Task): boolean {
     const block = this.selectedBlock();
     return block === undefined || task.categoryId === block.categoryId;
-  }
-
-  /**
-   * Marks an objective achieved today, or takes the mark back.
-   * @example this.toggleAchieved(courseObjective)
-   */
-  protected toggleAchieved(goal: Goal): void {
-    this.store.setAchieved(goal.id, goal.achievedOn === undefined);
   }
 
   protected toggleTask(taskId: string): void {
@@ -320,19 +270,5 @@ export class Today {
 
   private categoryOf(item: { readonly categoryId?: string }): Category | undefined {
     return findCategory(this.store.categories(), item.categoryId);
-  }
-
-  private toFocusGoal(goal: Goal): FocusGoalView {
-    const category = this.categoryOf(goal);
-    return {
-      goal,
-      meta: [GOAL_TYPE_LABELS[goal.type], goalPeriodInfo(goal.period).label, category?.name]
-        .filter((part) => part !== undefined)
-        .join(' · '),
-      value: goal.type === 'objective' ? goalValueLabel(goal) : `${goal.done}/${goal.target}`,
-      percent: goalProgress(goal),
-      color: category?.color ?? 'var(--color-mint)',
-      isMet: isGoalMet(goal),
-    };
   }
 }

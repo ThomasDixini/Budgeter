@@ -1,4 +1,5 @@
 import { Component, ErrorHandler, LOCALE_ID, computed, inject, signal } from '@angular/core';
+import { fieldValue } from '../../../core/forms/field-value';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, catchError, switchMap } from 'rxjs';
 import { PageHeading } from '../../../components/page-heading/page-heading';
@@ -94,9 +95,7 @@ export class History {
     if (!this.isToday()) this.day.set(this.dayAfter(this.day()));
   }
 
-  protected valueOf(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly valueOf = fieldValue;
 
   /** A failed load is reported and leaves the page loading, rather than showing an empty day as if real. */
   private load(isoDay: string): Observable<DayRecord> {

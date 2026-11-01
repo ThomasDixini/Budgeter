@@ -55,7 +55,9 @@ builder.Services.AddScoped<TaskCompletions>();
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.MapGet("/", () => "Hello World!");
+// Answers once the database is ready (the initializer runs before the server listens), for whatever
+// waits on the API to start: the E2E runner today, a serverless platform later.
+app.MapGet("/health", () => Results.NoContent());
 app.MapCategoryEndpoints();
 app.MapGoalEndpoints();
 app.MapRoutineEndpoints();

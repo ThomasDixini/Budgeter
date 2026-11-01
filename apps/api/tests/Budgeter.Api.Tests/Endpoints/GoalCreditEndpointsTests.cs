@@ -72,14 +72,24 @@ public sealed class GoalCreditEndpointsTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task ADailyGoal_CountsBeyondItsTarget_AndStartsOverTheNextDay()
+    public async Task ADailyGoal_CountsBeyondItsTarget()
     {
         await CreateGoalAsync("daily", 1);
 
         await CompleteAsync("csharp");
         await CompleteAsync("linq");
 
-        (await DoneAsync(), await DoneAsync("2026-10-29")).ShouldBe((2, 0));
+        (await DoneAsync()).ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task ADailyGoal_StartsOverTheNextDay()
+    {
+        await CreateGoalAsync("daily", 1);
+
+        await CompleteAsync("csharp");
+
+        (await DoneAsync("2026-10-29")).ShouldBe(0);
     }
 
     [Fact]

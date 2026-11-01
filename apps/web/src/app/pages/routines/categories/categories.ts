@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { fieldValue } from '../../../core/forms/field-value';
 import { Router, RouterLink } from '@angular/router';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { formatDuration } from '../../../core/calendar/time-of-day';
@@ -58,9 +59,7 @@ export class Categories {
     });
   }
 
-  protected valueOf(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly valueOf = fieldValue;
 
   private toCard(category: Category): CategoryCardView {
     const goals = this.store.goals().filter((goal) => goal.categoryId === category.id);

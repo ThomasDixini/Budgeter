@@ -111,19 +111,29 @@ describe('History page', () => {
     expect(next.disabled).toBe(true);
   });
 
-  it('shows the day picked in the date field, and ignores a future one', async () => {
-    const page = await openHistory();
+  function pickDay(page: Awaited<ReturnType<typeof openHistory>>, isoDay: string): void {
     const field = page.element.querySelector<HTMLInputElement>('.day-input')!;
+    field.value = isoDay;
+    field.dispatchEvent(new Event('change'));
+    TestBed.tick();
+  }
 
-    field.value = '2026-10-20';
-    field.dispatchEvent(new Event('change'));
-    TestBed.tick();
-    field.value = '2026-11-20';
-    field.dispatchEvent(new Event('change'));
-    TestBed.tick();
+  it('shows the day picked in the date field', async () => {
+    const page = await openHistory();
+
+    pickDay(page, '2026-10-20');
 
     expect(page.goals.listedDays).toContain('2026-10-20');
     expect(page.element.querySelector('h1')?.textContent?.trim()).toBe('Tuesday, October 20');
+  });
+
+  it('ignores a future day picked in the date field', async () => {
+    const page = await openHistory();
+
+    pickDay(page, '2026-11-20');
+
+    expect(page.goals.listedDays).not.toContain('2026-11-20');
+    expect(page.element.querySelector('h1')?.textContent?.trim()).toBe('Tuesday, October 27');
   });
 
   it('is reachable from its own tab', async () => {

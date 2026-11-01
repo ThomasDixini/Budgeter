@@ -75,24 +75,7 @@ internal sealed class InMemoryGoalRepository : IGoalRepository, IGoalProgressLed
         return Task.CompletedTask;
     }
 
-    private Goal Restore(GoalDefinition definition, DateOnly day)
-    {
-        var normalized = Goal.Create(definition).Definition;
-        var window = GoalWindow.For(definition.Period, day, definition.Deadline);
-        if (normalized.Type == GoalType.Objective)
-        {
-            var marks = _events
-                .Where(entry => IsAchievement(entry, definition.Id) && entry.Date >= window.Start && entry.Date <= day)
-                .Select(entry => (DateOnly?)entry.Date);
-            return Goal.RestoreObjective(definition, marks.Min());
-        }
-        var inWindow = _events
-            .Where(entry => entry.GoalId == definition.Id && entry.SourceRef != GoalAchievement.SourceRef && window.Contains(entry.Date))
-            .ToList();
-        var manual = inWindow.Where(entry => entry.Source == GoalSource.Manual).Sum(entry => entry.Amount);
-        var automatic = inWindow.Where(entry => entry.Source != GoalSource.Manual).Sum(entry => entry.Amount);
-        return Goal.Restore(definition, GoalProgress.Compute(manual, automatic));
-    }
+    private Goal Restore(GoalDefinition definition, DateOnly day) => Goal.StandingOn(definition, _events, day);
 
     private static bool IsAchievement(GoalProgressEvent entry, string goalId) =>
         entry.GoalId == goalId && entry.SourceRef == GoalAchievement.SourceRef;

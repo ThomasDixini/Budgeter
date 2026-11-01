@@ -32,6 +32,25 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
             cancellationToken);
     }
 
+    public async Task<Routine?> FindAsync(string routineId, CancellationToken cancellationToken)
+    {
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var blocks = await SqliteCommands.QueryAsync(
+            lease.Connection,
+            "SELECT routine_id, id, name, start_time, end_time, category_id FROM routine_blocks WHERE routine_id = $id ORDER BY position",
+            ToBlockRow,
+            cancellationToken,
+            ("$id", routineId));
+        var blocksByRoutine = blocks.ToLookup(row => row.RoutineId, row => row.Block);
+        var routines = await SqliteCommands.QueryAsync(
+            lease.Connection,
+            "SELECT id, name, days, start_time, end_time FROM routines WHERE id = $id",
+            reader => ToRoutine(reader, blocksByRoutine),
+            cancellationToken,
+            ("$id", routineId));
+        return routines.Count == 0 ? null : routines[0];
+    }
+
     public async Task SaveAsync(Routine routine, CancellationToken cancellationToken)
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);

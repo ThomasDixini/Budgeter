@@ -8,6 +8,7 @@ import {
   linkedSignal,
   output,
 } from '@angular/core';
+import { fieldValue } from '../../../../core/forms/field-value';
 import { Category } from '../../../../core/routines/category';
 import { WEEKDAY_LABELS } from '../../../../core/routines/routine';
 import { TASK_REPEAT_OPTIONS, Task, TaskDraft, TaskRepeat } from '../../../../core/routines/task';
@@ -91,7 +92,5 @@ export class TaskForm {
     });
   }
 
-  protected valueOf(event: Event): string {
-    return (event.target as HTMLInputElement | HTMLSelectElement).value;
-  }
+  protected readonly valueOf = fieldValue;
 }

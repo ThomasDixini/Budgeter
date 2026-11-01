@@ -120,13 +120,20 @@ describe('CategoryDetail', () => {
     );
   });
 
-  it('filters goals by period and type', async () => {
+  it('filters goals by period', async () => {
     const page = await openCategory('/routines/categories/study');
 
     click(page, '.period', 2);
+
     expect(goalTitles(page)).toEqual(['Study C# 5x a week']);
+  });
+
+  it('combines the period and type filters, and says when nothing is left', async () => {
+    const page = await openCategory('/routines/categories/study');
+    click(page, '.period', 2);
 
     click(page, '.type', 2);
+
     expect(goalTitles(page)).toEqual([]);
     expect(page.element.querySelector('.no-goals')).not.toBeNull();
   });

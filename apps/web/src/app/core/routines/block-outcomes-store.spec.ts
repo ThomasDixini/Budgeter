@@ -73,19 +73,22 @@ describe('BlockOutcomesStore', () => {
   it('reloads the goals after recording or undoing, since blocks can count toward them', () => {
     const { store, goals } = createStore();
 
+    const loadedOnStart = goals.listedDays.length;
+
     store.record('weekdays', 'project', 'done', 20 * 60 + 40);
     store.undo('weekdays', 'project');
 
-    expect(goals.listedDays).toHaveLength(3);
+    expect(goals.listedDays.length - loadedOnStart).toBe(2);
   });
 
   it('does not reload the goals when recording failed', () => {
     const { store, gateway, goals } = createStore();
     gateway.failure = new Error('offline');
+    const loadedOnStart = goals.listedDays.length;
 
     store.record('weekdays', 'project', 'done', 20 * 60 + 40);
 
-    expect(goals.listedDays).toHaveLength(1);
+    expect(goals.listedDays.length).toBe(loadedOnStart);
   });
 
   it('undoes an outcome through the gateway', () => {

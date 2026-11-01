@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, input, output, signal } from '@angular/core';
+import { fieldValue } from '../../../../core/forms/field-value';
 import { formatDate } from '@angular/common';
 import { withAlpha } from '../../../../core/routines/category';
 import {
@@ -118,9 +119,7 @@ export class GoalForm implements OnInit {
     });
   }
 
-  protected textOf(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly textOf = fieldValue;
 
   /** Number fields never go below one, matching their `min` attribute. */
   protected countOf(event: Event): number {

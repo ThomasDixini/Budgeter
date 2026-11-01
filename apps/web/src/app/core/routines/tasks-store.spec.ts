@@ -358,9 +358,9 @@ describe('TasksStore', () => {
       const gateway = new ControlledSaveTasksGateway();
       const { store } = createStore(gateway);
       store.updateTask('t5', { ...DAILY_READ, title: 'First edit' });
-      store.updateTask('t5', { ...DAILY_READ, title: 'Second edit' });
+      const second = store.updateTask('t5', { ...DAILY_READ, title: 'Second edit' })!;
 
-      gateway.pending[1].next({} as Task);
+      gateway.pending[1].next(second);
       gateway.pending[0].error(new Error('offline'));
 
       expect(store.tasks().find((task) => task.id === 't5')?.title).toBe('Second edit');

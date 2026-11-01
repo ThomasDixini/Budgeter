@@ -12,11 +12,18 @@
     <None Remove="tests/**" />
   </ItemGroup>
 
+  <!-- Test doubles of the web app: fakes, fixed clocks and ids, sample data. They live next to the code
+       they stand in for, but only specs use them. -->
+  <ItemGroup>
+    <WebTestDoubles Include="..\web\src\**\fake-*.ts;..\web\src\**\fixed-clock.ts;..\web\src\**\sequential-id-generator.ts;..\web\src\**\sample-routines.ts" />
+  </ItemGroup>
+
   <!-- The SonarScanner for .NET derives the analysis scope from MSBuild items,
        so the Angular sources must be linked here to be analyzed by SonarCloud.
-       Spec files are linked by the test project instead, so they are analyzed as test code. -->
+       Spec files and the test doubles they share are linked by the test project instead, so they are
+       analyzed as test code. -->
   <ItemGroup>
-    <None Include="..\web\src\**\*.ts" Exclude="..\web\src\**\*.spec.ts" />
+    <None Include="..\web\src\**\*.ts" Exclude="..\web\src\**\*.spec.ts;@(WebTestDoubles)" />
     <None Include="..\web\src\**\*.html" />
     <None Include="..\web\src\**\*.css" />
   </ItemGroup>

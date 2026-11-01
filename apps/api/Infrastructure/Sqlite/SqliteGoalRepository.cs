@@ -15,24 +15,24 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
     private const string SelectColumns =
         "SELECT id, category_id, title, type, period, target, unit, deadline, tracking FROM goals";
 
+    // Two queries whatever the number of goals: the definitions, then the log entries of their periods.
     public async Task<IReadOnlyList<Goal>> ListAsync(DateOnly day, CancellationToken cancellationToken)
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
-        var connection = lease.Connection;
         var definitions = await SqliteCommands.QueryAsync(
-            connection, $"{SelectColumns} ORDER BY rowid", ToDefinition, cancellationToken);
-        var goals = new List<Goal>(definitions.Count);
-        foreach (var definition in definitions) goals.Add(await WithProgressAsync(connection, definition, day, cancellationToken));
-        return goals;
+            lease.Connection, $"{SelectColumns} ORDER BY rowid", ToDefinition, cancellationToken);
+        var entries = await EntriesAroundAsync(lease.Connection, definitions, day, cancellationToken);
+        return [.. definitions.Select(definition => Goal.StandingOn(definition, entries[definition.Id], day))];
     }
 
     public async Task<Goal?> FindAsync(string id, DateOnly day, CancellationToken cancellationToken)
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
-        var connection = lease.Connection;
-        var rows = await SqliteCommands.QueryAsync(
-            connection, $"{SelectColumns} WHERE id = $id", ToDefinition, cancellationToken, ("$id", id));
-        return rows.Count == 0 ? null : await WithProgressAsync(connection, rows[0], day, cancellationToken);
+        var definitions = await SqliteCommands.QueryAsync(
+            lease.Connection, $"{SelectColumns} WHERE id = $id", ToDefinition, cancellationToken, ("$id", id));
+        if (definitions.Count == 0) return null;
+        var entries = await EntriesAroundAsync(lease.Connection, definitions, day, cancellationToken);
+        return Goal.StandingOn(definitions[0], entries[id], day);
     }
 
     public async Task<bool> AddAsync(Goal goal, CancellationToken cancellationToken)
@@ -82,59 +82,34 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
             connection, "DELETE FROM goals WHERE id = $id", cancellationToken, ("$id", id));
     }
 
-    private static Task<Goal> WithProgressAsync(
-        SqliteConnection connection, GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
+    /// <summary>
+    /// The log entries of the given goals that can count around the day, by goal id: only the span
+    /// covering every goal's window is read, then <see cref="Goal.StandingOn"/> keeps each goal's own.
+    /// </summary>
+    private static async Task<ILookup<string, GoalProgressEvent>> EntriesAroundAsync(
+        SqliteConnection connection, IReadOnlyList<GoalDefinition> definitions, DateOnly day,
+        CancellationToken cancellationToken)
     {
-        return definition.Type == GoalType.Objective
-            ? WithAchievementAsync(connection, definition, day, cancellationToken)
-            : WithCompletionsAsync(connection, definition, day, cancellationToken);
+        if (definitions.Count == 0) return Array.Empty<GoalProgressEvent>().ToLookup(entry => entry.GoalId);
+        var windows = definitions.Select(definition => GoalWindow.For(definition.Period, day, definition.Deadline)).ToList();
+        var entries = await SqliteCommands.QueryAsync(
+            connection,
+            "SELECT event_id, goal_id, date, amount, source, source_ref FROM goal_progress WHERE date >= $start AND date <= $end",
+            ToEntry,
+            cancellationToken,
+            ("$start", ToText(windows.Min(window => window.Start))), ("$end", ToText(windows.Max(window => window.End))));
+        return entries.ToLookup(entry => entry.GoalId);
     }
 
-    /// <summary>
-    /// A frequency goal counts every entry of its period around the day: completed blocks, plus the
-    /// manual and task entries kept from before goals were fed by blocks only, so no past progress is lost.
-    /// </summary>
-    private static async Task<Goal> WithCompletionsAsync(
-        SqliteConnection connection, GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
+    private static GoalProgressEvent ToEntry(SqliteDataReader reader)
     {
-        var window = GoalWindow.For(definition.Period, day, definition.Deadline);
-        var totals = await SqliteCommands.QueryAsync(
-            connection,
-            """
-            SELECT COALESCE(SUM(CASE WHEN source = 'manual' THEN amount ELSE 0 END), 0),
-                   COALESCE(SUM(CASE WHEN source <> 'manual' THEN amount ELSE 0 END), 0)
-            FROM goal_progress
-            WHERE goal_id = $id AND source_ref <> $achievement AND date >= $start AND date <= $end
-            """,
-            reader => (Manual: reader.GetInt32(0), Automatic: reader.GetInt32(1)),
-            cancellationToken,
-            ("$id", definition.Id), ("$achievement", GoalAchievement.SourceRef),
-            ("$start", ToText(window.Start)), ("$end", ToText(window.End)));
-        var (manual, automatic) = totals[0];
-        return Goal.Restore(definition, GoalProgress.Compute(manual, automatic));
-    }
-
-    /// <summary>
-    /// An objective is achieved in the period around the day once it was marked in that period: earlier
-    /// days still show it pending, and so does the next period.
-    /// </summary>
-    private static async Task<Goal> WithAchievementAsync(
-        SqliteConnection connection, GoalDefinition definition, DateOnly day, CancellationToken cancellationToken)
-    {
-        var window = GoalWindow.For(definition.Period, day, definition.Deadline);
-        var dates = await SqliteCommands.QueryAsync(
-            connection,
-            """
-            SELECT MIN(date) FROM goal_progress
-            WHERE goal_id = $id AND source_ref = $achievement AND date >= $start AND date <= $day
-            """,
-            reader => reader.IsDBNull(0)
-                ? (DateOnly?)null
-                : DateOnly.ParseExact(reader.GetString(0), DateFormat, CultureInfo.InvariantCulture),
-            cancellationToken,
-            ("$id", definition.Id), ("$achievement", GoalAchievement.SourceRef),
-            ("$start", ToText(window.Start)), ("$day", ToText(day)));
-        return Goal.RestoreObjective(definition, dates[0]);
+        return new GoalProgressEvent(
+            EventId: reader.GetString(0),
+            GoalId: reader.GetString(1),
+            Date: DateOnly.ParseExact(reader.GetString(2), DateFormat, CultureInfo.InvariantCulture),
+            Amount: reader.GetInt32(3),
+            Source: Enum.Parse<GoalSource>(reader.GetString(4), ignoreCase: true),
+            SourceRef: reader.GetString(5));
     }
 
     private static string ToText(DateOnly day) => day.ToString(DateFormat, CultureInfo.InvariantCulture);

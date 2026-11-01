@@ -7,17 +7,20 @@ if [ "$current_branch" = "$protected_branch" ]; then
   exit 0
 fi
 
-echo "[pre-push] Formatting .NET code..."
-dotnet format Budgeter.slnx --no-restore || exit 1
+# Checks only: the pushed commits are what CI will see. Rewriting the last commit here (an amend with
+# --no-verify) used to fold any uncommitted work into it behind the developer's back.
+echo "[pre-push] Checking .NET formatting..."
+dotnet format Budgeter.slnx --no-restore --verify-no-changes || {
+  echo "[pre-push] Run 'dotnet format Budgeter.slnx' and commit the result."
+  exit 1
+}
 
-echo "[pre-push] Linting and formatting web code..."
-(cd apps/web && npm run format) || exit 1
+echo "[pre-push] Checking web formatting and lint..."
+(cd apps/web && npm run format:check) || {
+  echo "[pre-push] Run 'npm run format' in apps/web and commit the result."
+  exit 1
+}
 (cd apps/web && npm run lint) || exit 1
-
-if ! git diff --quiet; then
-  git add -u
-  git commit --amend --no-edit --no-verify
-fi
 
 if command -v gh >/dev/null 2>&1; then
   if ! gh pr view "$current_branch" >/dev/null 2>&1; then

@@ -6,5 +6,11 @@
     "types": []
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts"]
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/fake-*.ts",
+    "src/**/fixed-clock.ts",
+    "src/**/sequential-id-generator.ts",
+    "src/**/sample-routines.ts"
+  ]
 }
