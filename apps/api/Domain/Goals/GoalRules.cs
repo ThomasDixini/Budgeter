@@ -10,9 +10,8 @@ internal static class GoalRules
     public static GoalDefinition Normalize(GoalDefinition definition)
     {
         RequireTarget(definition.Target);
-        return definition with
+        return WithDerivedTracking(definition) with
         {
-            Tracking = TrackingFor(definition.Type),
             Id = EntityId.Require(definition.Id, "goal id"),
             CategoryId = EntityId.Require(definition.CategoryId, "category id"),
             Title = RequiredText.Require(definition.Title, Goal.MaxTitleLength, "goal title"),
@@ -20,6 +19,14 @@ internal static class GoalRules
             Deadline = RequireDeadlineMatchesPeriod(definition.Period, definition.Deadline),
         };
     }
+
+    /// <summary>
+    /// The definition with the tracking its type implies and nothing else checked, for goals read back
+    /// from storage.
+    /// </summary>
+    /// <example><code>GoalRules.WithDerivedTracking(weeklyStudy with { Tracking = GoalTracking.Tasks }).Tracking; // Blocks</code></example>
+    public static GoalDefinition WithDerivedTracking(GoalDefinition definition) =>
+        definition with { Tracking = TrackingFor(definition.Type) };
 
     private static void RequireTarget(int target)
     {
@@ -40,7 +47,7 @@ internal static class GoalRules
         if (type != GoalType.Objective)
         {
             throw new DomainRuleException(
-                $"Expected no unit on a {type} goal (units belong to objectives), received \"{unit}\"");
+                $"Expected no unit on a {type} goal (units belong to objectives), received {ReceivedValue.Quote(unit)}");
         }
         return RequiredText.Require(unit, Goal.MaxUnitLength, "goal unit");
     }

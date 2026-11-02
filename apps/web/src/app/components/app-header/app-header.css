@@ -40,6 +40,11 @@
   transition: background var(--duration-fast);
 }
 
-.profile:hover {
+.profile:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.profile:not(:disabled):hover {
   background: var(--color-surface-hover);
 }

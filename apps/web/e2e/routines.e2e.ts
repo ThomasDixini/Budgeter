@@ -11,11 +11,15 @@ import {
   createWeeklyGoal,
   localDay,
   localToday,
+  ownDay,
   SeededRoutine,
   uniqueTitle,
 } from './support/routines-api';
 
 let routines: RoutinesPage;
+
+/** Monday 7 January 2030, 14:10: during the sample "C# study" block (13:30–15:00). */
+const STUDY_TIME = new Date(2030, 0, 7, 14, 10);
 
 /** Selects a routine tab and waits until the editor shows its single block. */
 async function openRoutine(page: Page, routine: SeededRoutine): Promise<void> {
@@ -106,9 +110,9 @@ test.describe('today', () => {
   });
 
   test('completing the running block marks it done and moves the next one up', async ({ page }) => {
-    // 14:10 on a Monday, in the sample "C# study" (13:30–15:00). A random far-off week keeps
-    // runs and browser projects from sharing a day, since outcomes are stored per date.
-    const monday = new Date(2030, 0, 7 + 7 * Math.floor(Math.random() * 2000), 14, 10);
+    // 14:10 on a Monday, in the sample "C# study" (13:30–15:00), on a day of this test's own: outcomes
+    // are stored per date and other tests complete or skip the same block.
+    const monday = ownDay(test.info(), 0, STUDY_TIME);
     await page.clock.setFixedTime(monday);
     await routines.goto();
     const nowCard = page.getByRole('region', { name: 'C# study' });
@@ -128,7 +132,7 @@ test.describe('today', () => {
   });
 
   test('a skipped block can be undone and stays back on plan after a reload', async ({ page }) => {
-    const monday = new Date(2030, 0, 7 + 7 * Math.floor(Math.random() * 2000), 14, 10);
+    const monday = ownDay(test.info(), 1, STUDY_TIME);
     await page.clock.setFixedTime(monday);
     await routines.goto();
     const skipped = page.waitForResponse((response) => response.url().includes('/days/'));
@@ -176,8 +180,8 @@ test.describe('today', () => {
     page,
   }) => {
     const title = uniqueTitle('Renew the passport');
-    // A far-off random day, so runs and browser projects do not share one and nothing else is due.
-    const day = new Date(2031, 0, 6 + Math.floor(Math.random() * 300), 9, 0);
+    // A far-off day of this test's own, so no other test schedules a task for it.
+    const day = ownDay(test.info(), 0, new Date(2031, 0, 6, 9, 0));
     const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     await routines.goto();
     const tasksCard = page.getByRole('region', { name: "Today's tasks" });

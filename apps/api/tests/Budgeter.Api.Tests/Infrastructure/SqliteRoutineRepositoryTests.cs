@@ -71,6 +71,23 @@ public sealed class SqliteRoutineRepositoryTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task Find_ReturnsOneRoutineWithItsBlocksInOrder()
+    {
+        await _routines.SaveAsync(Routines.Weekdays(), CancellationToken.None);
+        await _routines.SaveAsync(Routine.Create("weekend", "Weekend", [5, 6], "09:00", "14:00", []), CancellationToken.None);
+
+        var found = await _routines.FindAsync("weekdays", CancellationToken.None);
+
+        found!.Blocks.Select(block => block.Id).ShouldBe(["work", "csharp"]);
+    }
+
+    [Fact]
+    public async Task Find_AnswersNullForAnUnknownId()
+    {
+        (await _routines.FindAsync("missing", CancellationToken.None)).ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Delete_RemovesTheRoutineAndItsBlocks()
     {
         await _routines.SaveAsync(Routines.Weekdays(), CancellationToken.None);

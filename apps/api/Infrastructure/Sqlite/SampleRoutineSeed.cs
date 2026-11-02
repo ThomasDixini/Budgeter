@@ -36,11 +36,10 @@ internal static class SampleRoutineSeed
             connection, "SELECT COUNT(*) FROM routines", reader => reader.GetInt64(0), cancellationToken);
         if (counts[0] > 0) return;
 
-        await using var transaction = connection.BeginTransaction();
+        // Runs inside the transaction of SampleData.ApplyOnceAsync, so no transaction of its own.
         foreach (var routine in Routines)
         {
             await SqliteRoutineRepository.WriteAsync(connection, routine, cancellationToken);
         }
-        await transaction.CommitAsync(cancellationToken);
     }
 }

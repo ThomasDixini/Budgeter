@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using Budgeter.Api.Endpoints;
 using Shouldly;
 
@@ -44,14 +45,17 @@ public sealed class RoutineEndpointsTests : IDisposable
 
         var response = await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
 
-        (await response.Content.ReadAsStringAsync()).ShouldNotContain("\"categoryId\":null");
+        // Status first: an error body has no "categoryId" either, so checking the text alone could not fail.
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var work = JsonNode.Parse(await response.Content.ReadAsStringAsync())!["blocks"]![0]!.AsObject();
+        (work["id"]!.GetValue<string>(), work.ContainsKey("categoryId")).ShouldBe(("work", false));
     }
 
     [Fact]
     public async Task Put_TwiceKeepsASingleRoutine()
     {
         await CreateLanguagesCategoryAsync();
-        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+        await SaveWeekdaysAsync();
 
         await _client.PutAsJsonAsync("/routines/weekdays", Weekdays with { End = "18:00" });
 
@@ -81,7 +85,7 @@ public sealed class RoutineEndpointsTests : IDisposable
     public async Task Delete_RemovesTheRoutineAndRepeatsAsNoContent()
     {
         await CreateLanguagesCategoryAsync();
-        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+        await SaveWeekdaysAsync();
 
         var first = await _client.DeleteAsync("/routines/weekdays");
         var retry = await _client.DeleteAsync("/routines/weekdays");
@@ -94,7 +98,7 @@ public sealed class RoutineEndpointsTests : IDisposable
     public async Task BlockOutcome_IsRecordedAndListedForItsDay()
     {
         await CreateLanguagesCategoryAsync();
-        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+        await SaveWeekdaysAsync();
 
         var response = await _client.PutAsJsonAsync(
             "/routines/weekdays/days/2026-10-27/blocks/csharp", new { outcome = "skipped", at = "14:10" });
@@ -109,9 +113,9 @@ public sealed class RoutineEndpointsTests : IDisposable
     public async Task BlockOutcome_UndoRemovesItAndRepeatsAsNoContent()
     {
         await CreateLanguagesCategoryAsync();
-        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+        await SaveWeekdaysAsync();
         const string path = "/routines/weekdays/days/2026-10-27/blocks/csharp";
-        await _client.PutAsJsonAsync(path, new { outcome = "done", at = "14:10" });
+        (await _client.PutAsJsonAsync(path, new { outcome = "done", at = "14:10" })).EnsureSuccessStatusCode();
 
         var first = await _client.DeleteAsync(path);
         var retry = await _client.DeleteAsync(path);
@@ -124,12 +128,21 @@ public sealed class RoutineEndpointsTests : IDisposable
     public async Task BlockOutcome_ForAnUnknownBlockIsNotFound()
     {
         await CreateLanguagesCategoryAsync();
-        await _client.PutAsJsonAsync("/routines/weekdays", Weekdays);
+        await SaveWeekdaysAsync();
 
         var response = await _client.PutAsJsonAsync(
             "/routines/weekdays/days/2026-10-27/blocks/missing", new { outcome = "done", at = "14:10" });
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    /// <summary>
+    /// Stores the weekday routine, failing the test right away if that does not work: deletes and undos
+    /// answer 204 and unknown blocks 404 even when nothing was saved, so those tests would pass anyway.
+    /// </summary>
+    private async Task SaveWeekdaysAsync()
+    {
+        (await _client.PutAsJsonAsync("/routines/weekdays", Weekdays)).EnsureSuccessStatusCode();
     }
 
     private async Task CreateLanguagesCategoryAsync()

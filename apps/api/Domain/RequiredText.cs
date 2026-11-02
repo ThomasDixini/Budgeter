@@ -13,7 +13,7 @@ public static class RequiredText
         if (trimmed.Length == 0 || trimmed.Length > maxLength)
         {
             throw new DomainRuleException(
-                $"Expected the {description} to have 1-{maxLength} characters, received \"{text}\"");
+                $"Expected the {description} to have 1-{maxLength} characters, received {ReceivedValue.Quote(text)}");
         }
         return trimmed;
     }

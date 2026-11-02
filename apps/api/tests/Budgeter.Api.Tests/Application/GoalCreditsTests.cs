@@ -1,9 +1,7 @@
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Application.Tasks;
 using Budgeter.Api.Domain.Goals;
 using Budgeter.Api.Domain.Routines;
-using Budgeter.Api.Domain.Tasks;
 using Budgeter.Api.Tests.Fakes;
 using Shouldly;
 
@@ -36,7 +34,7 @@ public class GoalCreditsTests
     private GoalCredits Credits => new(_goals, _goals);
 
     private Task CompleteBlock(string blockId, DateOnly day, BlockOutcomeKind kind = BlockOutcomeKind.Done) =>
-        new RecordBlockOutcome(_outcomes, _routines, Credits)
+        new RecordBlockOutcome(_outcomes, _routines, Credits, new ImmediateUnitOfWork())
             .ExecuteAsync(new("weekdays", blockId, day, kind, "14:00"), CancellationToken.None);
 
     private Task CompleteBlock(string blockId, BlockOutcomeKind kind = BlockOutcomeKind.Done) =>
@@ -139,7 +137,7 @@ public class GoalCreditsTests
     {
         await CompleteBlock("csharp");
 
-        await new UndoBlockOutcome(_outcomes, Credits).ExecuteAsync("weekdays", "csharp", Today, CancellationToken.None);
+        await new UndoBlockOutcome(_outcomes, Credits, new ImmediateUnitOfWork()).ExecuteAsync("weekdays", "csharp", Today, CancellationToken.None);
 
         (await DoneByGoal())["weekly"].ShouldBe(0);
     }
@@ -152,13 +150,6 @@ public class GoalCreditsTests
         _goals.Events.ShouldBeEmpty();
     }
 
-    [Fact]
-    public async Task CheckingATaskOff_DoesNotFeedGoals()
-    {
-        var tasks = new InMemoryTaskRepository(TaskItem.Create("t1", "Read", "study", TaskRepeat.Daily, [], null));
-
-        await new TaskCompletions(tasks).SetAsync("t1", Today, isDone: true, CancellationToken.None);
-
-        _goals.Events.ShouldBeEmpty();
-    }
+    // That checking a task off feeds no goal is covered over HTTP by GoalCreditEndpointsTests: the use case
+    // has no access to goals, so a unit test here could not fail.
 }

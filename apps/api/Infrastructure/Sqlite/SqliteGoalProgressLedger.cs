@@ -14,7 +14,8 @@ public sealed class SqliteGoalProgressLedger(SqliteConnectionFactory connections
 
     public async Task RecordAsync(GoalProgressEvent entry, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
             """
@@ -27,18 +28,26 @@ public sealed class SqliteGoalProgressLedger(SqliteConnectionFactory connections
             ("$sourceRef", entry.SourceRef));
     }
 
-    public async Task RemoveAsync(string eventId, CancellationToken cancellationToken)
+    public async Task RemoveAchievementsAsync(string goalId, GoalWindow window, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
-            connection, "DELETE FROM goal_progress WHERE event_id = $eventId", cancellationToken,
-            ("$eventId", eventId));
+            connection,
+            """
+            DELETE FROM goal_progress
+            WHERE goal_id = $goalId AND source_ref = $achievement AND date >= $start AND date <= $end
+            """,
+            cancellationToken,
+            ("$goalId", goalId), ("$achievement", GoalAchievement.SourceRef),
+            ("$start", ToText(window.Start)), ("$end", ToText(window.End)));
     }
 
     public async Task RemoveBySourceAsync(
         GoalSource source, string sourceRef, DateOnly day, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
             "DELETE FROM goal_progress WHERE source = $source AND source_ref = $sourceRef AND date = $date",

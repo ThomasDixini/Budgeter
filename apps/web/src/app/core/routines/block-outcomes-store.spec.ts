@@ -1,5 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Observable, Subject } from 'rxjs';
 import { Clock } from '../calendar/clock';
 import { FixedClock } from '../calendar/fixed-clock';
 import { BlockOutcomesGateway } from './block-outcomes-gateway';
@@ -72,19 +73,22 @@ describe('BlockOutcomesStore', () => {
   it('reloads the goals after recording or undoing, since blocks can count toward them', () => {
     const { store, goals } = createStore();
 
+    const loadedOnStart = goals.listedDays.length;
+
     store.record('weekdays', 'project', 'done', 20 * 60 + 40);
     store.undo('weekdays', 'project');
 
-    expect(goals.listedDays).toHaveLength(3);
+    expect(goals.listedDays.length - loadedOnStart).toBe(2);
   });
 
   it('does not reload the goals when recording failed', () => {
     const { store, gateway, goals } = createStore();
     gateway.failure = new Error('offline');
+    const loadedOnStart = goals.listedDays.length;
 
     store.record('weekdays', 'project', 'done', 20 * 60 + 40);
 
-    expect(goals.listedDays).toHaveLength(1);
+    expect(goals.listedDays.length).toBe(loadedOnStart);
   });
 
   it('undoes an outcome through the gateway', () => {
@@ -115,6 +119,103 @@ describe('BlockOutcomesStore', () => {
 
     expect(store.outcomes()).toEqual([GYM_DONE]);
     expect(errors.errors).toEqual([gateway.failure]);
+  });
+});
+
+/** Records and undos that stay open until a test answers them, to play out late failures. */
+class ControlledBlockOutcomesGateway extends FakeBlockOutcomesGateway {
+  readonly pendingRecords: Subject<BlockOutcome>[] = [];
+  readonly pendingUndos: Subject<void>[] = [];
+
+  override record(isoDay: string, outcome: BlockOutcome): Observable<BlockOutcome> {
+    this.recorded.push({ isoDay, outcome });
+    const reply = new Subject<BlockOutcome>();
+    this.pendingRecords.push(reply);
+    return reply;
+  }
+
+  override undo(isoDay: string, routineId: string, blockId: string): Observable<void> {
+    this.undone.push({ isoDay, routineId, blockId });
+    const reply = new Subject<void>();
+    this.pendingUndos.push(reply);
+    return reply;
+  }
+}
+
+function blockIds(store: BlockOutcomesStore): string[] {
+  return store.outcomes().map((outcome) => outcome.blockId);
+}
+
+describe('BlockOutcomesStore while requests are in flight', () => {
+  const EVENING = 20 * 60 + 40;
+
+  it('puts back the outcome a failed record replaced', () => {
+    const { store, gateway } = createStore();
+    gateway.failure = new Error('offline');
+
+    store.record('weekdays', 'gym', 'skipped', 19 * 60);
+
+    expect(store.outcomes()).toEqual([GYM_DONE]);
+  });
+
+  // Regression: a failed record put back a copy of the whole list, dropping a block ended meanwhile.
+  it('keeps a block ended while a record was pending when that record fails', () => {
+    const gateway = new ControlledBlockOutcomesGateway([GYM_DONE]);
+    const { store } = createStore(gateway);
+    store.record('weekdays', 'project', 'done', EVENING);
+    store.record('weekdays', 'guitar', 'done', EVENING + 30);
+
+    gateway.pendingRecords[0].error(new Error('offline'));
+
+    expect(blockIds(store)).toEqual(['gym', 'guitar']);
+  });
+
+  it('keeps a newer outcome of the block when an older record of it fails', () => {
+    const gateway = new ControlledBlockOutcomesGateway([GYM_DONE]);
+    const { store } = createStore(gateway);
+    store.record('weekdays', 'project', 'done', EVENING);
+    store.record('weekdays', 'project', 'skipped', EVENING + 5);
+
+    gateway.pendingRecords[0].error(new Error('offline'));
+
+    expect(store.outcomes().at(-1)).toMatchObject({ blockId: 'project', outcome: 'skipped' });
+  });
+
+  it('puts an outcome back in its place when undoing it fails, keeping one recorded meanwhile', () => {
+    const gateway = new ControlledBlockOutcomesGateway([GYM_DONE]);
+    const { store } = createStore(gateway);
+    store.undo('weekdays', 'gym');
+    store.record('weekdays', 'project', 'done', EVENING);
+
+    gateway.pendingUndos[0].error(new Error('offline'));
+
+    expect(blockIds(store)).toEqual(['gym', 'project']);
+  });
+
+  // Regression: a record that failed after the page moved to another day put the old day's list on it.
+  it('leaves the day now shown alone when a record of the day before fails', () => {
+    const gateway = new ControlledBlockOutcomesGateway([GYM_DONE]);
+    gateway.outcomesOnDay.set('2026-10-26', []);
+    const { store, errors } = createStore(gateway);
+    store.record('weekdays', 'project', 'done', EVENING);
+    store.showDay('2026-10-26');
+
+    gateway.pendingRecords[0].error(new Error('offline'));
+
+    expect(store.outcomes()).toEqual([]);
+    expect(errors.errors).toHaveLength(1);
+  });
+
+  it('does not bring an outcome of the day before onto the day now shown when undoing it fails', () => {
+    const gateway = new ControlledBlockOutcomesGateway([GYM_DONE]);
+    gateway.outcomesOnDay.set('2026-10-26', []);
+    const { store } = createStore(gateway);
+    store.undo('weekdays', 'gym');
+    store.showDay('2026-10-26');
+
+    gateway.pendingUndos[0].error(new Error('offline'));
+
+    expect(store.outcomes()).toEqual([]);
   });
 });
 

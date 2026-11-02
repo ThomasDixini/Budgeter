@@ -53,18 +53,37 @@ public sealed class SqliteTaskRepositoryTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
-    public async Task Completions_AreKeptPerDayAndGoWithTheTask()
+    public async Task Completions_MarkingTheSameDayTwiceCountsOnce()
+    {
+        await SaveAndMarkReadAsync();
+
+        await _tasks.SetCompletedAsync("t1", Today, isDone: true, CancellationToken.None);
+
+        (await _tasks.ListCompletedAsync(Today, CancellationToken.None)).ShouldBe(["t1"]);
+    }
+
+    [Fact]
+    public async Task Completions_AreKeptPerDay()
+    {
+        await SaveAndMarkReadAsync();
+
+        (await _tasks.ListCompletedAsync(Today.AddDays(1), CancellationToken.None)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Completions_GoWithTheirTask()
+    {
+        await SaveAndMarkReadAsync();
+
+        await _tasks.DeleteAsync("t1", CancellationToken.None);
+
+        (await _tasks.ListCompletedAsync(Today, CancellationToken.None)).ShouldBeEmpty();
+    }
+
+    private async Task SaveAndMarkReadAsync()
     {
         await _tasks.SaveAsync(TaskItem.Create("t1", "Read", null, TaskRepeat.Daily, [], null), CancellationToken.None);
         await _tasks.SetCompletedAsync("t1", Today, isDone: true, CancellationToken.None);
-        await _tasks.SetCompletedAsync("t1", Today, isDone: true, CancellationToken.None);
-
-        var today = await _tasks.ListCompletedAsync(Today, CancellationToken.None);
-        var tomorrow = await _tasks.ListCompletedAsync(Today.AddDays(1), CancellationToken.None);
-        await _tasks.DeleteAsync("t1", CancellationToken.None);
-
-        (today.Count, tomorrow.Count).ShouldBe((1, 0));
-        (await _tasks.ListCompletedAsync(Today, CancellationToken.None)).ShouldBeEmpty();
     }
 
     [Fact]

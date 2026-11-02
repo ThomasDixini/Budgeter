@@ -18,7 +18,8 @@
   "private": true,
   "packageManager": "npm@11.19.0",
   "overrides": {
-    "vite": "8.3.5"
+    "vite": "8.3.5",
+    "minimatch": "^11.0.3"
   },
   "dependencies": {
     "@angular/common": "^22.2.0",

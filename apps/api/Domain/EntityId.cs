@@ -18,11 +18,12 @@ public static partial class EntityId
         if (id.Length > MaxLength || !IdPattern().IsMatch(id))
         {
             throw new DomainRuleException(
-                $"Expected the {description} to be 1-{MaxLength} letters, digits or dashes, received \"{id}\"");
+                $"Expected the {description} to be 1-{MaxLength} letters, digits or dashes, received {ReceivedValue.Quote(id)}");
         }
         return id;
     }
 
-    [GeneratedRegex("^[A-Za-z0-9-]+$")]
+    // \z, not $: in .NET "$" also matches before a final newline, which would let "id\n" through.
+    [GeneratedRegex(@"^[A-Za-z0-9-]+\z")]
     private static partial Regex IdPattern();
 }

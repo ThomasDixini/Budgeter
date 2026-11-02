@@ -1,5 +1,30 @@
-import { APIRequestContext, expect } from '@playwright/test';
+import { APIRequestContext, TestInfo, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+
+/**
+ * A day no other test or browser project uses: `first`, moved on by whole weeks according to the
+ * test's `slot` and the project running it, so it keeps its weekday and time. Tests that record on
+ * the shared sample routine pick distinct slots; each run starts from a fresh database, so the same
+ * day every run is safe and makes a failure repeatable.
+ * @example ownDay(test.info(), 0, new Date(2030, 0, 7, 14, 10)) // a Monday at 14:10
+ */
+export function ownDay(testInfo: TestInfo, slot: number, first: Date): Date {
+  const projects = testInfo.config.projects.map((project) => project.name);
+  const project = projects.indexOf(testInfo.project.name);
+  if (project < 0) {
+    throw new Error(
+      `Expected a project among [${projects.join(', ')}], received "${testInfo.project.name}"`,
+    );
+  }
+  const weeks = slot * projects.length + project;
+  return new Date(
+    first.getFullYear(),
+    first.getMonth(),
+    first.getDate() + 7 * weeks,
+    first.getHours(),
+    first.getMinutes(),
+  );
+}
 
 export interface SeededGoal {
   readonly id: string;

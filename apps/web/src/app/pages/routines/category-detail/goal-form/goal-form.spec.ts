@@ -57,6 +57,19 @@ const STUDY_GOAL: Goal = {
   target: 5,
 };
 
+/** An objective set before objectives were marked by hand: it still counts modules. */
+const COURSE_OBJECTIVE: Goal = {
+  id: 'g2',
+  categoryId: 'study',
+  title: 'Finish the C# course',
+  type: 'objective',
+  period: 'custom',
+  done: 0,
+  target: 12,
+  unit: 'modules',
+  deadline: '2026-12-15',
+};
+
 function editForm(goal: Goal): ComponentFixture<GoalForm> {
   const fixture = TestBed.createComponent(GoalForm);
   fixture.componentRef.setInput('categoryId', goal.categoryId);
@@ -84,7 +97,7 @@ describe('GoalForm', () => {
       'Frequency · Weekly',
       'Your goal name',
       '0 of 3 times',
-      'Renews on Sunday',
+      'Renews on Monday',
     ]) {
       expect(text).toContain(part);
     }
@@ -131,6 +144,21 @@ describe('GoalForm', () => {
     });
     expect(element(fixture).querySelector('.number-input')).toBeNull();
     expect(preview(fixture)).toContain('Not achieved yet');
+  });
+
+  // Regression: a "From" date was shown and previewed but never saved; the period only has an end.
+  it('asks a custom period for its end only, and previews and saves that day', () => {
+    const fixture = createForm();
+    setField(fixture, '.name-input', 'Finish the book');
+    click(fixture, '.periods .ui-chip', 4);
+    const dates = element(fixture).querySelectorAll<HTMLInputElement>('.custom-dates input');
+    setField(fixture, '.custom-dates input', '2026-12-20', 'change');
+
+    const [draft] = submit(fixture);
+
+    expect(dates).toHaveLength(1);
+    expect(preview(fixture)).toContain('until Dec 20');
+    expect(draft.deadline).toBe('2026-12-20');
   });
 
   it('does not emit without a name', () => {
@@ -186,5 +214,22 @@ describe('GoalForm', () => {
     const fixture = editForm(STUDY_GOAL);
 
     expect(submit(fixture)).toEqual([]);
+  });
+
+  // Regression: renaming an objective set before objectives were marked by hand reset it to 1 and
+  // dropped its unit.
+  it('keeps the target and unit of an objective when only its title changes', () => {
+    const fixture = editForm(COURSE_OBJECTIVE);
+    setField(fixture, '.name-input', 'Finish the C# course for real');
+
+    expect(submitEdit(fixture)).toEqual([
+      {
+        title: 'Finish the C# course for real',
+        period: 'custom',
+        target: 12,
+        unit: 'modules',
+        deadline: '2026-12-15',
+      },
+    ]);
   });
 });

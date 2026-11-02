@@ -40,13 +40,13 @@ public sealed class TaskEndpointsTests : IDisposable
     [Fact]
     public async Task Completions_MarkUnmarkAndListByDate()
     {
-        await _client.PutAsJsonAsync("/tasks/t1", new { title = "Read", repeat = "daily" });
+        await SaveDailyReadAsync();
 
         var marked = await _client.PutAsync("/tasks/t1/completions/2026-10-27", null);
         var done = await _client.GetFromJsonAsync<string[]>("/task-completions?date=2026-10-27");
-        await _client.DeleteAsync("/tasks/t1/completions/2026-10-27");
+        var unmarked = await _client.DeleteAsync("/tasks/t1/completions/2026-10-27");
 
-        marked.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (marked.StatusCode, unmarked.StatusCode).ShouldBe((HttpStatusCode.NoContent, HttpStatusCode.NoContent));
         done.ShouldBe(["t1"]);
         (await _client.GetFromJsonAsync<string[]>("/task-completions?date=2026-10-27")).ShouldBeEmpty();
     }
@@ -60,13 +60,30 @@ public sealed class TaskEndpointsTests : IDisposable
     }
 
     [Fact]
+    public async Task Completions_UnmarkingADeletedTaskIsNoContent()
+    {
+        await SaveDailyReadAsync();
+        (await _client.DeleteAsync("/tasks/t1")).EnsureSuccessStatusCode();
+
+        var response = await _client.DeleteAsync("/tasks/t1/completions/2026-10-27");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
     public async Task Delete_RemovesTheTask()
     {
-        await _client.PutAsJsonAsync("/tasks/t1", new { title = "Read", repeat = "daily" });
+        await SaveDailyReadAsync();
 
         var response = await _client.DeleteAsync("/tasks/t1");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         (await _client.GetFromJsonAsync<TaskResponse[]>("/tasks")).ShouldBeEmpty();
+    }
+
+    /// <summary>Stores task t1, failing the test right away if that does not work (a delete would pass anyway).</summary>
+    private async Task SaveDailyReadAsync()
+    {
+        (await _client.PutAsJsonAsync("/tasks/t1", new { title = "Read", repeat = "daily" })).EnsureSuccessStatusCode();
     }
 }

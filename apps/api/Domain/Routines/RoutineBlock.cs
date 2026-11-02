@@ -36,4 +36,12 @@ public sealed class RoutineBlock
             ClockTime.Require(end, "block end"),
             categoryId is null ? null : EntityId.Require(categoryId, "block category id"));
     }
+
+    /// <summary>
+    /// Rebuilds a stored block as it was saved, without today's rules, so a stricter rule never makes an
+    /// old routine unreadable.
+    /// </summary>
+    /// <example><code>RoutineBlock.Restore("csharp", "C# study", "13:30", "15:00", "study");</code></example>
+    internal static RoutineBlock Restore(string id, string name, string start, string end, string? categoryId) =>
+        new(id, name, start, end, categoryId);
 }

@@ -42,7 +42,8 @@ public class GoalTests
 
         var exception = Should.Throw<DomainRuleException>(() => Goal.Create(definition));
 
-        exception.Message.ShouldContain(target.ToString());
+        // "received", since a bare "0" would also be found in the limit "100000".
+        exception.Message.ShouldContain($"received {target}");
     }
 
     [Fact]
@@ -140,5 +141,37 @@ public class GoalTests
         var goal = Goal.RestoreObjective(GoalDefinitions.CourseObjective(), achievedOn: null);
 
         (goal.Done, goal.AchievedOn).ShouldBe((0, (DateOnly?)null));
+    }
+
+    private static GoalProgressEvent Entry(
+        string goalId, DateOnly day, GoalSource source = GoalSource.Block, string sourceRef = "weekdays/csharp") =>
+        new($"{goalId}:{day}:{sourceRef}", goalId, day, 1, source, sourceRef);
+
+    [Fact]
+    public void StandingOn_CountsOnlyTheGoalsOwnEntriesOfThePeriodAroundTheDay()
+    {
+        GoalProgressEvent[] log =
+        [
+            Entry("g1", TestDays.MondayOfThisWeek),
+            Entry("g1", TestDays.Today, sourceRef: "weekdays/linq"),
+            Entry("g1", TestDays.MondayOfThisWeek.AddDays(-1)),
+            Entry("other", TestDays.Today),
+        ];
+
+        Goal.StandingOn(GoalDefinitions.WeeklyStudy(), log, TestDays.Today).Done.ShouldBe(2);
+    }
+
+    [Fact]
+    public void StandingOn_AchievesAnObjectiveFromTheFirstMarkOfItsPeriod()
+    {
+        GoalProgressEvent[] log =
+        [
+            Entry("g5", TestDays.MondayOfThisWeek.AddDays(-7), GoalSource.Manual, GoalAchievement.SourceRef),
+            Entry("g5", TestDays.Today, GoalSource.Manual, GoalAchievement.SourceRef),
+        ];
+
+        var goal = Goal.StandingOn(GoalDefinitions.WeeklyObjective(), log, TestDays.Today.AddDays(1));
+
+        (goal.AchievedOn, goal.Done).ShouldBe((TestDays.Today, 1));
     }
 }

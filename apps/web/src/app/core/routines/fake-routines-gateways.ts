@@ -67,6 +67,10 @@ export class FakeGoalsGateway extends GoalsGateway {
   private readonly progress = new Map<string, number>();
   /** Days objectives were marked achieved on; null once a mark is taken back. */
   private readonly achievedOn = new Map<string, string | null>();
+  /** Changes stored by `update`, by goal id, so later lists show them. */
+  private readonly edits = new Map<string, GoalChanges>();
+  /** Goals deleted through `delete`, so later lists leave them out. */
+  private readonly removed = new Set<string>();
 
   constructor(private readonly goals: readonly Goal[] = SAMPLE_GOALS) {
     super();
@@ -94,12 +98,15 @@ export class FakeGoalsGateway extends GoalsGateway {
     const goal = this.find(goalId);
     if (this.failure !== undefined) return throwError(() => this.failure);
     if (goal === undefined) return throwError(() => unknownGoal(goalId));
-    return of({ ...goal, ...changes });
+    this.edits.set(goalId, { ...this.edits.get(goalId), ...changes });
+    return of(this.find(goalId) ?? goal);
   }
 
   override delete(goalId: string): Observable<void> {
     this.deleted.push(goalId);
-    return this.failure === undefined ? of(undefined) : throwError(() => this.failure);
+    if (this.failure !== undefined) return throwError(() => this.failure);
+    this.removed.add(goalId);
+    return of(undefined);
   }
 
   override setAchievement(goalId: string, isoDay: string, isAchieved: boolean): Observable<Goal> {
@@ -112,8 +119,11 @@ export class FakeGoalsGateway extends GoalsGateway {
     return of(this.find(goalId) ?? goal);
   }
 
+  /** Every goal as the API would now list it: added ones in, deleted ones out, edits applied. */
   private known(): Goal[] {
-    return [...this.goals, ...this.saved].map((goal) => this.withProgress(goal));
+    return [...this.goals, ...this.saved]
+      .filter((goal) => !this.removed.has(goal.id))
+      .map((goal) => this.withProgress({ ...goal, ...this.edits.get(goal.id) }));
   }
 
   private withProgress(goal: Goal): Goal {

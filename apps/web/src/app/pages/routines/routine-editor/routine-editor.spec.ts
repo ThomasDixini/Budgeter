@@ -133,7 +133,7 @@ describe('RoutineEditor', () => {
     changeValue(fixture, lunchStart, '11:00');
 
     expect(element(fixture).querySelector('[role="status"]')).toBeNull();
-    expect(element(fixture).querySelector<HTMLElement>('.bar')?.style.height).toBe('120px');
+    expect(element(fixture).querySelector<HTMLElement>('.bar')?.style.height).toBe('76px');
   });
 
   it('warns when a block starts and ends at the same time', () => {

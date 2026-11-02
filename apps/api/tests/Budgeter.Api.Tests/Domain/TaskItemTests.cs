@@ -53,9 +53,14 @@ public class TaskItemTests
     }
 
     [Fact]
-    public void Create_TrimsTheTitleAndRejectsABlankOne()
+    public void Create_TrimsTheTitle()
     {
         TaskItem.Create("t1", "  Read ", null, TaskRepeat.Daily, [], null).Title.ShouldBe("Read");
+    }
+
+    [Fact]
+    public void Create_RejectsABlankTitle()
+    {
         Should.Throw<DomainRuleException>(() => TaskItem.Create("t1", "  ", null, TaskRepeat.Daily, [], null));
     }
 }

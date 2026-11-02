@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, input, output, signal } from '@angular/core';
+import { fieldValue } from '../../../../core/forms/field-value';
 import { formatDate } from '@angular/common';
 import { withAlpha } from '../../../../core/routines/category';
 import {
@@ -9,9 +10,7 @@ import {
   GoalPeriod,
   GoalType,
   goalPeriodInfo,
-  parseIsoDate,
   periodFooter,
-  shortDate,
   usesDots,
 } from '../../../../core/routines/goal';
 import { GoalDraft } from '../../../../core/routines/routines-store';
@@ -59,7 +58,6 @@ export class GoalForm implements OnInit {
   protected readonly type = signal<GoalType>('frequency');
   protected readonly period = signal<GoalPeriod>('weekly');
   protected readonly times = signal(3);
-  protected readonly from = signal('');
   protected readonly to = signal('');
   protected readonly isEditing = computed(() => this.goal() !== undefined);
 
@@ -83,12 +81,11 @@ export class GoalForm implements OnInit {
       ? `0 of ${this.times()} ${this.times() === 1 ? 'time' : 'times'}`
       : 'Not achieved yet',
   );
-  protected readonly previewFooter = computed(() => {
-    if (this.period() !== 'custom') return periodFooter(this.period(), this.today());
-    return `${shortDate(parseIsoDate(this.customFrom()))} – ${shortDate(parseIsoDate(this.customTo()))}`;
-  });
+  /** A custom period only has an end: the API counts everything up to its deadline. */
+  protected readonly previewFooter = computed(() =>
+    periodFooter(this.period(), this.today(), this.customTo()),
+  );
 
-  protected readonly customFrom = computed(() => this.from() || this.isoDate(0));
   protected readonly customTo = computed(
     () => this.to() || this.isoDate(DEFAULT_CUSTOM_PERIOD_DAYS),
   );
@@ -122,24 +119,27 @@ export class GoalForm implements OnInit {
     });
   }
 
-  protected textOf(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly textOf = fieldValue;
 
   /** Number fields never go below one, matching their `min` attribute. */
   protected countOf(event: Event): number {
     return Math.max(1, Number.parseInt(this.textOf(event), 10) || 1);
   }
 
-  /** An objective has no count: it is achieved or not, so it is stored with a target of one. */
+  /**
+   * An objective has no count to fill in: it is achieved or not, so a new one is stored with a target
+   * of one. An edited objective keeps the target and unit it had (older ones count, say, 12 modules),
+   * since the form shows no field that could have changed them.
+   */
   private toDraft(title: string): GoalDraft {
+    const isFrequency = this.type() === 'frequency';
     return {
       categoryId: this.categoryId(),
       title,
       type: this.type(),
       period: this.period(),
-      target: this.type() === 'frequency' ? this.times() : 1,
-      unit: undefined,
+      target: isFrequency ? this.times() : (this.goal()?.target ?? 1),
+      unit: isFrequency ? undefined : this.goal()?.unit,
       deadline: this.period() === 'custom' ? this.customTo() : undefined,
     };
   }

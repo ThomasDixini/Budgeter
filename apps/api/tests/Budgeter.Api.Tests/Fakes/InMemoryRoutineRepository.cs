@@ -20,6 +20,11 @@ internal sealed class InMemoryRoutineRepository : IRoutineRepository
         return Task.FromResult<IReadOnlyList<Routine>>(_routines.ToList());
     }
 
+    public Task<Routine?> FindAsync(string routineId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_routines.Find(stored => stored.Id == routineId));
+    }
+
     public Task SaveAsync(Routine routine, CancellationToken cancellationToken)
     {
         var index = _routines.FindIndex(stored => stored.Id == routine.Id);

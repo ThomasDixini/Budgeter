@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { fieldValue } from '../../../core/forms/field-value';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -11,6 +12,7 @@ import {
   withAlpha,
 } from '../../../core/routines/category';
 import { Goal, GoalChanges, averageProgress } from '../../../core/routines/goal';
+import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { GoalDraft, RoutinesStore } from '../../../core/routines/routines-store';
 import { TasksStore } from '../../../core/routines/tasks-store';
 import { GoalCard } from './goal-card/goal-card';
@@ -26,7 +28,7 @@ import {
 /** One category: its headline numbers, routine blocks and goals, with filters and a new-goal form. */
 @Component({
   selector: 'app-category-detail',
-  imports: [RouterLink, GoalCard, GoalForm],
+  imports: [RouterLink, GoalCard, GoalForm, LoadFailed],
   templateUrl: './category-detail.html',
   styleUrl: './category-detail.css',
 })
@@ -48,6 +50,7 @@ export class CategoryDetail {
   /** Id of the goal whose form is open for editing. */
   protected readonly editingGoalId = signal<string | undefined>(undefined);
   protected readonly isLoaded = this.store.isLoaded;
+  protected readonly hasLoadFailed = this.store.hasLoadFailed;
   protected readonly swatches = CATEGORY_SWATCHES;
   protected readonly isEditingCategory = signal(false);
   protected readonly isConfirmingDelete = signal(false);
@@ -105,18 +108,21 @@ export class CategoryDetail {
     this.isEditingCategory.set(false);
   }
 
-  protected deleteCategory(categoryId: string): void {
-    this.store.deleteCategory(categoryId);
-    this.tasksStore.detachCategory(categoryId);
+  /** Deletes the category and leaves its page; its tasks get it back if the deletion is rejected. */
+  protected async deleteCategory(categoryId: string): Promise<void> {
+    const reattachTasks = this.tasksStore.detachCategory(categoryId);
     void this.router.navigate(['/routines/categories']);
+    if (!(await this.store.deleteCategory(categoryId))) reattachTasks();
   }
 
-  protected valueOf(event: Event): string {
-    return (event.target as HTMLInputElement).value;
-  }
+  protected readonly valueOf = fieldValue;
 
   protected toggleAchieved(goal: Goal): void {
     this.store.setAchieved(goal.id, goal.achievedOn === undefined);
+  }
+
+  protected reload(): void {
+    this.store.reload();
   }
 
   protected startEditing(goalId: string): void {

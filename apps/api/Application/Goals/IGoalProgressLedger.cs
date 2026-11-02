@@ -13,8 +13,8 @@ public interface IGoalProgressLedger
     /// <summary>Adds the entry unless one with the same id is already logged.</summary>
     Task RecordAsync(GoalProgressEvent entry, CancellationToken cancellationToken);
 
-    /// <summary>Removes the entry with this id, if there is one.</summary>
-    Task RemoveAsync(string eventId, CancellationToken cancellationToken);
+    /// <summary>Removes the marks that an objective was achieved on a day inside the window, if there are any.</summary>
+    Task RemoveAchievementsAsync(string goalId, GoalWindow window, CancellationToken cancellationToken);
 
     /// <summary>Removes the entries a block produced on a day, from every goal.</summary>
     Task RemoveBySourceAsync(GoalSource source, string sourceRef, DateOnly day, CancellationToken cancellationToken);

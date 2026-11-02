@@ -14,11 +14,12 @@ public static partial class ClockTime
         if (!ClockPattern().IsMatch(clock))
         {
             throw new DomainRuleException(
-                $"Expected the {description} to be a time shaped like HH:mm, received \"{clock}\"");
+                $"Expected the {description} to be a time shaped like HH:mm, received {ReceivedValue.Quote(clock)}");
         }
         return clock;
     }
 
-    [GeneratedRegex("^([01][0-9]|2[0-3]):[0-5][0-9]$")]
+    // \z, not $: in .NET "$" also matches before a final newline, which would let "13:30\n" through.
+    [GeneratedRegex(@"^([01][0-9]|2[0-3]):[0-5][0-9]\z")]
     private static partial Regex ClockPattern();
 }

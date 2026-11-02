@@ -71,7 +71,15 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "coverageReporters": ["text-summary", "html", "lcov"],
-            "coverageExclude": ["src/main.ts", "src/**/*.spec.ts"]
+            "coverageExclude": [
+              "src/main.ts",
+              "src/**/*.spec.ts",
+              "src/**/*.testing.ts",
+              "src/**/fake-*.ts",
+              "src/**/fixed-clock.ts",
+              "src/**/sequential-id-generator.ts",
+              "src/**/sample-routines.ts"
+            ]
           }
         },
         "lint": {

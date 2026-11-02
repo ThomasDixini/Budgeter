@@ -98,7 +98,7 @@ describe('goalFooter', () => {
   });
 
   it('says when a pending goal renews', () => {
-    expect(goalFooter(weeklyGoal, TODAY)).toBe('Renews on Sunday');
+    expect(goalFooter(weeklyGoal, TODAY)).toBe('Renews on Monday');
   });
 
   it('counts what was done beyond the target', () => {

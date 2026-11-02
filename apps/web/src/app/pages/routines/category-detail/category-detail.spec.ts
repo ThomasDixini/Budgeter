@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Clock } from '../../../core/calendar/clock';
 import { FixedClock } from '../../../core/calendar/fixed-clock';
-import { NEVER, Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import {
   FakeCategoriesGateway,
   FakeGoalsGateway,
@@ -11,6 +11,7 @@ import {
 } from '../../../core/routines/fake-routines-gateways';
 import { Goal } from '../../../core/routines/goal';
 import { RoutinesStore } from '../../../core/routines/routines-store';
+import { TasksStore } from '../../../core/routines/tasks-store';
 import { CategoryDetail } from './category-detail';
 
 interface Page {
@@ -18,19 +19,29 @@ interface Page {
   readonly render: () => void;
 }
 
-/** Goals that never arrive, as while the API is still answering. */
-class PendingGoalsGateway extends FakeGoalsGateway {
+/** Goals that arrive only once the test answers, as while the API is still answering. */
+class ControlledListGoalsGateway extends FakeGoalsGateway {
+  readonly answer = new Subject<readonly Goal[]>();
+
   override list(): Observable<readonly Goal[]> {
-    return NEVER;
+    return this.answer;
   }
 }
 
-async function openCategory(url: string, goals = new FakeGoalsGateway()): Promise<Page> {
+async function openCategory(
+  url: string,
+  goals = new FakeGoalsGateway(),
+  categories = new FakeCategoriesGateway(),
+): Promise<Page> {
   TestBed.configureTestingModule({
     providers: [
-      provideRouter([{ path: 'routines/categories/:categoryId', component: CategoryDetail }]),
+      provideRouter([
+        // Where deleting a category leads; without it the navigation is rejected.
+        { path: 'routines/categories', children: [] },
+        { path: 'routines/categories/:categoryId', component: CategoryDetail },
+      ]),
       { provide: Clock, useValue: new FixedClock(new Date(2026, 9, 26, 9)) },
-      ...provideFakeRoutinesGateways(new FakeCategoriesGateway(), goals),
+      ...provideFakeRoutinesGateways(categories, goals),
     ],
   });
   const harness = await RouterTestingHarness.create(url);
@@ -109,13 +120,20 @@ describe('CategoryDetail', () => {
     );
   });
 
-  it('filters goals by period and type', async () => {
+  it('filters goals by period', async () => {
     const page = await openCategory('/routines/categories/study');
 
     click(page, '.period', 2);
+
     expect(goalTitles(page)).toEqual(['Study C# 5x a week']);
+  });
+
+  it('combines the period and type filters, and says when nothing is left', async () => {
+    const page = await openCategory('/routines/categories/study');
+    click(page, '.period', 2);
 
     click(page, '.type', 2);
+
     expect(goalTitles(page)).toEqual([]);
     expect(page.element.querySelector('.no-goals')).not.toBeNull();
   });
@@ -216,9 +234,70 @@ describe('CategoryDetail', () => {
     expect(page.element.textContent).toContain('This category does not exist anymore.');
   });
 
-  it('does not claim the category is missing while data is loading', async () => {
-    const page = await openCategory('/routines/categories/unknown', new PendingGoalsGateway());
-
+  // Checked both ways: a page that rendered nothing at all would also not say the category is missing.
+  it('says the category is missing only once the data has arrived', async () => {
+    const goals = new ControlledListGoalsGateway();
+    const page = await openCategory('/routines/categories/unknown', goals);
     expect(page.element.textContent).not.toContain('does not exist');
+
+    goals.answer.next([]);
+    page.render();
+
+    expect(page.element.textContent).toContain('This category does not exist anymore.');
+  });
+
+  // Regression: with only the goals failing, the page said "No goals here yet" with no way to retry.
+  it('offers to try again when only the goals failed, instead of saying there are none', async () => {
+    const goals = new FakeGoalsGateway();
+    goals.failure = new Error('offline');
+    const page = await openCategory('/routines/categories/study', goals);
+    expect(page.element.textContent).toContain("Couldn't load the goals.");
+    expect(page.element.querySelector('.no-goals')).toBeNull();
+    goals.failure = undefined;
+
+    [...page.element.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Try again')!
+      .click();
+    page.render();
+
+    expect(goalTitles(page)).toContain('Study C# 5x a week');
+    expect(page.element.textContent).not.toContain("Couldn't load the goals.");
+  });
+
+  // Regression: a failed load left the page empty for good, with no way but reloading the app.
+  it('offers to try again when loading failed, and shows the category once it loads', async () => {
+    const categories = new FakeCategoriesGateway();
+    categories.failure = new Error('offline');
+    const page = await openCategory('/routines/categories/study', undefined, categories);
+    expect(page.element.textContent).toContain("Couldn't load this category.");
+    categories.failure = undefined;
+
+    [...page.element.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Try again')!
+      .click();
+    page.render();
+
+    expect(page.element.querySelector('#category-title')?.textContent).toBe('Study');
+  });
+
+  // Regression: the tasks lost the category for good even when the API refused to delete it.
+  it('gives its tasks the category back when deleting it fails', async () => {
+    const categories = new FakeCategoriesGateway();
+    const page = await openCategory('/routines/categories/study', undefined, categories);
+    categories.failure = new Error('offline');
+
+    click(page, '.hero-top button', 1);
+    click(page, '[aria-label="Confirm deletion"] button', 0);
+    await afterPendingWork();
+
+    const task = TestBed.inject(TasksStore)
+      .tasks()
+      .find((current) => current.id === 't2');
+    expect(task?.categoryId).toBe('study');
   });
 });
+
+/** Lets the promise chains started by a click (the deletion and its rollback) run to the end. */
+function afterPendingWork(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve));
+}

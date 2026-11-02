@@ -43,6 +43,29 @@ describe('historyBlocks', () => {
     expect(blocks[1].category?.name).toBe('Study');
     expect(blocks[1].routineName).toBe('Weekdays');
   });
+
+  // Regression: outcomes were sorted as text, so a night shift's 00:30 came before its 23:50.
+  it('lists what a night shift ended after midnight last', () => {
+    const nightShift = {
+      id: 'night',
+      name: 'Night shift',
+      days: [0],
+      start: '22:00',
+      end: '06:00',
+      blocks: [
+        { id: 'patrol', name: 'Patrol', start: '22:00', end: '00:00' },
+        { id: 'report', name: 'Report', start: '00:00', end: '01:00' },
+      ],
+    };
+    const outcomes: BlockOutcome[] = [
+      { routineId: 'night', blockId: 'report', outcome: 'done', at: '00:30' },
+      { routineId: 'night', blockId: 'patrol', outcome: 'done', at: '23:50' },
+    ];
+
+    const blocks = historyBlocks(outcomes, [nightShift], SAMPLE_CATEGORIES);
+
+    expect(blocks.map((block) => block.name)).toEqual(['Patrol', 'Report']);
+  });
 });
 
 describe('goalsMetOn', () => {

@@ -1,6 +1,6 @@
 using Budgeter.Api.Application;
-using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Tasks;
+using Budgeter.Api.Domain;
 using Budgeter.Api.Domain.Categories;
 using Budgeter.Api.Domain.Tasks;
 using Budgeter.Api.Tests.Fakes;
@@ -13,7 +13,6 @@ public class TaskUseCaseTests
     private static readonly DateOnly Today = new(2026, 10, 27);
     private readonly InMemoryCategoryRepository _categories = new(Category.Create("reading", "Reading", "#FBBF24"));
     private readonly InMemoryTaskRepository _tasks = new();
-    private readonly InMemoryGoalRepository _goals = new();
 
     private static SaveTaskCommand ReadDaily(string? categoryId = "reading") =>
         new("t1", "Read 20 pages", categoryId, TaskRepeat.Daily, [], null);
@@ -63,6 +62,21 @@ public class TaskUseCaseTests
     {
         await Should.ThrowAsync<ResourceNotFoundException>(() =>
             new TaskCompletions(_tasks).SetAsync("missing", Today, isDone: true, CancellationToken.None));
+    }
+
+    // Regression: unmarking a task deleted in the meantime answered 404, so a replayed request failed.
+    [Fact]
+    public async Task Completions_UnmarkingATaskThatIsGoneSucceeds()
+    {
+        await Should.NotThrowAsync(() =>
+            new TaskCompletions(_tasks).SetAsync("deleted", Today, isDone: false, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Completions_RejectAMalformedTaskId()
+    {
+        await Should.ThrowAsync<DomainRuleException>(() =>
+            new TaskCompletions(_tasks).SetAsync("has spaces", Today, isDone: false, CancellationToken.None));
     }
 
     [Fact]

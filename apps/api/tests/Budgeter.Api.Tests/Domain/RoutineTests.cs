@@ -53,6 +53,7 @@ public class RoutineTests
     [InlineData("8:00")]
     [InlineData("24:00")]
     [InlineData("noon")]
+    [InlineData("08:00\n")]
     public void Create_RejectsTimeNotShapedLikeClock(string start)
     {
         var exception = Should.Throw<DomainRuleException>(() =>

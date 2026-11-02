@@ -15,7 +15,8 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
 
     public async Task<IReadOnlyList<BlockOutcome>> ListAsync(DateOnly date, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         return await SqliteCommands.QueryAsync(
             connection,
             "SELECT routine_id, block_id, date, kind, at FROM block_outcomes WHERE date = $date ORDER BY rowid",
@@ -26,7 +27,8 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
 
     public async Task SaveAsync(BlockOutcome outcome, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
             """
@@ -40,7 +42,8 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
 
     public async Task DeleteAsync(string routineId, string blockId, DateOnly date, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
             "DELETE FROM block_outcomes WHERE routine_id = $routineId AND block_id = $blockId AND date = $date",
@@ -50,7 +53,7 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
 
     private static BlockOutcome ToOutcome(SqliteDataReader reader)
     {
-        return BlockOutcome.Create(
+        return BlockOutcome.Restore(
             reader.GetString(0),
             reader.GetString(1),
             DateOnly.ParseExact(reader.GetString(2), DateFormat, CultureInfo.InvariantCulture),

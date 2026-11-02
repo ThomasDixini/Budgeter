@@ -36,11 +36,12 @@ internal sealed class InMemoryGoalRepository : IGoalRepository, IGoalProgressLed
         return Task.FromResult(definition is null ? null : Restore(definition, day));
     }
 
-    public Task AddAsync(Goal goal, CancellationToken cancellationToken)
+    public Task<bool> AddAsync(Goal goal, CancellationToken cancellationToken)
     {
+        if (_definitions.Exists(stored => stored.Id == goal.Id)) return Task.FromResult(false);
         _definitions.Add(goal.Definition);
         AddCount++;
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
     public Task UpdateAsync(GoalDefinition definition, CancellationToken cancellationToken)
@@ -62,9 +63,9 @@ internal sealed class InMemoryGoalRepository : IGoalRepository, IGoalProgressLed
         return Task.CompletedTask;
     }
 
-    public Task RemoveAsync(string eventId, CancellationToken cancellationToken)
+    public Task RemoveAchievementsAsync(string goalId, GoalWindow window, CancellationToken cancellationToken)
     {
-        _events.RemoveAll(entry => entry.EventId == eventId);
+        _events.RemoveAll(entry => IsAchievement(entry, goalId) && window.Contains(entry.Date));
         return Task.CompletedTask;
     }
 
@@ -74,20 +75,8 @@ internal sealed class InMemoryGoalRepository : IGoalRepository, IGoalProgressLed
         return Task.CompletedTask;
     }
 
-    private Goal Restore(GoalDefinition definition, DateOnly day)
-    {
-        var normalized = Goal.Create(definition).Definition;
-        if (normalized.Type == GoalType.Objective)
-        {
-            var achievement = _events.Find(entry => entry.EventId == GoalAchievement.EntryId(definition.Id) && entry.Date <= day);
-            return Goal.RestoreObjective(definition, achievement?.Date);
-        }
-        var window = GoalWindow.For(definition.Period, day, definition.Deadline);
-        var inWindow = _events
-            .Where(entry => entry.GoalId == definition.Id && entry.SourceRef != GoalAchievement.SourceRef && window.Contains(entry.Date))
-            .ToList();
-        var manual = inWindow.Where(entry => entry.Source == GoalSource.Manual).Sum(entry => entry.Amount);
-        var automatic = inWindow.Where(entry => entry.Source != GoalSource.Manual).Sum(entry => entry.Amount);
-        return Goal.Restore(definition, GoalProgress.Compute(manual, automatic));
-    }
+    private Goal Restore(GoalDefinition definition, DateOnly day) => Goal.StandingOn(definition, _events, day);
+
+    private static bool IsAchievement(GoalProgressEvent entry, string goalId) =>
+        entry.GoalId == goalId && entry.SourceRef == GoalAchievement.SourceRef;
 }

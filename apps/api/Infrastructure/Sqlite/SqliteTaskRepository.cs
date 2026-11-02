@@ -17,13 +17,15 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
 
     public async Task<IReadOnlyList<TaskItem>> ListAsync(CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         return await SqliteCommands.QueryAsync(connection, $"{SelectColumns} ORDER BY rowid", ToTask, cancellationToken);
     }
 
     public async Task<TaskItem?> FindAsync(string id, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         var rows = await SqliteCommands.QueryAsync(
             connection, $"{SelectColumns} WHERE id = $id", ToTask, cancellationToken, ("$id", id));
         return rows.FirstOrDefault();
@@ -31,13 +33,15 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
 
     public async Task SaveAsync(TaskItem task, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         await WriteAsync(connection, task, cancellationToken);
     }
 
     public async Task DeleteAsync(string taskId, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         // Completions go with it through ON DELETE CASCADE.
         await SqliteCommands.ExecuteAsync(
             connection, "DELETE FROM tasks WHERE id = $id", cancellationToken, ("$id", taskId));
@@ -45,7 +49,8 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
 
     public async Task<IReadOnlyList<string>> ListCompletedAsync(DateOnly day, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         return await SqliteCommands.QueryAsync(
             connection, "SELECT task_id FROM task_completions WHERE date = $date ORDER BY rowid",
             reader => reader.GetString(0), cancellationToken, ("$date", ToText(day)));
@@ -53,7 +58,8 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
 
     public async Task SetCompletedAsync(string taskId, DateOnly day, bool isDone, CancellationToken cancellationToken)
     {
-        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var connection = lease.Connection;
         var sql = isDone
             ? "INSERT OR IGNORE INTO task_completions (task_id, date) VALUES ($taskId, $date)"
             : "DELETE FROM task_completions WHERE task_id = $taskId AND date = $date";
@@ -83,7 +89,7 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
 
     private static TaskItem ToTask(SqliteDataReader reader)
     {
-        return TaskItem.Create(
+        return TaskItem.Restore(
             reader.GetString(0),
             reader.GetString(1),
             reader.IsDBNull(2) ? null : reader.GetString(2),

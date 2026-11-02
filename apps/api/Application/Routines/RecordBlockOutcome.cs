@@ -9,10 +9,11 @@ public sealed record RecordBlockOutcomeCommand(
 /// <summary>
 /// Records that a block was completed or skipped on a day; recording it again replaces the
 /// previous outcome, so a retried request is harmless. Completing a block counts toward the frequency
-/// goals of its category; skipping it takes that back.
+/// goals of its category; skipping it takes that back. The outcome and the goal progress are stored
+/// together: a failure keeps neither.
 /// </summary>
 public sealed class RecordBlockOutcome(
-    IBlockOutcomeRepository outcomes, IRoutineRepository routines, GoalCredits goalCredits)
+    IBlockOutcomeRepository outcomes, IRoutineRepository routines, GoalCredits goalCredits, IUnitOfWork unitOfWork)
 {
     /// <summary>
     /// Validates the outcome, checks the routine has the block, stores it and updates the goals.
@@ -22,8 +23,11 @@ public sealed class RecordBlockOutcome(
     {
         var outcome = BlockOutcome.Create(command.RoutineId, command.BlockId, command.Date, command.Kind, command.At);
         var block = await RequireBlockAsync(outcome, cancellationToken);
-        await outcomes.SaveAsync(outcome, cancellationToken);
-        await UpdateGoalsAsync(outcome, block, cancellationToken);
+        await unitOfWork.RunAsync(async () =>
+        {
+            await outcomes.SaveAsync(outcome, cancellationToken);
+            await UpdateGoalsAsync(outcome, block, cancellationToken);
+        }, cancellationToken);
         return outcome;
     }
 
@@ -40,7 +44,7 @@ public sealed class RecordBlockOutcome(
 
     private async Task<RoutineBlock> RequireBlockAsync(BlockOutcome outcome, CancellationToken cancellationToken)
     {
-        var routine = (await routines.ListAsync(cancellationToken)).FirstOrDefault(stored => stored.Id == outcome.RoutineId)
+        var routine = await routines.FindAsync(outcome.RoutineId, cancellationToken)
             ?? throw ResourceNotFoundException.For("routine", outcome.RoutineId);
         return routine.Blocks.FirstOrDefault(block => block.Id == outcome.BlockId)
             ?? throw ResourceNotFoundException.For($"block of routine \"{routine.Id}\"", outcome.BlockId);

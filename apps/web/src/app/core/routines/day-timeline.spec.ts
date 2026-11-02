@@ -1,4 +1,5 @@
 import {
+  blockAhead,
   blockElapsed,
   currentBlock,
   dayProgress,
@@ -200,6 +201,37 @@ describe('current block', () => {
     const block = { start: '13:30', end: '15:00' };
 
     expect([blockElapsed(block, STUDY_TIME), minutesLeft(block, STUDY_TIME)]).toEqual([44, 50]);
+  });
+});
+
+describe('blockAhead', () => {
+  const NIGHT_SHIFT: Routine = {
+    id: 'night',
+    name: 'Night shift',
+    days: [0],
+    start: '22:00',
+    end: '06:00',
+    blocks: [
+      { id: 'patrol', name: 'Patrol', start: '22:00', end: '23:00' },
+      { id: 'report', name: 'Report', start: '01:00', end: '02:00' },
+    ],
+  };
+
+  it('finds the next block later in the day', () => {
+    expect(blockAhead(weekdays, STUDY_TIME)?.name).toBe('Networking');
+  });
+
+  // Regression: "next" compared clock times, so after 23:00 a block at 01:00 never came next.
+  it('finds a block after midnight on a day running past it', () => {
+    expect(blockAhead(NIGHT_SHIFT, 23 * 60 + 30)?.name).toBe('Report');
+  });
+
+  it('is the first block before the day starts', () => {
+    expect(blockAhead(weekdays, 7 * 60 + 30)?.name).toBe('Work');
+  });
+
+  it('is nothing once the day is over', () => {
+    expect(blockAhead(weekdays, 20 * 60)).toBeUndefined();
   });
 });
 

@@ -46,4 +46,15 @@ public class CreateGoalTests
         creation.Record.Done.ShouldBe(2);
         goals.AddCount.ShouldBe(0);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsARetryWithAnotherDefinition()
+    {
+        var goals = new InMemoryGoalRepository(Goal.Create(GoalDefinitions.WeeklyStudy()));
+
+        await Should.ThrowAsync<ConflictException>(() => new CreateGoal(goals, _categories).ExecuteAsync(
+            GoalDefinitions.WeeklyStudy() with { Target = 3 }, TestDays.Today, CancellationToken.None));
+
+        (await goals.FindAsync("g1", TestDays.Today, CancellationToken.None))!.Definition.Target.ShouldBe(5);
+    }
 }

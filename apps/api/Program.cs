@@ -10,7 +10,13 @@ using Budgeter.Api.Infrastructure.Sqlite;
 
 [assembly: InternalsVisibleTo("Budgeter.Api.Tests")]
 
+// Bodies are small JSON documents (a full routine is a few KB); the cap keeps an oversized one from
+// being read, validated and stored row by row.
+const long maxRequestBodyBytes = 256 * 1024;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxRequestBodyBytes);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -49,7 +55,9 @@ builder.Services.AddScoped<TaskCompletions>();
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.MapGet("/", () => "Hello World!");
+// Answers once the database is ready (the initializer runs before the server listens), for whatever
+// waits on the API to start: the E2E runner today, a serverless platform later.
+app.MapGet("/health", () => Results.NoContent());
 app.MapCategoryEndpoints();
 app.MapGoalEndpoints();
 app.MapRoutineEndpoints();

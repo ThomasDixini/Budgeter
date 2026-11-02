@@ -11,7 +11,10 @@ public class SetGoalAchievementTests
 {
     private readonly InMemoryGoalRepository _goals = new(
         Goal.Create(GoalDefinitions.CourseObjective()),
-        Goal.Create(GoalDefinitions.WeeklyStudy()));
+        Goal.Create(GoalDefinitions.WeeklyStudy()),
+        Goal.Create(GoalDefinitions.WeeklyObjective()));
+
+    private static readonly DateOnly NextWeek = TestDays.Today.AddDays(7);
 
     private Task<Goal> Set(string goalId, bool isAchieved, DateOnly? day = null) =>
         new SetGoalAchievement(_goals, _goals).ExecuteAsync(
@@ -69,5 +72,38 @@ public class SetGoalAchievementTests
     public async Task ExecuteAsync_RejectsAnUnknownGoal()
     {
         await Should.ThrowAsync<ResourceNotFoundException>(() => Set("missing", isAchieved: true));
+    }
+
+    // Regression: the mark had no period, so a weekly objective stayed achieved forever and could
+    // never be marked again.
+    [Fact]
+    public async Task ExecuteAsync_LeavesAWeeklyObjectivePendingInTheNextWeek()
+    {
+        await Set("g5", isAchieved: true);
+
+        var nextWeek = await _goals.FindAsync("g5", NextWeek, CancellationToken.None);
+
+        nextWeek!.AchievedOn.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MarksAWeeklyObjectiveAgainInTheNextWeek()
+    {
+        await Set("g5", isAchieved: true);
+
+        var goal = await Set("g5", isAchieved: true, NextWeek);
+
+        goal.AchievedOn.ShouldBe(NextWeek);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_TakesBackOnlyTheMarkOfTheWeekOfTheDay()
+    {
+        await Set("g5", isAchieved: true);
+        await Set("g5", isAchieved: true, NextWeek);
+
+        await Set("g5", isAchieved: false, NextWeek);
+
+        (await _goals.FindAsync("g5", TestDays.Today, CancellationToken.None))!.AchievedOn.ShouldBe(TestDays.Today);
     }
 }

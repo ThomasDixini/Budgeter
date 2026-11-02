@@ -25,11 +25,12 @@ internal sealed class InMemoryCategoryRepository : ICategoryRepository
         return Task.FromResult(_categories.Find(category => category.Id == id));
     }
 
-    public Task AddAsync(Category category, CancellationToken cancellationToken)
+    public Task<bool> AddAsync(Category category, CancellationToken cancellationToken)
     {
+        if (_categories.Exists(stored => stored.Id == category.Id)) return Task.FromResult(false);
         _categories.Add(category);
         AddCount++;
-        return Task.CompletedTask;
+        return Task.FromResult(true);
     }
 
     public Task UpdateAsync(Category category, CancellationToken cancellationToken)

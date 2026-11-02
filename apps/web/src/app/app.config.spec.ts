@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { appConfig } from './app.config';
 import { routes } from './app.routes';
+import { APP_MODULES } from './core/modules/module-catalog';
 import { Home } from './pages/home/home';
 
 describe('appConfig', () => {
@@ -34,5 +35,15 @@ describe('routes', () => {
 
   it('is wired into the application config', () => {
     expect(appConfig.providers).toContainEqual(provideRouter(routes));
+  });
+
+  // Regression: Finances linked to /finances, which no route served, so "Open module" led back home.
+  it('serves the page of every module the home wheel links to', () => {
+    const linked = APP_MODULES.flatMap((module) =>
+      module.route === undefined ? [] : [module.route],
+    );
+    const served = routes.map((route) => `/${route.path}`);
+
+    expect(linked.filter((route) => !served.includes(route))).toEqual([]);
   });
 });

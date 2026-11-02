@@ -78,6 +78,21 @@ export function weeklyMinutesByCategory(routine: Routine): Map<string, number> {
   return totals;
 }
 
+/**
+ * Minutes of one routine day each category gets, largest first; blocks without a category are
+ * skipped and overlapping blocks each count their own time.
+ * @example dailyMinutesByCategory(weekdays) // [['networking', 120], ['study', 90]]
+ */
+export function dailyMinutesByCategory(routine: Routine): [string, number][] {
+  const totals = new Map<string, number>();
+  for (const block of routine.blocks) {
+    if (block.categoryId === undefined) continue;
+    const minutes = blockMinutesWithin(block, routine);
+    totals.set(block.categoryId, (totals.get(block.categoryId) ?? 0) + minutes);
+  }
+  return [...totals].sort((first, second) => second[1] - first[1]);
+}
+
 /** Hour labels the horizontal bar fits without overlapping; longer days label every few hours. */
 const MAX_HOUR_TICKS = 10;
 

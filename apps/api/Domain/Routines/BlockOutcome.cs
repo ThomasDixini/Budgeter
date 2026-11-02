@@ -43,4 +43,13 @@ public sealed class BlockOutcome
             kind,
             ClockTime.Require(at, "block end time"));
     }
+
+    /// <summary>
+    /// Rebuilds a stored outcome as it was saved, without today's rules, so a stricter rule never makes
+    /// an old day unreadable.
+    /// </summary>
+    /// <example><code>BlockOutcome.Restore("weekdays", "project", day, BlockOutcomeKind.Done, "20:40");</code></example>
+    internal static BlockOutcome Restore(
+        string routineId, string blockId, DateOnly date, BlockOutcomeKind kind, string at) =>
+        new(routineId, blockId, date, kind, at);
 }

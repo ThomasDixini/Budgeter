@@ -18,7 +18,9 @@ export default defineConfig({
   testMatch: '**/*.e2e.ts',
   fullyParallel: true,
   forbidOnly: isContinuousIntegration,
-  retries: isContinuousIntegration ? 2 : 0,
+  // No retries: a test that only passes on a second try is a bug to see, not to hide; the trace of
+  // the failed attempt is kept.
+  retries: 0,
   reporter: isContinuousIntegration ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: baseUrl,
@@ -31,7 +33,7 @@ export default defineConfig({
   webServer: [
     {
       command: `dotnet run --project ../api --no-launch-profile --urls ${apiUrl}`,
-      url: apiUrl,
+      url: `${apiUrl}/health`,
       reuseExistingServer: !isContinuousIntegration,
       timeout: 180_000,
       env: {
