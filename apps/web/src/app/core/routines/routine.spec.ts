@@ -2,6 +2,7 @@ import {
   Routine,
   RoutineBlock,
   activeRoutine,
+  dailyMinutesByCategory,
   hourTicks,
   plannedMinutes,
   routineForWeekday,
@@ -172,5 +173,14 @@ describe('activeRoutine', () => {
 
   it('is nothing when no routine covers the day', () => {
     expect(activeRoutine([DAYTIME], 5, 600)).toBeUndefined();
+  });
+});
+
+describe('dailyMinutesByCategory', () => {
+  it('totals each category over one day, largest first, leaving uncategorized blocks out', () => {
+    expect(dailyMinutesByCategory(weekdays)).toEqual([
+      ['networking', 120],
+      ['study', 90],
+    ]);
   });
 });

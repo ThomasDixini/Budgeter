@@ -1,25 +1,53 @@
-<div>
-  <div class="bar" aria-hidden="true" [style.height.px]="barHeight()">
+<div class="chart">
+  @if (shown(); as segment) {
+    <!-- Sighted users only: each block's button already reads out its name, category and time. -->
+    <div class="tooltip" aria-hidden="true" [style.left.%]="tooltipLeft()">
+      <span class="tooltip-category" [style.color]="segment.category?.color">
+        <span
+          class="tooltip-swatch"
+          [style.background]="segment.category?.color ?? 'rgba(255, 255, 255, 0.3)'"
+        ></span>
+        {{ segment.category?.name ?? 'No category' }}
+      </span>
+      <span class="tooltip-block">{{ segment.name }} · {{ segment.range }}</span>
+    </div>
+  }
+  <div
+    class="bar"
+    [class.is-pointing]="shownCategoryId() !== undefined"
+    [style.height.px]="barHeight()"
+  >
+    @for (tick of ticks(); track tick.label) {
+      <span class="hour-line" aria-hidden="true" [style.left.%]="tick.offset"></span>
+    }
     <div class="lanes">
       @for (segment of segments(); track segment.key) {
         <div
           class="segment-slot"
+          [class.is-same-category]="(segment.category?.id ?? null) === shownCategoryId()"
           [style.left.%]="segment.left"
           [style.width.%]="segment.width"
           [style.top.%]="segment.top"
           [style.height.%]="segment.height"
         >
-          <div
+          <!-- A button, so a block can be reached with the keyboard and tapped on a phone. -->
+          <button
             class="segment"
-            [attr.title]="segment.name + ' · ' + segment.caption"
+            type="button"
+            [attr.aria-label]="segment.summary"
+            [attr.aria-pressed]="pinnedKey() === segment.key"
             [style.background]="segment.background"
             [style.border-color]="segment.border"
+            (mouseenter)="focusedKey.set(segment.key)"
+            (mouseleave)="focusedKey.set(undefined)"
+            (focus)="focusedKey.set(segment.key)"
+            (blur)="focusedKey.set(undefined)"
+            (click)="togglePinned(segment.key)"
           >
-            <span class="segment-name">{{ segment.name }}</span>
-            <span class="segment-caption" [style.color]="segment.captionColor">{{
-              segment.caption
-            }}</span>
-          </div>
+            @if (segment.showsName) {
+              <span class="segment-name">{{ segment.name }}</span>
+            }
+          </button>
         </div>
       }
     </div>
@@ -30,6 +58,26 @@
     }
   </div>
 </div>
+
+@if (legend().length > 0) {
+  <ul
+    class="legend"
+    aria-label="Time per category"
+    [class.is-pointing]="shownCategoryId() !== undefined"
+  >
+    @for (entry of legend(); track entry.category.id) {
+      <li
+        class="legend-entry"
+        [class.is-hovered]="entry.category.id === shownCategoryId()"
+        [style.border-color]="entry.category.id === shownCategoryId() ? entry.category.color : null"
+      >
+        <span class="legend-swatch" [style.background]="entry.category.color"></span>
+        <span class="legend-name">{{ entry.category.name }}</span>
+        <span class="legend-duration ui-tabular">{{ entry.duration }}</span>
+      </li>
+    }
+  </ul>
+}
 
 @if (issues(); as issues) {
   <div class="issue" role="status">
