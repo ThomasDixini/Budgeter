@@ -229,7 +229,10 @@
         }
       </div>
 
-      @if (visibleGoals().length === 0) {
+      @if (hasLoadFailed()) {
+        <!-- Not "no goals yet": the goals did not arrive, so saying so would be wrong. -->
+        <app-load-failed message="Couldn't load the goals." (retry)="reload()" />
+      } @else if (visibleGoals().length === 0) {
         <div class="no-goals">No goals here yet. Use “New goal” to set the first one.</div>
       }
     </section>

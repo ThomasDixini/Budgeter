@@ -246,6 +246,24 @@ describe('CategoryDetail', () => {
     expect(page.element.textContent).toContain('This category does not exist anymore.');
   });
 
+  // Regression: with only the goals failing, the page said "No goals here yet" with no way to retry.
+  it('offers to try again when only the goals failed, instead of saying there are none', async () => {
+    const goals = new FakeGoalsGateway();
+    goals.failure = new Error('offline');
+    const page = await openCategory('/routines/categories/study', goals);
+    expect(page.element.textContent).toContain("Couldn't load the goals.");
+    expect(page.element.querySelector('.no-goals')).toBeNull();
+    goals.failure = undefined;
+
+    [...page.element.querySelectorAll('button')]
+      .find((button) => button.textContent?.trim() === 'Try again')!
+      .click();
+    page.render();
+
+    expect(goalTitles(page)).toContain('Study C# 5x a week');
+    expect(page.element.textContent).not.toContain("Couldn't load the goals.");
+  });
+
   // Regression: a failed load left the page empty for good, with no way but reloading the app.
   it('offers to try again when loading failed, and shows the category once it loads', async () => {
     const categories = new FakeCategoriesGateway();

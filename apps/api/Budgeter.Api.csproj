@@ -15,7 +15,7 @@
   <!-- Test doubles of the web app: fakes, fixed clocks and ids, sample data. They live next to the code
        they stand in for, but only specs use them. -->
   <ItemGroup>
-    <WebTestDoubles Include="..\web\src\**\fake-*.ts;..\web\src\**\fixed-clock.ts;..\web\src\**\sequential-id-generator.ts;..\web\src\**\sample-routines.ts" />
+    <WebTestDoubles Include="..\web\src\**\fake-*.ts;..\web\src\**\fixed-clock.ts;..\web\src\**\sequential-id-generator.ts;..\web\src\**\sample-routines.ts;..\web\src\**\*.testing.ts" />
   </ItemGroup>
 
   <!-- The SonarScanner for .NET derives the analysis scope from MSBuild items,

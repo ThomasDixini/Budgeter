@@ -8,7 +8,8 @@ import { RouterLink } from '@angular/router';
   template: `<header class="app-header">
     <a class="brand" routerLink="/">Budgeter</a>
     <ng-content />
-    <button class="profile" type="button" aria-label="Profile">
+    <!-- Disabled until there is an account to show: a button that did nothing looked broken. -->
+    <button class="profile" type="button" aria-label="Profile" title="Coming soon" disabled>
       <svg
         width="20"
         height="20"

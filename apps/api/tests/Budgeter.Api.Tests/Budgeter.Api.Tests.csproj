@@ -28,7 +28,7 @@
        they use, as test code -->
   <ItemGroup>
     <None Include="..\..\..\web\src\**\*.spec.ts" />
-    <None Include="..\..\..\web\src\**\fake-*.ts;..\..\..\web\src\**\fixed-clock.ts;..\..\..\web\src\**\sequential-id-generator.ts;..\..\..\web\src\**\sample-routines.ts" />
+    <None Include="..\..\..\web\src\**\fake-*.ts;..\..\..\web\src\**\fixed-clock.ts;..\..\..\web\src\**\sequential-id-generator.ts;..\..\..\web\src\**\sample-routines.ts;..\..\..\web\src\**\*.testing.ts" />
   </ItemGroup>
 
 </Project>

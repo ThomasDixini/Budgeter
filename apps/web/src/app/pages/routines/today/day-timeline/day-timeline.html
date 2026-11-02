@@ -173,9 +173,6 @@
 
   @let offset = nowOffset();
   @if (offset !== undefined) {
-    <div class="now-line" aria-hidden="true" [style.top.px]="offset">
-      <span class="now-dot"></span>
-      <span class="now-label ui-tabular">{{ nowLabel() }}</span>
-    </div>
+    <app-now-line [offset]="offset" [label]="nowLabel()" />
   }
 </div>

@@ -1,0 +1,27 @@
+:host {
+  position: absolute;
+  inset-inline: 56px 0;
+  z-index: 3;
+  height: 0;
+  border-top: 1px solid rgba(var(--color-mint-rgb), 0.8);
+}
+
+.now-dot {
+  position: absolute;
+  inset: -4.5px auto auto -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-mint);
+  box-shadow: 0 0 10px rgba(var(--color-mint-rgb), 0.8);
+}
+
+.now-label {
+  position: absolute;
+  inset: -9px auto auto -58px;
+  padding: 1px 4px;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-mint);
+  background: var(--color-bg);
+}

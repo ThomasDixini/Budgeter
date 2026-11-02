@@ -5,12 +5,13 @@
 
 .timeline {
   position: relative;
+  /* On a narrow timeline the shared row drops the check and category dot so the name stays readable. */
+  container-type: inline-size;
 }
 
 .hour {
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   height: 0;
   display: flex;
   align-items: center;
@@ -18,8 +19,7 @@
 }
 
 .hour-label {
-  width: 44px;
-  flex: none;
+  flex: 0 0 44px;
   font-size: var(--font-size-xs);
   color: var(--color-text-faint);
 }
@@ -38,23 +38,19 @@
 
 .block-slot {
   position: absolute;
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   padding: 3px 0;
   box-sizing: border-box;
 }
 
 /* Short ended blocks sit side by side in one row, with a small gap between them. */
-.block-slot.shares-row-left {
+.block-slot.shares-row-left,
+.block-slot.shares-row-inner {
   padding-right: 3px;
 }
 
 .block-slot.shares-row-right {
   padding-left: 3px;
-}
-
-.block-slot.shares-row-inner {
-  padding-right: 3px;
 }
 
 /* An ended block may grow over the past part of an earlier one; it stays on top to be read. */
@@ -66,8 +62,7 @@
   height: 100%;
   box-sizing: border-box;
   border-radius: 14px;
-  padding: 12px;
-  padding-left: 16px;
+  padding: 12px 12px 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -90,7 +85,6 @@
 }
 
 .block-select {
-  appearance: none;
   background: transparent;
   border: 0;
   padding: 0;
@@ -101,7 +95,6 @@
   cursor: pointer;
   align-self: stretch;
   flex: 1;
-  align-items: flex-start;
 }
 
 /* The whole block picks it, not just its name: the button's hit area stretches over the block. */
@@ -109,7 +102,6 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
 }
 
 .block-select:focus-visible {
@@ -157,7 +149,8 @@
 }
 
 /* Completed today: mint card with a check. */
-.block.is-done .block-name {
+.block.is-done .block-name,
+.done-check {
   color: var(--color-mint);
 }
 
@@ -166,10 +159,6 @@
   display: inline-block;
   vertical-align: -2px;
   margin-right: 4px;
-}
-
-.done-check {
-  color: var(--color-mint);
 }
 
 /* Skipped today: grey, dashed and crossed out; it does not count as done. */
@@ -189,9 +178,8 @@
 
 .undo,
 .step {
-  width: 24px;
+  flex: 0 0 24px;
   height: 24px;
-  flex: none;
   border: 0;
   border-radius: var(--radius-control);
   background: transparent;
@@ -202,22 +190,24 @@
   cursor: pointer;
 }
 
-.undo:hover,
-.step:hover,
-.step:focus-visible,
-.undo:focus-visible {
+:is(.undo, .step):is(:hover, :focus-visible) {
   color: var(--color-text);
   background: rgba(255, 255, 255, 0.08);
 }
 
-.outcome-label {
+/* The pill look shared by the outcome label and the category badge. */
+.outcome-label,
+.category-badge {
   padding: 4px 10px;
   border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-muted);
   background: rgba(255, 255, 255, 0.04);
   border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
+}
+
+.outcome-label {
+  color: var(--color-text-muted);
 }
 
 .block.is-done .outcome-label {
@@ -250,7 +240,6 @@
 
 .block.is-compact .block-name {
   font-size: 13px;
-  flex: 0 1 auto;
 }
 
 /* In a narrow lane the time gives way long before the name does. */
@@ -264,56 +253,14 @@
   flex-wrap: nowrap;
 }
 
-.category-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: var(--font-weight-medium);
-  background: rgba(255, 255, 255, 0.04);
-  border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
-}
-
-.now-line {
-  position: absolute;
-  left: 56px;
-  right: 0;
-  z-index: 3;
-  height: 0;
-  border-top: 1px solid rgba(var(--color-mint-rgb), 0.8);
-}
-
-.now-dot {
-  position: absolute;
-  left: -4px;
-  top: -4.5px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-mint);
-  box-shadow: 0 0 10px rgba(var(--color-mint-rgb), 0.8);
-}
-
-.now-label {
-  position: absolute;
-  left: -58px;
-  top: -9px;
-  padding: 1px 4px;
-  font-size: 11px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-mint);
-  background: var(--color-bg);
-}
-
 .block.is-compact .block-select {
   align-self: center;
 }
 
-/* On a narrow timeline the shared row drops the check and category dot so the name stays readable. */
-.timeline {
-  container-type: inline-size;
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 @container (max-width: 520px) {
