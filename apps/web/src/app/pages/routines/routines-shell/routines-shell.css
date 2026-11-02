@@ -13,26 +13,9 @@
   box-sizing: border-box;
 }
 
-.glow {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.glow-mint {
-  left: -300px;
-  top: -260px;
-  width: 760px;
-  height: 760px;
-  background: radial-gradient(circle, rgba(var(--color-mint-rgb), 0.1), transparent 65%);
-}
-
-.glow-violet {
-  right: -320px;
-  top: 260px;
-  width: 820px;
-  height: 820px;
-  background: radial-gradient(circle, rgba(var(--color-violet-deep-rgb), 0.1), transparent 65%);
+/* Routines pages are text-heavy, so the fire stays dimmer than on the home screen. */
+.fire {
+  opacity: 0.45;
 }
 
 .content {

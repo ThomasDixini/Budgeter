@@ -1,0 +1,14 @@
+:host {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The canvas draws at low resolution; the stretch and blur melt the separate puffs into one soft
+   body of flame and smoke. */
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: blur(20px);
+}
