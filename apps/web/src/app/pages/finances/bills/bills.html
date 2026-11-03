@@ -1,0 +1,130 @@
+<div class="page">
+  <app-page-heading
+    eyebrow="Finances"
+    eyebrowIcon="finances"
+    heading="To pay & receive"
+    [description]="summary()"
+  >
+    <button class="ui-button-ghost" type="button" (click)="open({ kind: 'new' })">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      Add bill
+    </button>
+  </app-page-heading>
+
+  @switch (panel().kind) {
+    @case ('new') {
+      <app-bill-form
+        [categories]="categories()"
+        [today]="today"
+        (save)="saveBill($event)"
+        (dismiss)="close()"
+      />
+    }
+    @case ('edit') {
+      <app-bill-form
+        [bill]="panelBill()"
+        [categories]="categories()"
+        [today]="today"
+        (save)="saveBill($event)"
+        (dismiss)="close()"
+        (remove)="deleteBill()"
+      />
+    }
+    @case ('settle') {
+      @if (panelBill(); as bill) {
+        <app-settle-form
+          [description]="bill.description"
+          [kind]="bill.kind"
+          [accounts]="accounts()"
+          [today]="today"
+          (confirm)="settleBill($event)"
+          (dismiss)="close()"
+        />
+      }
+    }
+    @case ('pay') {
+      @if (payingCard(); as card) {
+        <app-payment-form
+          [card]="card"
+          [bankAccounts]="bankAccounts()"
+          [suggestedCents]="suggestedPayment()"
+          [today]="today"
+          (save)="payInvoice($event)"
+          (dismiss)="close()"
+        />
+      }
+    }
+  }
+
+  @if (hasLoadFailed()) {
+    <app-load-failed message="Couldn't load your bills." (retry)="reload()" />
+  }
+
+  @if (groups().overdue.length > 0) {
+    <app-bill-group
+      title="Overdue"
+      [items]="groups().overdue"
+      [categoryNames]="categoryNames()"
+      [accountNames]="accountNames()"
+      [today]="today"
+      (settle)="open({ kind: 'settle', billId: $event.id })"
+      (edit)="open({ kind: 'edit', billId: $event.id })"
+      (payInvoice)="open({ kind: 'pay', invoice: $event })"
+    />
+  }
+
+  @if (groups().soon.length > 0) {
+    <app-bill-group
+      title="Next 7 days"
+      [items]="groups().soon"
+      [categoryNames]="categoryNames()"
+      [accountNames]="accountNames()"
+      [today]="today"
+      (settle)="open({ kind: 'settle', billId: $event.id })"
+      (edit)="open({ kind: 'edit', billId: $event.id })"
+      (payInvoice)="open({ kind: 'pay', invoice: $event })"
+    />
+  }
+
+  @if (groups().later.length > 0) {
+    <app-bill-group
+      title="Later"
+      [items]="groups().later"
+      [categoryNames]="categoryNames()"
+      [accountNames]="accountNames()"
+      [today]="today"
+      (settle)="open({ kind: 'settle', billId: $event.id })"
+      (edit)="open({ kind: 'edit', billId: $event.id })"
+      (payInvoice)="open({ kind: 'pay', invoice: $event })"
+    />
+  }
+
+  @if (groups().settled.length > 0) {
+    <app-bill-group
+      title="Paid & received (last 30 days)"
+      [settled]="true"
+      [items]="groups().settled"
+      [categoryNames]="categoryNames()"
+      [accountNames]="accountNames()"
+      [today]="today"
+      (reopen)="reopenBill($event)"
+    />
+  }
+
+  @if (isLoaded() && isEmpty()) {
+    <p class="ui-card empty">
+      Nothing to pay or receive. Add a bill to keep track of its due date.
+    </p>
+  }
+</div>

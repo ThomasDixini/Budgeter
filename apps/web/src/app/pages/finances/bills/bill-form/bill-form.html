@@ -1,0 +1,125 @@
+<form
+  class="bill-form ui-enter"
+  [attr.aria-label]="isEditing() ? 'Edit bill' : 'New bill'"
+  (submit)="submit($event)"
+  (keydown.escape)="dismiss.emit()"
+>
+  <div class="chips" role="group" aria-label="Type">
+    @for (option of kindOptions; track option.value) {
+      <button
+        class="ui-chip"
+        type="button"
+        [attr.aria-pressed]="option.value === kind()"
+        (click)="kind.set(option.value)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  <div class="fields">
+    <label class="ui-field description">
+      Description
+      <input
+        class="ui-input"
+        name="description"
+        type="text"
+        autocomplete="off"
+        placeholder="E.g. Rent"
+        [maxLength]="maxDescriptionLength"
+        [value]="description()"
+        (input)="description.set(valueOf($event))"
+      />
+    </label>
+
+    <label class="ui-field">
+      Amount (R$)
+      <input
+        class="ui-input"
+        name="amount"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="0.00"
+        [value]="amount()"
+        [attr.aria-invalid]="amountError() !== undefined"
+        [attr.aria-describedby]="amountError() === undefined ? null : 'bill-amount-error'"
+        (input)="amount.set(valueOf($event))"
+      />
+      @if (amountError(); as error) {
+        <span id="bill-amount-error" class="error">{{ error }}</span>
+      }
+    </label>
+
+    <label class="ui-field">
+      Category
+      <select class="ui-input" name="category" (change)="categoryId.set(valueOf($event))">
+        <option value="" disabled [selected]="categoryId() === ''">Choose a category</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id" [selected]="category.id === categoryId()">
+            {{ category.name }}
+          </option>
+        }
+      </select>
+    </label>
+
+    <label class="ui-field">
+      Due date
+      <input
+        class="ui-input"
+        name="dueDate"
+        type="date"
+        [value]="dueDate()"
+        (change)="dueDate.set(valueOf($event))"
+      />
+    </label>
+
+    @if (isEditing()) {
+      @if (seriesNote(); as note) {
+        <p class="ui-muted note">{{ note }} · Changes apply to this one only.</p>
+      }
+    } @else {
+      <label class="ui-field">
+        Repeat
+        <select class="ui-input" name="repeat" (change)="chooseRepeat(valueOf($event))">
+          @for (option of repeatOptions; track option.value) {
+            <option [value]="option.value" [selected]="option.value === repeatKind()">
+              {{ option.label }}
+            </option>
+          }
+        </select>
+      </label>
+
+      @if (isRepeating()) {
+        <label class="ui-field">
+          {{ repeatKind() === 'installments' ? 'Installments' : 'Occurrences' }}
+          <input
+            class="ui-input"
+            name="count"
+            type="number"
+            inputmode="numeric"
+            [min]="minCount"
+            [max]="maxCount"
+            [value]="repeatCount()"
+            [attr.aria-invalid]="countError() !== undefined"
+            [attr.aria-describedby]="countError() === undefined ? null : 'bill-count-error'"
+            (input)="repeatCount.set(valueOf($event))"
+          />
+          @if (countError(); as error) {
+            <span id="bill-count-error" class="error">{{ error }}</span>
+          }
+        </label>
+      }
+    }
+  </div>
+
+  <div class="actions">
+    @if (isEditing()) {
+      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">Delete</button>
+    }
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ isEditing() ? 'Save bill' : 'Add bill' }}
+    </button>
+  </div>
+</form>

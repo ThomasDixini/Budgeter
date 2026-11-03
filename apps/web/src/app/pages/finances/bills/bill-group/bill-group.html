@@ -1,0 +1,64 @@
+<section class="ui-card group" [attr.aria-label]="title()">
+  <h2 class="group-header">
+    <span>{{ title() }}</span>
+    <span class="ui-tabular">{{ total() }}</span>
+  </h2>
+
+  <ul class="rows">
+    @for (item of items(); track item.key) {
+      <li class="item">
+        @if (item.bill && !settled()) {
+          <button
+            class="row"
+            type="button"
+            [attr.aria-label]="rowLabel(item)"
+            (click)="edit.emit(item.bill)"
+          >
+            <ng-container *ngTemplateOutlet="content; context: { $implicit: item }" />
+          </button>
+        } @else {
+          <div class="row">
+            <ng-container *ngTemplateOutlet="content; context: { $implicit: item }" />
+          </div>
+        }
+        <button
+          class="ui-button-ghost action"
+          type="button"
+          [attr.aria-label]="actionLabel(item) + ': ' + item.description"
+          (click)="act(item)"
+        >
+          {{ actionLabel(item) }}
+        </button>
+      </li>
+    }
+  </ul>
+</section>
+
+<ng-template #content let-item>
+  <span class="mark" [class.income]="item.kind === 'receivable'" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      @if (item.kind === 'receivable') {
+        <path d="M12 5v14M6 13l6 6 6-6"></path>
+      } @else {
+        <path d="M12 19V5M6 11l6-6 6 6"></path>
+      }
+    </svg>
+  </span>
+  <span class="text">
+    <span class="description">{{ item.description }}</span>
+    <span class="detail">{{ detail(item) }}</span>
+  </span>
+  @if (series(item); as label) {
+    <span class="ui-tag series">{{ label }}</span>
+  }
+  <span class="amount ui-tabular">{{ signed(item) }}</span>
+</ng-template>

@@ -16,7 +16,7 @@ public class IncomeSplitUseCaseTests
 
     private SaveIncomeSplit SaveIncomeSplit => new(_plans, _categories);
     private SaveFinanceCategory SaveCategory => new(_categories);
-    private DeleteFinanceCategory DeleteCategory => new(_categories, _transactions);
+    private DeleteFinanceCategory DeleteCategory => new(_categories, _transactions, new InMemoryBillRepository());
 
     private static SaveIncomeSplitCommand Plan(params IncomeSplitPartCommand[] parts) => new(950000, parts);
 

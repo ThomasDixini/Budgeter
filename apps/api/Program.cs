@@ -67,6 +67,11 @@ builder.Services.AddScoped<DeleteTransaction>();
 builder.Services.AddScoped<ListCardPayments>();
 builder.Services.AddScoped<SaveCardPayment>();
 builder.Services.AddScoped<DeleteCardPayment>();
+builder.Services.AddScoped<ListBillsAgenda>();
+builder.Services.AddScoped<SaveBill>();
+builder.Services.AddScoped<DeleteBill>();
+builder.Services.AddScoped<SettleBill>();
+builder.Services.AddScoped<ReopenBill>();
 
 var app = builder.Build();
 
@@ -83,6 +88,7 @@ app.MapFinanceReferenceEndpoints();
 app.MapAccountEndpoints();
 app.MapTransactionEndpoints();
 app.MapCardPaymentEndpoints();
+app.MapBillEndpoints();
 app.MapIncomeSplitEndpoints();
 
 await app.RunAsync();

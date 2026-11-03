@@ -5,4 +5,5 @@ export const FINANCES_SECTIONS: readonly ModuleSection[] = [
   { label: 'Income split', path: '/finances/income-split', matchesChildren: false },
   { label: 'Transactions', path: '/finances/transactions', matchesChildren: false },
   { label: 'Banks & Cards', path: '/finances/accounts', matchesChildren: false },
+  { label: 'To pay & receive', path: '/finances/bills', matchesChildren: false },
 ];
