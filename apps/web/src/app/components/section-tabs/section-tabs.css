@@ -35,10 +35,13 @@
 @media (max-width: 639px) {
   .tabs {
     flex-wrap: nowrap;
+    /* More tabs than fit the width scroll sideways inside the pill instead of widening the page. */
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
   .tab {
-    flex: 1;
+    flex: 1 0 auto;
     padding: 10px 12px;
     text-align: center;
     white-space: nowrap;
