@@ -27,6 +27,14 @@ export function formatSignedMoney(cents: number, locale: string): string {
 }
 
 /**
+ * A balance in reais: a minus when below zero, no sign otherwise.
+ * @example formatBalance(-15000, 'en-US') // '−R$150.00'
+ */
+export function formatBalance(cents: number, locale: string): string {
+  return `${cents < 0 ? MINUS_SIGN : ''}${formatMoney(cents, locale)}`;
+}
+
+/**
  * Reads an amount typed by the user as cents; undefined when it is not shaped like `286,40` or
  * `286.4`. Zero is read as 0: whether it is acceptable is the caller's rule.
  * @example parseAmountCents('286,4') // 28640
@@ -36,6 +44,19 @@ export function parseAmountCents(text: string): number | undefined {
   if (match === null) return undefined;
   const fraction = (match[2] ?? '').padEnd(2, '0');
   return Number(match[1]) * CENTS_PER_REAL + Number(fraction);
+}
+
+/**
+ * Reads an amount that may be negative (an overdrawn balance) as cents: a leading minus, then an
+ * amount `parseAmountCents` reads; undefined otherwise.
+ * @example parseSignedAmountCents('-150,5') // -15050
+ */
+export function parseSignedAmountCents(text: string): number | undefined {
+  const trimmed = text.trim();
+  const isNegative = trimmed.startsWith('-') || trimmed.startsWith(MINUS_SIGN);
+  const cents = parseAmountCents(isNegative ? trimmed.slice(1) : trimmed);
+  if (cents === undefined) return undefined;
+  return isNegative ? -cents : cents;
 }
 
 /**
@@ -52,4 +73,13 @@ export function isValidAmount(cents: number | undefined): cents is number {
  */
 export function amountText(cents: number): string {
   return (Math.abs(cents) / CENTS_PER_REAL).toFixed(2);
+}
+
+/**
+ * Cents written back as an editable amount that keeps its sign, the way `parseSignedAmountCents`
+ * reads it.
+ * @example signedAmountText(-15000) // '-150.00'
+ */
+export function signedAmountText(cents: number): string {
+  return `${cents < 0 ? '-' : ''}${amountText(cents)}`;
 }

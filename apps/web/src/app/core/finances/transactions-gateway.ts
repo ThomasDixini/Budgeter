@@ -24,4 +24,10 @@ export abstract class FinanceReferencesGateway {
 
   /** Every bank account and credit card, in creation order. */
   abstract accounts(): Observable<readonly Account[]>;
+
+  /** Creates or replaces an account; answers with the stored (normalized) version. */
+  abstract saveAccount(account: Account): Observable<Account>;
+
+  /** Deletes an account nothing was recorded on; deleting one already gone succeeds. */
+  abstract deleteAccount(accountId: string): Observable<void>;
 }

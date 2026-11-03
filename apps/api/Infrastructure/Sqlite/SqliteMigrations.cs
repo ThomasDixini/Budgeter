@@ -18,7 +18,52 @@ internal static class SqliteMigrations
             connection, "PRAGMA user_version", reader => reader.GetInt32(0), cancellationToken);
         if (versions[0] < 1) await GoalProgressLogAsync(connection, cancellationToken);
         if (versions[0] < 2) await TrackingFromTypeAsync(connection, cancellationToken);
+        if (versions[0] < 3) await AccountBalancesAndCardTermsAsync(connection, cancellationToken);
     }
+
+    /// <summary>
+    /// Version 3: bank accounts gain an opening balance (zero, as before) and credit cards their billing
+    /// terms. Cards stored without terms get the starter card's, which the user can then edit.
+    /// </summary>
+    private static async Task AccountBalancesAndCardTermsAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await using var transaction = connection.BeginTransaction(deferred: false);
+        var versions = await SqliteCommands.QueryAsync(
+            connection, "PRAGMA user_version", reader => reader.GetInt32(0), cancellationToken);
+        if (versions[0] >= 3) return;
+        await AddMissingAccountColumnsAsync(connection, cancellationToken);
+        await SqliteCommands.ExecuteAsync(
+            connection,
+            """
+            UPDATE accounts SET credit_limit_cents = $limit, closing_day = $closingDay, due_day = $dueDay
+            WHERE kind = 'CreditCard' AND credit_limit_cents IS NULL
+            """,
+            cancellationToken,
+            ("$limit", FinanceStarterSeed.CardTerms.LimitCents),
+            ("$closingDay", FinanceStarterSeed.CardTerms.ClosingDay),
+            ("$dueDay", FinanceStarterSeed.CardTerms.DueDay));
+        await SqliteCommands.ExecuteAsync(connection, "PRAGMA user_version = 3", cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    // A database created after version 3 already has them, from the CREATE TABLE.
+    private static async Task AddMissingAccountColumnsAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        foreach (var (column, definition) in AccountColumnsAddedInVersion3)
+        {
+            if (await HasColumnAsync(connection, "accounts", column, cancellationToken)) continue;
+            await SqliteCommands.ExecuteAsync(
+                connection, $"ALTER TABLE accounts ADD COLUMN {column} {definition}", cancellationToken);
+        }
+    }
+
+    private static readonly (string Column, string Definition)[] AccountColumnsAddedInVersion3 =
+    [
+        ("opening_balance_cents", "INTEGER NOT NULL DEFAULT 0"),
+        ("credit_limit_cents", "INTEGER NULL"),
+        ("closing_day", "INTEGER NULL"),
+        ("due_day", "INTEGER NULL"),
+    ];
 
     /// <summary>
     /// Version 2: what feeds a goal follows from its type (frequency goals count blocks, objectives are

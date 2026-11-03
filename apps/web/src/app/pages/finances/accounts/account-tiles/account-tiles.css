@@ -1,0 +1,110 @@
+:host {
+  display: block;
+}
+
+.tiles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  width: 100%;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border-radius: var(--radius-tile);
+  border: var(--border-hairline) solid var(--color-border);
+  background: linear-gradient(
+    145deg,
+    rgba(var(--color-violet-rgb), 0.1),
+    rgba(255, 255, 255, 0.02) 70%
+  );
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast),
+    box-shadow var(--duration-fast);
+}
+
+.tile.card {
+  background: linear-gradient(
+    145deg,
+    rgba(var(--color-sky-rgb), 0.1),
+    rgba(255, 255, 255, 0.02) 70%
+  );
+}
+
+.tile:hover {
+  border-color: var(--color-border-strong);
+}
+
+.tile[aria-pressed='true'] {
+  border-color: rgba(var(--color-violet-rgb), 0.6);
+  box-shadow: 0 0 36px rgba(var(--color-violet-rgb), 0.18);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-text-soft);
+}
+
+.kind {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* A card's contact chip, drawn instead of an icon. */
+.chip {
+  width: 30px;
+  height: 22px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #e7d9a8, #b39b5c);
+  opacity: 0.85;
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.value-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.value {
+  font-size: 26px;
+  font-weight: var(--font-weight-light);
+  overflow-wrap: anywhere;
+}
+
+.name {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 479px) {
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .tile {
+    min-height: 0;
+  }
+}

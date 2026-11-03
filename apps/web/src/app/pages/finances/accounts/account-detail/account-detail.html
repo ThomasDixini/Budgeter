@@ -1,0 +1,128 @@
+<section class="ui-card detail" aria-labelledby="account-detail-title">
+  <div class="header">
+    <div class="title">
+      <span class="kind">{{ kindLabel() }}</span>
+      <h2 id="account-detail-title" class="name">{{ account().name }}</h2>
+    </div>
+    <div class="actions">
+      <button class="ui-button-ghost" type="button" (click)="edit.emit()">Edit</button>
+      @if (isCard()) {
+        <button class="ui-button-primary" type="button" [disabled]="!canPay()" (click)="pay.emit()">
+          Pay invoice
+        </button>
+      } @else {
+        <a class="ui-button-ghost" routerLink="/finances/transactions">See all transactions</a>
+      }
+    </div>
+  </div>
+
+  @if (amountDue(); as message) {
+    <p class="due" role="status">{{ message }}</p>
+  }
+
+  <div class="stats">
+    @for (stat of stats(); track stat.label) {
+      <div class="stat">
+        <span class="stat-label"
+          ><span class="mark" [class]="stat.mark" aria-hidden="true"></span>{{ stat.label }}</span
+        >
+        <span class="stat-value ui-tabular">{{ stat.value }}</span>
+      </div>
+    }
+  </div>
+
+  @if (limitUse(); as use) {
+    <div class="limit">
+      <div class="limit-text">
+        <span>Limit used</span>
+        <span class="ui-tabular">{{ use.label }}</span>
+      </div>
+      <div class="ui-track" role="img" [attr.aria-label]="'Limit used: ' + use.percent + '%'">
+        <div class="ui-fill limit-fill" [style.width.%]="use.percent"></div>
+      </div>
+    </div>
+  }
+
+  <div class="columns">
+    <div class="column">
+      <h3 class="column-title">{{ listTitle() }}</h3>
+      @if (movements().length === 0) {
+        <p class="ui-muted empty">Nothing recorded yet.</p>
+      } @else {
+        <ul class="rows" [attr.aria-label]="listTitle()">
+          @for (movement of movements(); track movement.id) {
+            <li class="row">
+              <span class="arrow" [class.income]="movement.amountCents > 0" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  @if (movement.amountCents > 0) {
+                    <path d="M12 5v14M6 13l6 6 6-6"></path>
+                  } @else {
+                    <path d="M12 19V5M6 11l6-6 6 6"></path>
+                  }
+                </svg>
+              </span>
+              <span class="text">
+                <span class="description">{{ movement.description }}</span>
+                <span class="sub">{{ rowDetail(movement) }}</span>
+              </span>
+              <span class="amount ui-tabular">{{ signed(movement.amountCents) }}</span>
+              @if (movement.isCardPayment) {
+                <button
+                  class="ui-icon-button remove"
+                  type="button"
+                  [attr.aria-label]="
+                    'Delete ' + movement.description + ', ' + signed(movement.amountCents)
+                  "
+                  (click)="removePayment.emit(movement.id)"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 6l12 12M18 6L6 18"></path>
+                  </svg>
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <div class="column">
+      <h3 class="column-title">{{ spendingTitle() }}</h3>
+      @if (spending().length === 0) {
+        <p class="ui-muted empty">No spending yet.</p>
+      } @else {
+        <ul class="spending" [attr.aria-label]="spendingTitle()">
+          @for (row of spending(); track row.name) {
+            <li class="spending-row">
+              <span class="spending-text">
+                <span>{{ row.name }}</span>
+                <span class="ui-tabular">{{ row.amount }}</span>
+              </span>
+              <span class="ui-track" aria-hidden="true">
+                <span class="ui-fill spending-fill" [style.width.%]="row.percent"></span>
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</section>

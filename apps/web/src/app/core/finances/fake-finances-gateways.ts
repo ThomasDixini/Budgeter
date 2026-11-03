@@ -10,8 +10,19 @@ export const SAMPLE_FINANCE_CATEGORIES: readonly FinanceCategory[] = [
 ];
 
 export const SAMPLE_ACCOUNTS: readonly Account[] = [
-  { id: 'checking-account', name: 'Checking account', kind: 'bankAccount' },
-  { id: 'credit-card', name: 'Credit card', kind: 'creditCard' },
+  {
+    id: 'checking-account',
+    name: 'Checking account',
+    kind: 'bankAccount',
+    openingBalanceCents: 100000,
+  },
+  {
+    id: 'credit-card',
+    name: 'Credit card',
+    kind: 'creditCard',
+    openingBalanceCents: 0,
+    card: { limitCents: 500000, closingDay: 3, dueDay: 10 },
+  },
 ];
 
 /** October 2026, newest first as the API answers: a salary, groceries and a pharmacy purchase. */
@@ -81,6 +92,8 @@ export class FakeTransactionsGateway extends TransactionsGateway {
 /** Test double serving the sample categories and accounts; set `failure` to make the next calls fail. */
 export class FakeFinanceReferencesGateway extends FinanceReferencesGateway {
   failure: Error | undefined;
+  readonly savedAccounts: Account[] = [];
+  readonly deletedAccounts: string[] = [];
 
   override categories(): Observable<readonly FinanceCategory[]> {
     return this.answer(SAMPLE_FINANCE_CATEGORIES);
@@ -88,6 +101,16 @@ export class FakeFinanceReferencesGateway extends FinanceReferencesGateway {
 
   override accounts(): Observable<readonly Account[]> {
     return this.answer(SAMPLE_ACCOUNTS);
+  }
+
+  override saveAccount(account: Account): Observable<Account> {
+    this.savedAccounts.push(account);
+    return this.answer(account);
+  }
+
+  override deleteAccount(accountId: string): Observable<void> {
+    this.deletedAccounts.push(accountId);
+    return this.answer(undefined);
   }
 
   private answer<TValue>(value: TValue): Observable<TValue> {

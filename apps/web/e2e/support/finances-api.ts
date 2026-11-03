@@ -41,6 +41,39 @@ export interface SeededTransaction {
   readonly amountCents: number;
 }
 
+export interface SeededAccount {
+  readonly name: string;
+  readonly kind: 'bankAccount' | 'creditCard';
+  readonly openingBalanceCents: number;
+  readonly card?: {
+    readonly limitCents: number;
+    readonly closingDay: number;
+    readonly dueDay: number;
+  };
+}
+
+/**
+ * Creates an account straight through the API and gives back its id.
+ * @example const cardId = await createAccount(request, { name: 'Visa', kind: 'creditCard', openingBalanceCents: 0, card: { limitCents: 500000, closingDay: 20, dueDay: 27 } })
+ */
+export async function createAccount(
+  request: APIRequestContext,
+  account: SeededAccount,
+): Promise<string> {
+  const id = randomUUID();
+  const response = await request.put(`/api/accounts/${id}`, { data: account });
+  expect(response.ok()).toBe(true);
+  return id;
+}
+
+/**
+ * A name no other test or browser project uses, so tests sharing the database tell their accounts apart.
+ * @example uniqueName(test.info(), 'Wallet') // 'Wallet desktop 3f2b7c'
+ */
+export function uniqueName(testInfo: TestInfo, prefix: string): string {
+  return `${prefix} ${testInfo.project.name} ${randomUUID().slice(0, 6)}`;
+}
+
 /**
  * Records a transaction straight through the API, against the starter categories and accounts.
  * @example await createTransaction(request, { date: '2031-01-10', description: 'Salary', categoryId: 'salary', accountId: 'checking-account', amountCents: 950000 })

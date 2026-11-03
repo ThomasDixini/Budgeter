@@ -33,4 +33,17 @@ internal sealed class InMemoryMoneyTransactionRepository : IMoneyTransactionRepo
         _transactions.RemoveAll(transaction => transaction.Id == transactionId);
         return Task.CompletedTask;
     }
+
+    public Task<long> SumAsync(string accountId, DateOnly from, DateOnly until, CancellationToken cancellationToken)
+    {
+        var sum = _transactions
+            .Where(transaction => transaction.AccountId == accountId && transaction.Date >= from && transaction.Date < until)
+            .Sum(transaction => transaction.AmountCents);
+        return Task.FromResult(sum);
+    }
+
+    public Task<bool> AnyOnAccountAsync(string accountId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_transactions.Exists(transaction => transaction.AccountId == accountId));
+    }
 }

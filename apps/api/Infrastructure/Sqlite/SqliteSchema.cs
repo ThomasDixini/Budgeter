@@ -87,7 +87,11 @@ internal static class SqliteSchema
         CREATE TABLE IF NOT EXISTS accounts (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
-            kind TEXT NOT NULL
+            kind TEXT NOT NULL,
+            opening_balance_cents INTEGER NOT NULL DEFAULT 0,
+            credit_limit_cents INTEGER NULL,
+            closing_day INTEGER NULL,
+            due_day INTEGER NULL
         );
         CREATE TABLE IF NOT EXISTS transactions (
             id TEXT PRIMARY KEY,
@@ -98,6 +102,15 @@ internal static class SqliteSchema
             amount_cents INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_transactions_date ON transactions (date);
+        CREATE INDEX IF NOT EXISTS ix_transactions_account_date ON transactions (account_id, date);
+        CREATE TABLE IF NOT EXISTS card_payments (
+            id TEXT PRIMARY KEY,
+            card_id TEXT NOT NULL REFERENCES accounts (id),
+            from_account_id TEXT NOT NULL REFERENCES accounts (id),
+            date TEXT NOT NULL,
+            amount_cents INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_card_payments_date ON card_payments (date);
         CREATE TABLE IF NOT EXISTS finance_seed (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

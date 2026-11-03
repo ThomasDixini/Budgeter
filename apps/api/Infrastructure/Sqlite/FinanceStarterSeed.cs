@@ -4,13 +4,16 @@ using Microsoft.Data.Sqlite;
 namespace Budgeter.Api.Infrastructure.Sqlite;
 
 /// <summary>
-/// The finance categories and accounts every database starts with, until the app can manage them.
+/// The finance categories and accounts every database starts with, which the user can then change.
 /// Tracked by its own <c>finance_seed</c> marker: <c>sample_seed</c> is already set on databases that
 /// existed before Finances, which would never get these. Unlike the sample data it is not optional, since
 /// a transaction cannot be recorded without a category and an account.
 /// </summary>
 internal static class FinanceStarterSeed
 {
+    /// <summary>The starter card's terms (R$ 5,000.00, closing on the 3rd, due on the 10th), until the user edits them.</summary>
+    public static readonly CardTerms CardTerms = CardTerms.Create(500_000, closingDay: 3, dueDay: 10);
+
     private static readonly (string Id, string Name)[] Categories =
     [
         ("housing", "Housing"),
@@ -26,10 +29,10 @@ internal static class FinanceStarterSeed
         ("other", "Other"),
     ];
 
-    private static readonly (string Id, string Name, AccountKind Kind)[] Accounts =
+    private static readonly Account[] Accounts =
     [
-        ("checking-account", "Checking account", AccountKind.BankAccount),
-        ("credit-card", "Credit card", AccountKind.CreditCard),
+        Account.CreateBankAccount("checking-account", "Checking account"),
+        Account.CreateCreditCard("credit-card", "Credit card", CardTerms),
     ];
 
     /// <summary>
@@ -68,13 +71,13 @@ internal static class FinanceStarterSeed
 
     private static async Task InsertAccountsAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
-        foreach (var (id, name, kind) in Accounts)
+        foreach (var account in Accounts)
         {
             await SqliteCommands.ExecuteAsync(
                 connection,
-                "INSERT OR IGNORE INTO accounts (id, name, kind) VALUES ($id, $name, $kind)",
+                $"INSERT OR IGNORE INTO accounts {SqliteAccountRepository.InsertColumns}",
                 cancellationToken,
-                ("$id", id), ("$name", name), ("$kind", kind.ToString()));
+                SqliteAccountRepository.ParametersOf(account));
         }
     }
 }

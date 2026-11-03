@@ -55,6 +55,33 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
             lease.Connection, "DELETE FROM transactions WHERE id = $id", cancellationToken, ("$id", transactionId));
     }
 
+    public async Task<long> SumAsync(string accountId, DateOnly from, DateOnly until, CancellationToken cancellationToken)
+    {
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var sums = await SqliteCommands.QueryAsync(
+            lease.Connection,
+            """
+            SELECT COALESCE(SUM(amount_cents), 0) FROM transactions
+            WHERE account_id = $accountId AND date >= $from AND date < $until
+            """,
+            reader => reader.GetInt64(0),
+            cancellationToken,
+            ("$accountId", accountId), ("$from", ToText(from)), ("$until", ToText(until)));
+        return sums[0];
+    }
+
+    public async Task<bool> AnyOnAccountAsync(string accountId, CancellationToken cancellationToken)
+    {
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var found = await SqliteCommands.QueryAsync(
+            lease.Connection,
+            "SELECT EXISTS (SELECT 1 FROM transactions WHERE account_id = $accountId)",
+            reader => reader.GetBoolean(0),
+            cancellationToken,
+            ("$accountId", accountId));
+        return found[0];
+    }
+
     private static MoneyTransaction ToTransaction(SqliteDataReader reader)
     {
         return MoneyTransaction.Restore(

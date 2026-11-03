@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { Accounts } from './accounts/accounts';
 import { FinancesShell } from './finances-shell/finances-shell';
 import { Transactions } from './transactions/transactions';
 
@@ -13,6 +14,7 @@ export const FINANCES_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'transactions' },
       { path: 'transactions', component: Transactions, title: 'Transactions · Finances' },
+      { path: 'accounts', component: Accounts, title: 'Banks & Cards · Finances' },
     ],
   },
 ];

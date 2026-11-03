@@ -54,9 +54,15 @@ builder.Services.AddScoped<DeleteTask>();
 builder.Services.AddScoped<TaskCompletions>();
 builder.Services.AddScoped<ListFinanceCategories>();
 builder.Services.AddScoped<ListAccounts>();
+builder.Services.AddScoped<SaveAccount>();
+builder.Services.AddScoped<DeleteAccount>();
+builder.Services.AddScoped<ListAccountStatements>();
 builder.Services.AddScoped<ListTransactions>();
 builder.Services.AddScoped<SaveTransaction>();
 builder.Services.AddScoped<DeleteTransaction>();
+builder.Services.AddScoped<ListCardPayments>();
+builder.Services.AddScoped<SaveCardPayment>();
+builder.Services.AddScoped<DeleteCardPayment>();
 
 var app = builder.Build();
 
@@ -70,6 +76,8 @@ app.MapRoutineEndpoints();
 app.MapBlockOutcomeEndpoints();
 app.MapTaskEndpoints();
 app.MapFinanceReferenceEndpoints();
+app.MapAccountEndpoints();
 app.MapTransactionEndpoints();
+app.MapCardPaymentEndpoints();
 
 await app.RunAsync();

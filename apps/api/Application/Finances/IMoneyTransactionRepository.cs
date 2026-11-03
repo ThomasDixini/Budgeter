@@ -16,4 +16,13 @@ public interface IMoneyTransactionRepository
 
     /// <summary>Removes the transaction; an unknown id is ignored.</summary>
     Task DeleteAsync(string transactionId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The signed sum of the account's transactions dated from <paramref name="from"/> up to the day
+    /// before <paramref name="until"/>; zero when there are none.
+    /// </summary>
+    Task<long> SumAsync(string accountId, DateOnly from, DateOnly until, CancellationToken cancellationToken);
+
+    /// <summary>Whether any transaction was recorded on the account.</summary>
+    Task<bool> AnyOnAccountAsync(string accountId, CancellationToken cancellationToken);
 }
