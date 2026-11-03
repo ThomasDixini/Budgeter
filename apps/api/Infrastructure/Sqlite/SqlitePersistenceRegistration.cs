@@ -2,6 +2,7 @@ using Budgeter.Api.Application;
 using Budgeter.Api.Application.Categories;
 using Budgeter.Api.Application.Finances;
 using Budgeter.Api.Application.Goals;
+using Budgeter.Api.Application.Investments;
 using Budgeter.Api.Application.Routines;
 using Budgeter.Api.Application.Tasks;
 
@@ -34,6 +35,8 @@ public static class SqlitePersistenceRegistration
         services.AddSingleton<ICardPaymentRepository, SqliteCardPaymentRepository>();
         services.AddSingleton<IIncomeSplitRepository, SqliteIncomeSplitRepository>();
         services.AddSingleton<IBillRepository, SqliteBillRepository>();
+        services.AddSingleton<IInvestmentRepository, SqliteInvestmentRepository>();
+        services.AddSingleton<ICdiRateStore, SqliteCdiRateStore>();
         services.AddHostedService<SqliteDatabaseInitializer>();
         return services;
     }

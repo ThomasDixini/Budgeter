@@ -1,0 +1,54 @@
+<form
+  class="income-form ui-enter"
+  [attr.aria-label]="'Income from ' + investmentName()"
+  (submit)="submit($event)"
+  (keydown.escape)="dismiss.emit()"
+>
+  <div class="fields">
+    <label class="ui-field">
+      Kind
+      <select class="ui-input" name="kind" (change)="kind.set($any(valueOf($event)))">
+        @for (option of kindOptions; track option.value) {
+          <option [value]="option.value" [selected]="option.value === kind()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+    </label>
+
+    <label class="ui-field">
+      Amount (R$)
+      <input
+        class="ui-input"
+        name="amount"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="0.00"
+        [value]="amount()"
+        [attr.aria-invalid]="amountError() !== undefined"
+        [attr.aria-describedby]="amountError() === undefined ? null : 'income-amount-error'"
+        (input)="amount.set(valueOf($event))"
+      />
+      @if (amountError(); as error) {
+        <span id="income-amount-error" class="error">{{ error }}</span>
+      }
+    </label>
+
+    <label class="ui-field">
+      Date
+      <input
+        class="ui-input"
+        name="date"
+        type="date"
+        [value]="date()"
+        (change)="date.set(valueOf($event))"
+      />
+    </label>
+  </div>
+
+  <div class="actions">
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">Record income</button>
+  </div>
+</form>

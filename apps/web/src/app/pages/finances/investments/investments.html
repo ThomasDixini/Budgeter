@@ -1,0 +1,172 @@
+<div class="page">
+  <app-page-heading
+    eyebrow="Finances"
+    eyebrowIcon="finances"
+    heading="Investments"
+    [description]="summary()"
+  >
+    <button class="ui-button-ghost" type="button" (click)="open({ kind: 'new' })">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      Add investment
+    </button>
+  </app-page-heading>
+
+  @switch (panel().kind) {
+    @case ('new') {
+      <app-investment-form
+        [today]="today"
+        [saving]="isSaving()"
+        (save)="saveInvestment($event)"
+        (dismiss)="close()"
+      />
+    }
+    @case ('edit') {
+      <app-investment-form
+        [investment]="panelInvestment()"
+        [today]="today"
+        [saving]="isSaving()"
+        (save)="saveInvestment($event)"
+        (dismiss)="close()"
+        (remove)="deleteInvestment()"
+      />
+    }
+    @case ('trade') {
+      @if (panelInvestment(); as investment) {
+        <app-trade-form
+          [investmentName]="investment.name"
+          [suggestedPriceCents]="investment.price?.cents ?? 0"
+          [today]="today"
+          [saving]="isSaving()"
+          (save)="addTrade($event)"
+          (dismiss)="close()"
+        />
+      }
+    }
+    @case ('income') {
+      @if (panelInvestment(); as investment) {
+        <app-income-form
+          [investmentName]="investment.name"
+          [today]="today"
+          [saving]="isSaving()"
+          (save)="addIncome($event)"
+          (dismiss)="close()"
+        />
+      }
+    }
+  }
+
+  @if (hasLoadFailed()) {
+    <app-load-failed message="Couldn't load your investments." (retry)="reload()" />
+  }
+
+  <section class="stats" aria-label="Portfolio">
+    @for (stat of stats(); track stat.label) {
+      <div class="stat">
+        <p class="label">{{ stat.label }}</p>
+        <p class="value ui-tabular">{{ stat.value }}</p>
+        @if (stat.note) {
+          <p class="note ui-tabular">{{ stat.note }}</p>
+        }
+      </div>
+    }
+  </section>
+  @if (cdiNote(); as note) {
+    <p class="ui-muted cdi-note">{{ note }}</p>
+  }
+
+  <section class="ui-card card" aria-label="Holdings">
+    <h2 class="card-title">Holdings</h2>
+    @if (lines().length > 0) {
+      <ul class="list">
+        @for (line of lines(); track line.investment.id) {
+          <li class="holding" [attr.aria-label]="line.investment.name">
+            <div class="text">
+              <span class="name">
+                {{ line.investment.name }}
+                <span class="ui-tag">{{ kindLabel(line.investment) }}</span>
+              </span>
+              <span class="detail">{{ holding(line) }}</span>
+              <span class="detail">{{ priceText(line.investment) }}</span>
+            </div>
+            <div class="figures">
+              <span class="value-text ui-tabular">{{ valueText(line) }}</span>
+              <span
+                class="detail ui-tabular"
+                [class.gain]="(line.gainCents ?? 0) > 0"
+                [class.loss]="(line.gainCents ?? 0) < 0"
+                >{{ gainText(line) }}</span
+              >
+            </div>
+            <div class="actions">
+              <button
+                class="ui-button-ghost"
+                type="button"
+                [attr.aria-label]="'Trade ' + line.investment.name"
+                (click)="open({ kind: 'trade', investmentId: line.investment.id })"
+              >
+                Buy / sell
+              </button>
+              <button
+                class="ui-button-ghost"
+                type="button"
+                [attr.aria-label]="'Add income to ' + line.investment.name"
+                (click)="open({ kind: 'income', investmentId: line.investment.id })"
+              >
+                Income
+              </button>
+              <button
+                class="ui-button-ghost"
+                type="button"
+                [attr.aria-label]="'Edit ' + line.investment.name"
+                (click)="open({ kind: 'edit', investmentId: line.investment.id })"
+              >
+                Edit
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    } @else if (isLoaded()) {
+      <p class="ui-muted empty">
+        No investments yet. Add one, then record your purchases to follow it here.
+      </p>
+    }
+  </section>
+
+  <section class="ui-card card" aria-label="Movements">
+    <h2 class="card-title">Purchases, sales and proventos</h2>
+    @if (movements().length > 0) {
+      <ul class="list">
+        @for (movement of movements(); track movement.key) {
+          <li class="movement">
+            <span class="text">
+              <span class="name">{{ movementDetail(movement) }}</span>
+            </span>
+            <span class="amount ui-tabular">{{ signed(movement.cents) }}</span>
+            <button
+              class="ui-button-ghost"
+              type="button"
+              [attr.aria-label]="'Delete ' + movement.label + ' of ' + movement.investmentName"
+              (click)="removeMovement(movement)"
+            >
+              Delete
+            </button>
+          </li>
+        }
+      </ul>
+    } @else if (isLoaded()) {
+      <p class="ui-muted empty">Nothing recorded yet.</p>
+    }
+  </section>
+</div>

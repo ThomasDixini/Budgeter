@@ -4,9 +4,11 @@ using System.Text.Json.Serialization;
 using Budgeter.Api.Application.Categories;
 using Budgeter.Api.Application.Finances;
 using Budgeter.Api.Application.Goals;
+using Budgeter.Api.Application.Investments;
 using Budgeter.Api.Application.Routines;
 using Budgeter.Api.Application.Tasks;
 using Budgeter.Api.Endpoints;
+using Budgeter.Api.Infrastructure.Cdi;
 using Budgeter.Api.Infrastructure.Sqlite;
 
 [assembly: InternalsVisibleTo("Budgeter.Api.Tests")]
@@ -32,6 +34,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
 builder.Services.AddSqlitePersistence();
+builder.Services.AddCdiRateSource(builder.Configuration);
 builder.Services.AddScoped<ListCategories>();
 builder.Services.AddScoped<CreateCategory>();
 builder.Services.AddScoped<UpdateCategory>();
@@ -72,6 +75,13 @@ builder.Services.AddScoped<SaveBill>();
 builder.Services.AddScoped<DeleteBill>();
 builder.Services.AddScoped<SettleBill>();
 builder.Services.AddScoped<ReopenBill>();
+builder.Services.AddScoped<GetPortfolio>();
+builder.Services.AddScoped<SaveInvestment>();
+builder.Services.AddScoped<DeleteInvestment>();
+builder.Services.AddScoped<SaveTrade>();
+builder.Services.AddScoped<DeleteTrade>();
+builder.Services.AddScoped<SaveIncome>();
+builder.Services.AddScoped<DeleteIncome>();
 
 var app = builder.Build();
 
@@ -89,6 +99,7 @@ app.MapAccountEndpoints();
 app.MapTransactionEndpoints();
 app.MapCardPaymentEndpoints();
 app.MapBillEndpoints();
+app.MapInvestmentEndpoints();
 app.MapIncomeSplitEndpoints();
 
 await app.RunAsync();
