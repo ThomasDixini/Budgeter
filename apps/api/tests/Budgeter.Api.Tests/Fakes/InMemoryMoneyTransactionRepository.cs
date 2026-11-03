@@ -42,6 +42,11 @@ internal sealed class InMemoryMoneyTransactionRepository : IMoneyTransactionRepo
         return Task.FromResult(sum);
     }
 
+    public Task<bool> AnyInCategoryAsync(string categoryId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_transactions.Exists(transaction => transaction.CategoryId == categoryId));
+    }
+
     public Task<bool> AnyOnAccountAsync(string accountId, CancellationToken cancellationToken)
     {
         return Task.FromResult(_transactions.Exists(transaction => transaction.AccountId == accountId));

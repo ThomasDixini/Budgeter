@@ -48,6 +48,48 @@ export class FinanceReferencesStore {
   }
 
   /**
+   * Adds a category and saves it; the list stays ordered by name, as the API serves it.
+   * @example store.addCategory('Courses')
+   */
+  addCategory(name: string): FinanceCategory {
+    const category: FinanceCategory = { id: this.ids.next(), name: name.trim() };
+    this.categoryList.update((list) => this.sortedByName([...list, category]));
+    const dropAdded = (): void =>
+      this.categoryList.update((list) => list.filter((current) => current !== category));
+    this.send(this.gateway.saveCategory(category), NOTHING_TO_DO, dropAdded);
+    return category;
+  }
+
+  /**
+   * Renames a category in place. A failed save puts the previous name back only if this rename is still
+   * the one shown.
+   * @example store.renameCategory('courses', 'Study')
+   */
+  renameCategory(categoryId: string, name: string): FinanceCategory | undefined {
+    const previous = positionOf(this.categoryList(), (current) => current.id === categoryId);
+    if (previous === undefined) return undefined;
+    const category: FinanceCategory = { id: categoryId, name: name.trim() };
+    this.replaceCategory(previous.record, category);
+    this.send(this.gateway.saveCategory(category), NOTHING_TO_DO, () =>
+      this.replaceCategory(category, previous.record),
+    );
+    return category;
+  }
+
+  /**
+   * Deletes a category; puts it back if the gateway rejects it (one with transactions is kept). Says
+   * once it is stored, so what held the category (the income split) lets go of it too.
+   * @example store.deleteCategory('courses', () => dropFromPlan('courses'))
+   */
+  deleteCategory(categoryId: string, onStored: OnStored = NOTHING_TO_DO): void {
+    const removed = positionOf(this.categoryList(), (current) => current.id === categoryId);
+    this.categoryList.update((list) => list.filter((current) => current.id !== categoryId));
+    this.send(this.gateway.deleteCategory(categoryId), onStored, () =>
+      this.putBackCategory(removed),
+    );
+  }
+
+  /**
    * Adds an account at the end of the list and saves it.
    * @example store.addAccount({ name: 'Nubank', kind: 'bankAccount', openingBalanceCents: 0 }, refreshBalances)
    */
@@ -124,6 +166,21 @@ export class FinanceReferencesStore {
         this.errorHandler.handleError(error);
       },
     });
+  }
+
+  private sortedByName(categories: FinanceCategory[]): FinanceCategory[] {
+    return categories.sort((first, second) => first.name.localeCompare(second.name));
+  }
+
+  private replaceCategory(current: FinanceCategory, next: FinanceCategory): void {
+    this.categoryList.update((list) =>
+      this.sortedByName(list.map((category) => (category === current ? next : category))),
+    );
+  }
+
+  private putBackCategory(removed: Positioned<FinanceCategory> | undefined): void {
+    if (removed === undefined) return;
+    this.categoryList.update((list) => this.sortedByName(restoredAt(list, removed, sameId)));
   }
 
   // Swaps by identity, so a version replaced again in the meantime is left alone.

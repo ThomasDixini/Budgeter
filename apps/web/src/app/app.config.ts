@@ -23,6 +23,8 @@ import {
 } from './core/finances/transactions-gateway';
 import { AccountStatementsGateway } from './core/finances/account-statements-gateway';
 import { HttpAccountStatementsGateway } from './core/finances/http-account-statements-gateway';
+import { HttpIncomeSplitGateway } from './core/finances/http-income-split-gateway';
+import { IncomeSplitGateway } from './core/finances/income-split-gateway';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -38,5 +40,6 @@ export const appConfig: ApplicationConfig = {
     { provide: TransactionsGateway, useClass: HttpTransactionsGateway },
     { provide: FinanceReferencesGateway, useClass: HttpFinanceReferencesGateway },
     { provide: AccountStatementsGateway, useClass: HttpAccountStatementsGateway },
+    { provide: IncomeSplitGateway, useClass: HttpIncomeSplitGateway },
   ],
 };

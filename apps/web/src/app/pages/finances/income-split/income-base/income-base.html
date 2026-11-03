@@ -1,0 +1,33 @@
+<section class="ui-card base" aria-labelledby="base-title">
+  <h2 id="base-title" class="ui-card-title">Base income for the month</h2>
+  <label class="ui-field">
+    Base income (R$)
+    <input
+      class="ui-input amount"
+      name="baseIncome"
+      type="text"
+      inputmode="decimal"
+      autocomplete="off"
+      placeholder="0.00"
+      [value]="text()"
+      [attr.aria-invalid]="error() !== undefined"
+      [attr.aria-describedby]="error() === undefined ? null : 'base-income-error'"
+      (input)="type($event)"
+    />
+    @if (error(); as message) {
+      <span id="base-income-error" class="error">{{ message }}</span>
+    }
+  </label>
+  <div class="shortcuts">
+    @if (lastMonthCents() > 0) {
+      <button class="ui-button-ghost" type="button" (click)="use(lastMonthCents())">
+        {{ lastMonthLabel() }}
+      </button>
+    }
+    @if (salaryCents() > 0) {
+      <button class="ui-button-ghost" type="button" (click)="use(salaryCents())">
+        {{ salaryLabel() }}
+      </button>
+    }
+  </div>
+</section>

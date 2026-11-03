@@ -33,6 +33,25 @@ export interface FinanceCategory {
   readonly name: string;
 }
 
+/** The longest category name the API accepts. */
+export const MAX_CATEGORY_NAME_LENGTH = 40;
+
+/**
+ * Whether another category already has the name, ignoring case and the spaces around it: the API
+ * refuses a repeated name, so the form can say so before sending it.
+ * @example isCategoryNameTaken([{ id: 'food', name: 'Food' }], ' food ', 'meals') // true
+ */
+export function isCategoryNameTaken(
+  categories: readonly FinanceCategory[],
+  name: string,
+  exceptId?: string,
+): boolean {
+  const wanted = name.trim().toLowerCase();
+  return categories.some(
+    (category) => category.id !== exceptId && category.name.trim().toLowerCase() === wanted,
+  );
+}
+
 /** Choices of the bank account/credit card switch, in display order. */
 export const ACCOUNT_KIND_OPTIONS: readonly { value: AccountKind; label: string }[] = [
   { value: 'bankAccount', label: 'Bank account' },

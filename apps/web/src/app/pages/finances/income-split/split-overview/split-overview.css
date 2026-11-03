@@ -1,0 +1,119 @@
+:host {
+  display: block;
+}
+
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: var(--border-hairline) solid var(--color-border);
+}
+
+.status.warn {
+  color: var(--color-warning-text);
+  background: rgba(var(--color-amber-rgb), 0.08);
+  border-color: rgba(var(--color-amber-rgb), 0.35);
+}
+
+.bar {
+  display: flex;
+  height: 56px;
+  gap: 2px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.segment {
+  position: relative;
+  flex: 0 1 0;
+  min-width: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  /* Dark text: these fills are mid-tone, and white on them misses 4.5:1. */
+  color: #050507;
+  transition: opacity var(--duration-fast);
+}
+
+.segment:first-child {
+  border-radius: 14px 0 0 14px;
+}
+
+.segment:last-child {
+  border-radius: 0 14px 14px 0;
+}
+
+.segment:only-child {
+  border-radius: 14px;
+}
+
+.segment.dim {
+  opacity: 0.45;
+}
+
+.segment.free {
+  color: var(--color-text-muted);
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0 6px,
+    rgba(255, 255, 255, 0.02) 6px 12px
+  );
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 2;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid var(--color-border);
+  background: var(--color-option-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tip-name {
+  font-weight: var(--font-weight-medium);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.presets-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}

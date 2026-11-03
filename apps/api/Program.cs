@@ -53,6 +53,10 @@ builder.Services.AddScoped<SaveTask>();
 builder.Services.AddScoped<DeleteTask>();
 builder.Services.AddScoped<TaskCompletions>();
 builder.Services.AddScoped<ListFinanceCategories>();
+builder.Services.AddScoped<SaveFinanceCategory>();
+builder.Services.AddScoped<DeleteFinanceCategory>();
+builder.Services.AddScoped<GetIncomeSplit>();
+builder.Services.AddScoped<SaveIncomeSplit>();
 builder.Services.AddScoped<ListAccounts>();
 builder.Services.AddScoped<SaveAccount>();
 builder.Services.AddScoped<DeleteAccount>();
@@ -79,5 +83,6 @@ app.MapFinanceReferenceEndpoints();
 app.MapAccountEndpoints();
 app.MapTransactionEndpoints();
 app.MapCardPaymentEndpoints();
+app.MapIncomeSplitEndpoints();
 
 await app.RunAsync();

@@ -1,0 +1,73 @@
+<section class="ui-card overview" aria-labelledby="overview-title">
+  <div class="header">
+    <h2 id="overview-title" class="ui-card-title">How your income is split</h2>
+    <span class="status" [class.warn]="status().kind !== 'balanced'" role="status">
+      @if (status().kind === 'balanced') {
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12l5 5L20 7"></path>
+        </svg>
+      } @else {
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 9v4M12 17h.01"></path>
+          <path
+            d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"
+          ></path>
+        </svg>
+      }
+      {{ statusText() }}
+    </span>
+  </div>
+
+  <div class="bar" role="img" [attr.aria-label]="barLabel()">
+    @for (segment of segments(); track segment.id) {
+      <div
+        class="segment"
+        [style.flex-grow]="segment.percent"
+        [style.background]="segment.color"
+        [class.dim]="hoveredId() !== undefined && hoveredId() !== segment.id"
+        (mouseenter)="hoveredId.set(segment.id)"
+        (mouseleave)="hoveredId.set(undefined)"
+      >
+        {{ segment.inside }}
+        @if (hoveredId() === segment.id) {
+          <span class="tip"
+            ><span class="tip-name">{{ segment.name }}</span
+            ><span class="ui-tabular">{{ segment.detail }}</span></span
+          >
+        }
+      </div>
+    }
+    @if (freePercent() > 0) {
+      <div class="segment free" [style.flex-grow]="freePercent()">Free</div>
+    }
+  </div>
+
+  <div class="presets">
+    <span class="presets-label">Start from a template:</span>
+    @for (preset of presets(); track preset.label) {
+      <button class="ui-button-ghost" type="button" (click)="applyPreset.emit(preset)">
+        {{ preset.label }}
+      </button>
+    }
+  </div>
+</section>

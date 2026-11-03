@@ -1,0 +1,98 @@
+:host {
+  display: block;
+}
+
+.manager {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.new .ui-button-primary {
+  align-self: flex-end;
+}
+
+.new .ui-button-primary:disabled,
+.rename .ui-button-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.grow {
+  flex: 1 1 240px;
+}
+
+.error {
+  flex-basis: 100%;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px 16px;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 4px 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.name {
+  min-width: 0;
+  font-size: var(--font-size-md);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.small {
+  height: 36px;
+  padding: 0 12px;
+  font-size: var(--font-size-xs);
+}
+
+.delete {
+  color: var(--color-danger);
+}
+
+.rename {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.rename .ui-input {
+  flex: 1 1 160px;
+  min-width: 0;
+}

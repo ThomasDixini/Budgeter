@@ -1,0 +1,63 @@
+<div class="page">
+  <app-page-heading
+    eyebrow="Finances"
+    eyebrowIcon="finances"
+    heading="Income split"
+    description="Decide where each part of what you earn goes. Create, rename and adjust as you like."
+  >
+    @if (store.hasChanges()) {
+      <span class="ui-muted unsaved" role="status">Unsaved changes</span>
+    }
+    <button
+      class="ui-button-primary"
+      type="button"
+      [disabled]="!store.hasChanges() || store.isSaving() || !store.isLoaded()"
+      (click)="store.save()"
+    >
+      {{ saveLabel() }}
+    </button>
+  </app-page-heading>
+
+  @if (store.hasLoadFailed()) {
+    <app-load-failed message="Couldn't load your income split." (retry)="store.reload()" />
+  }
+
+  @if (store.isLoaded()) {
+    <div class="top">
+      <app-income-base
+        [baseIncomeCents]="store.split().baseIncomeCents"
+        [lastMonthCents]="store.lastMonthIncomeCents()"
+        [salaryCents]="store.lastMonthSalaryCents()"
+        [previousMonthName]="previousMonthName()"
+        (baseIncomeChange)="store.setBaseIncome($event)"
+      />
+      <app-split-overview
+        [split]="store.split()"
+        [status]="store.status()"
+        [presets]="store.presets"
+        (applyPreset)="store.applyPreset($event)"
+      />
+    </div>
+
+    <app-split-parts
+      [split]="store.split()"
+      [categories]="store.categories()"
+      (rename)="store.rename($event.partId, $event.name)"
+      (setPercent)="store.setPercent($event.partId, $event.percent)"
+      (nextColor)="store.nextColor($event)"
+      (assign)="store.assignCategory($event.partId, $event.categoryId)"
+      (unassign)="store.unassignCategory($event)"
+      (removePart)="store.removePart($event)"
+      (addPart)="store.addPart()"
+    />
+
+    <app-plan-vs-actual [progress]="store.progress()" [monthTitle]="monthTitle()" />
+
+    <app-category-manager
+      [categories]="store.categories()"
+      (add)="store.addCategory($event)"
+      (rename)="store.renameCategory($event.categoryId, $event.name)"
+      (remove)="store.deleteCategory($event)"
+    />
+  }
+</div>

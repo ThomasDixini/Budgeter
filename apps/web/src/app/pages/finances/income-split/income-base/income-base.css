@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.base {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.amount {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+}
+
+.shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shortcuts:empty {
+  display: none;
+}
+
+.shortcuts .ui-button-ghost {
+  height: auto;
+  min-height: var(--touch-target);
+  padding-block: 8px;
+  text-align: left;
+}
