@@ -4,8 +4,11 @@ import { PageHeading } from '../../../components/page-heading/page-heading';
 import { CardPaymentDraft } from '../../../core/finances/account-statement';
 import {
   AgendaItem,
+  AgendaGroups,
   Bill,
   BillDraft,
+  BillKind,
+  DueTotals,
   BillSettlement,
   CardInvoiceDue,
   dueTotals,
@@ -63,7 +66,16 @@ export class Bills {
       (items) => items.length === 0,
     );
   });
-  protected readonly summary = computed(() => this.describeSummary());
+  protected readonly kindOptions: readonly { value: BillKind; label: string }[] = [
+    { value: 'payable', label: 'To pay' },
+    { value: 'receivable', label: 'To receive' },
+  ];
+  protected readonly kindFilter = signal<BillKind | undefined>(undefined);
+  protected readonly visible = computed(() => this.filterGroups(this.groups()));
+  protected readonly leftToPay = computed(() => this.money(this.openTotals().payableCents));
+  protected readonly leftToReceive = computed(() => this.money(this.openTotals().receivableCents));
+  protected readonly projectedBalance = computed(() => this.describeBalance());
+  protected readonly overdueCount = computed(() => this.describeOverdue());
   protected readonly panelBill = computed(() => this.billOfPanel());
   protected readonly payingCard = computed(() => {
     const panel = this.panel();
@@ -117,6 +129,11 @@ export class Bills {
     return panel.kind === 'pay' ? panel.invoice.amountCents : 0;
   }
 
+  /** Picks a kind to show, or goes back to showing both when it is already the one picked. */
+  protected toggleKind(kind: BillKind): void {
+    this.kindFilter.update((current) => (current === kind ? undefined : kind));
+  }
+
   protected reload(): void {
     this.store.reload();
   }
@@ -134,15 +151,36 @@ export class Bills {
     return [...groups.overdue, ...groups.soon, ...groups.later, ...groups.settled];
   }
 
-  private describeSummary(): string {
-    if (!this.isLoaded()) return 'Overdue: — · Next 7 days: —';
+  private openTotals(): DueTotals {
     const groups = this.groups();
-    const overdue = dueTotals(groups.overdue);
-    const soon = dueTotals(groups.soon);
-    const money = (cents: number): string => formatMoney(cents, this.locale);
-    return (
-      `Overdue: ${money(overdue.payableCents)} to pay, ${money(overdue.receivableCents)} to receive · ` +
-      `Next 7 days: ${money(soon.payableCents)} to pay, ${money(soon.receivableCents)} to receive`
-    );
+    return dueTotals([...groups.overdue, ...groups.soon, ...groups.later]);
+  }
+
+  private describeBalance(): string {
+    const { payableCents, receivableCents } = this.openTotals();
+    const balance = receivableCents - payableCents;
+    return `${balance < 0 ? '−' : '+'}${this.money(Math.abs(balance))}`;
+  }
+
+  private describeOverdue(): string {
+    const count = this.groups().overdue.length;
+    return count === 1 ? '1 bill' : `${count} bills`;
+  }
+
+  private filterGroups(groups: AgendaGroups): AgendaGroups {
+    const kind = this.kindFilter();
+    if (kind === undefined) return groups;
+    const keep = (items: readonly AgendaItem[]): AgendaItem[] =>
+      items.filter((item) => item.kind === kind);
+    return {
+      overdue: keep(groups.overdue),
+      soon: keep(groups.soon),
+      later: keep(groups.later),
+      settled: keep(groups.settled),
+    };
+  }
+
+  private money(cents: number): string {
+    return formatMoney(cents, this.locale);
   }
 }
