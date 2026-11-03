@@ -4,7 +4,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, catchError, switchMap } from 'rxjs';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { Clock } from '../../../core/calendar/clock';
-import { isoDate, longDateLabel } from '../../../core/calendar/date-label';
+import { isoDate, longDateLabel, parseIsoDate } from '../../../core/calendar/date-label';
 import { Category, findCategory } from '../../../core/routines/category';
 import {
   HistoryBlock,
@@ -14,7 +14,7 @@ import {
   historyPeriodLabel,
 } from '../../../core/routines/day-history';
 import { DayRecord, DayRecords } from '../../../core/routines/day-records';
-import { GOAL_TYPE_LABELS, Goal, goalExtra, parseIsoDate } from '../../../core/routines/goal';
+import { GOAL_TYPE_LABELS, Goal, goalExtra } from '../../../core/routines/goal';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 
 interface HistoryGoalView {

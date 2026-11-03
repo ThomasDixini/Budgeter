@@ -15,3 +15,12 @@ export function longDateLabel(date: Date, locale: string): string {
 export function isoDate(date: Date): string {
   return formatDate(date, 'yyyy-MM-dd', 'en-US');
 }
+
+/**
+ * Local date for an ISO `YYYY-MM-DD` string (avoids the UTC shift of `new Date(iso)`).
+ * @example parseIsoDate('2026-12-15').getDate() // 15
+ */
+export function parseIsoDate(isoDay: string): Date {
+  const [year, month, day] = isoDay.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}

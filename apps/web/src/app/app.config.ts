@@ -13,6 +13,14 @@ import { HttpBlockOutcomesGateway } from './core/routines/http-block-outcomes-ga
 import { HttpTasksGateway } from './core/routines/http-tasks-gateway';
 import { RoutinesGateway } from './core/routines/routines-gateway';
 import { TasksGateway } from './core/routines/tasks-gateway';
+import {
+  HttpFinanceReferencesGateway,
+  HttpTransactionsGateway,
+} from './core/finances/http-transactions-gateway';
+import {
+  FinanceReferencesGateway,
+  TransactionsGateway,
+} from './core/finances/transactions-gateway';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -25,5 +33,7 @@ export const appConfig: ApplicationConfig = {
     { provide: RoutinesGateway, useClass: HttpRoutinesGateway },
     { provide: TasksGateway, useClass: HttpTasksGateway },
     { provide: BlockOutcomesGateway, useClass: HttpBlockOutcomesGateway },
+    { provide: TransactionsGateway, useClass: HttpTransactionsGateway },
+    { provide: FinanceReferencesGateway, useClass: HttpFinanceReferencesGateway },
   ],
 };

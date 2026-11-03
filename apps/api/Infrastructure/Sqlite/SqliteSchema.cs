@@ -80,6 +80,28 @@ internal static class SqliteSchema
             id INTEGER PRIMARY KEY CHECK (id = 1),
             applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS finance_categories (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS accounts (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            kind TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS transactions (
+            id TEXT PRIMARY KEY,
+            date TEXT NOT NULL,
+            description TEXT NOT NULL,
+            category_id TEXT NOT NULL REFERENCES finance_categories (id),
+            account_id TEXT NOT NULL REFERENCES accounts (id),
+            amount_cents INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_transactions_date ON transactions (date);
+        CREATE TABLE IF NOT EXISTS finance_seed (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
         """;
 
     /// <summary>

@@ -33,7 +33,8 @@
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--letter-spacing-caps);
   text-transform: uppercase;
-  color: var(--color-mint);
+  /* --color-accent is set by the module frame; screens outside a module keep the mint. */
+  color: var(--color-accent, var(--color-mint));
 }
 
 .ui-page-title {

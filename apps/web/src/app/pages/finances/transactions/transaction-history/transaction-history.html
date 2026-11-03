@@ -1,0 +1,47 @@
+<section class="ui-card history" aria-label="History">
+  @for (day of days(); track day.date) {
+    <div class="day">
+      <h2 class="day-header">
+        <span>{{ dayLabel(day.date) }}</span>
+        <span class="ui-tabular">{{ signed(day.totalCents) }}</span>
+      </h2>
+      <ul class="rows">
+        @for (transaction of day.transactions; track transaction.id) {
+          <li>
+            <button
+              class="row"
+              type="button"
+              [attr.aria-label]="rowLabel(transaction)"
+              (click)="edit.emit(transaction)"
+            >
+              <span class="mark" [class.income]="transaction.amountCents > 0" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  @if (transaction.amountCents > 0) {
+                    <path d="M12 5v14M6 13l6 6 6-6"></path>
+                  } @else {
+                    <path d="M12 19V5M6 11l6-6 6 6"></path>
+                  }
+                </svg>
+              </span>
+              <span class="text">
+                <span class="description">{{ transaction.description }}</span>
+                <span class="account">{{ accountNames().get(transaction.accountId) }}</span>
+              </span>
+              <span class="ui-tag category">{{ categoryNames().get(transaction.categoryId) }}</span>
+              <span class="amount ui-tabular">{{ signed(transaction.amountCents) }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</section>

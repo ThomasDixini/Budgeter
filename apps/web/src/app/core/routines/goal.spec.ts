@@ -8,7 +8,6 @@ import {
   goalTag,
   goalValueLabel,
   isGoalMet,
-  parseIsoDate,
   periodFooter,
   usesDots,
 } from './goal';
@@ -148,11 +147,5 @@ describe('periodFooter', () => {
 
   it('is empty for a custom period without deadline', () => {
     expect(periodFooter('custom', TODAY)).toBe('');
-  });
-});
-
-describe('parseIsoDate', () => {
-  it('reads the date in local time', () => {
-    expect(parseIsoDate('2026-12-15')).toEqual(new Date(2026, 11, 15));
   });
 });

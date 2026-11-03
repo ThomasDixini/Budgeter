@@ -13,7 +13,7 @@
   box-sizing: border-box;
 }
 
-/* Routines pages are text-heavy, so the fire stays dimmer than on the home screen. */
+/* Module pages are text-heavy, so the fire stays dimmer than on the home screen. */
 .fire {
   opacity: 0.45;
 }

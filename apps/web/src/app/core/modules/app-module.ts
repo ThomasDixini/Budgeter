@@ -27,3 +27,11 @@ export function isModuleAvailable(module: AppModule): boolean {
 export function accentRgbVariable(accent: ModuleAccent): string {
   return `var(--color-${accent}-rgb)`;
 }
+
+/**
+ * Builds the CSS value that resolves a module accent to its color token.
+ * @example accentVariable('violet') // 'var(--color-violet)'
+ */
+export function accentVariable(accent: ModuleAccent): string {
+  return `var(--color-${accent})`;
+}

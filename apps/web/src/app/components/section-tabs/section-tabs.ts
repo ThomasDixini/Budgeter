@@ -1,13 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { ROUTINES_SECTIONS } from '../../../core/routines/routines-section';
+import { ModuleSection } from '../../core/modules/module-section';
 
-/** Pill-shaped section switcher shown in the header of every Routines & Goals page. */
+/** Pill-shaped section switcher shown in the header of every module page. */
 @Component({
-  selector: 'app-routines-tabs',
+  selector: 'app-section-tabs',
   imports: [RouterLink, RouterLinkActive],
   template: `<nav class="tabs" aria-label="Module sections">
-    @for (section of sections; track section.path) {
+    @for (section of sections(); track section.path) {
       <a
         class="tab"
         [routerLink]="section.path"
@@ -18,8 +18,8 @@ import { ROUTINES_SECTIONS } from '../../../core/routines/routines-section';
       >
     }
   </nav>`,
-  styleUrl: './routines-tabs.css',
+  styleUrl: './section-tabs.css',
 })
-export class RoutinesTabs {
-  protected readonly sections = ROUTINES_SECTIONS;
+export class SectionTabs {
+  readonly sections = input.required<readonly ModuleSection[]>();
 }

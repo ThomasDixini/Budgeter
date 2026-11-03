@@ -1,5 +1,6 @@
 import { weekdayIndex } from '../calendar/time-of-day';
-import { parseIsoDate, shortDate } from './goal';
+import { parseIsoDate } from '../calendar/date-label';
+import { shortDate } from './goal';
 import { WEEKDAY_LABELS, weekdaysLabel } from './routine';
 
 /** How often a task shows up on the Today list. */

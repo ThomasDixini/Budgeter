@@ -19,8 +19,7 @@ test.describe('home module wheel', () => {
     await home.spinRight();
 
     await expect(home.title).toHaveText('Finances');
-    // Not built yet: no link that would only bounce back to this screen.
-    await expect(home.openModuleLink).toHaveCount(0);
+    await expect(home.openModuleLink).toHaveAttribute('href', '/finances');
   });
 
   test('spinning left from the first module wraps to the last one', async () => {

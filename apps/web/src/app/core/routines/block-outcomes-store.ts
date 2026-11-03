@@ -4,7 +4,7 @@ import { isoDate } from '../calendar/date-label';
 import { formatClock } from '../calendar/time-of-day';
 import { BlockOutcomesGateway } from './block-outcomes-gateway';
 import { BlockOutcome, BlockOutcomeKind } from './day-plan';
-import { Positioned, positionOf, restoredAt } from './list-positions';
+import { Positioned, positionOf, restoredAt } from '../lists/list-positions';
 import { RoutinesStore } from './routines-store';
 
 /**

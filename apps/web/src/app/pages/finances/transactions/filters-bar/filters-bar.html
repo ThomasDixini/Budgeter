@@ -1,0 +1,58 @@
+<div class="filters">
+  <label class="search">
+    <span class="ui-visually-hidden">Search transactions</span>
+    <svg
+      class="search-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="M20 20l-4-4"></path>
+    </svg>
+    <input
+      class="ui-input search-input"
+      type="search"
+      placeholder="Search by description or category"
+      [value]="filters().query"
+      (input)="changeQuery($event)"
+    />
+  </label>
+  <div class="chips" role="group" aria-label="Type">
+    @for (option of typeOptions; track option.value) {
+      <button
+        class="ui-chip"
+        type="button"
+        [attr.aria-pressed]="option.value === filters().type"
+        (click)="changeType(option.value)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+</div>
+<div class="chips" role="group" aria-label="Account">
+  <button
+    class="ui-chip"
+    type="button"
+    [attr.aria-pressed]="filters().accountId === undefined"
+    (click)="changeAccount(undefined)"
+  >
+    All accounts
+  </button>
+  @for (account of accounts(); track account.id) {
+    <button
+      class="ui-chip"
+      type="button"
+      [attr.aria-pressed]="account.id === filters().accountId"
+      (click)="changeAccount(account.id)"
+    >
+      {{ account.name }}
+    </button>
+  }
+</div>
