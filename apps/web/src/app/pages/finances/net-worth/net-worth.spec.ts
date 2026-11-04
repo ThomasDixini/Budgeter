@@ -45,13 +45,45 @@ function texts(fixture: ComponentFixture<NetWorth>, selector: string): string[] 
 }
 
 describe('Net worth page', () => {
-  it('adds the balances and investments and takes away what the cards owe', () => {
+  it('shows the net worth of today and leaves the history figures blank', () => {
     const fixture = render();
 
     expect([texts(fixture, '.stat .label'), texts(fixture, '.stat .value')]).toEqual([
-      ['Net worth', 'Assets', 'Owed on cards'],
-      ['R$11,052.20', 'R$11,338.60', 'R$286.40'],
+      ['Net worth today', 'Growth in period', 'Average per month', 'Best month'],
+      ['R$11,052.20', '—', '—', '—'],
     ]);
+  });
+
+  it('adds the balances and investments and takes away what the cards owe', () => {
+    const fixture = render();
+
+    expect(texts(fixture, '[aria-label="What it is made of"] .row')).toEqual([
+      'Cash in accountsR$10,028.60',
+      'InvestmentsR$1,310.00',
+      'Open invoices−R$286.40',
+      'Net worthR$11,052.20',
+    ]);
+  });
+
+  it('says there is no history yet, in the chart and in the table', () => {
+    const fixture = render();
+
+    expect([texts(fixture, 'app-line-chart .empty'), texts(fixture, '.history-empty')]).toEqual([
+      ['No history yet.'],
+      ['No history yet.'],
+    ]);
+  });
+
+  it('changes the period', () => {
+    const fixture = render();
+
+    const button = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
+      (candidate) => candidate.textContent?.trim() === '3 months',
+    )!;
+    button.click();
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('lists each account, investment and card behind the totals', () => {
@@ -66,12 +98,6 @@ describe('Net worth page', () => {
       ['PETR4R$1,200.00', 'XPML11R$110.00'],
       ['Credit cardR$286.40'],
     ]);
-  });
-
-  it('splits the assets between bank accounts and investments', () => {
-    const fixture = render();
-
-    expect(texts(fixture, '.legend')).toEqual(['Bank accounts 88%Investments 12%']);
   });
 
   it('says what is valued at cost for lack of a price', () => {
@@ -89,10 +115,10 @@ describe('Net worth page', () => {
     };
     const fixture = render(investments);
 
-    expect([texts(fixture, '.stat .value')[0], texts(fixture, '.empty')]).toEqual([
-      'R$9,742.20',
-      ['Nothing invested yet.'],
-    ]);
+    expect([
+      texts(fixture, '.stat .value')[0],
+      texts(fixture, '[aria-label="Investments"] .empty'),
+    ]).toEqual(['R$9,742.20', ['Nothing invested yet.']]);
   });
 
   it('offers to try again when the net worth does not load', () => {

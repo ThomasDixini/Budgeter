@@ -10,44 +10,84 @@
     <app-load-failed message="Couldn't load your net worth." (retry)="reload()" />
   }
 
+  <div class="chips" role="group" aria-label="Period">
+    @for (option of periodOptions; track option) {
+      <button
+        class="ui-chip"
+        type="button"
+        [attr.aria-pressed]="months() === option"
+        (click)="pickPeriod(option)"
+      >
+        {{ option }} months
+      </button>
+    }
+  </div>
+
   <section class="stats" aria-label="Net worth">
     @for (stat of stats(); track stat.label) {
       <div class="stat" [class.main]="$first">
         <p class="label">{{ stat.label }}</p>
         <p class="value ui-tabular">{{ stat.value }}</p>
+        @if (stat.note) {
+          <p class="sub">{{ stat.note }}</p>
+        }
       </div>
     }
   </section>
 
-  @if (isLoaded() && hasAssets()) {
-    <section class="ui-card card" aria-label="Where your assets are">
-      <h2 class="card-title">Where your assets are</h2>
-      <div
-        class="split"
-        role="img"
-        [attr.aria-label]="
-          'Bank accounts ' +
-          worth().bankPercent +
-          '%, investments ' +
-          worth().investmentsPercent +
-          '%'
-        "
-      >
-        <span class="part bank" [style.width.%]="worth().bankPercent"></span>
-        <span class="part invested" [style.width.%]="worth().investmentsPercent"></span>
-      </div>
-      <p class="legend">
-        <span
-          ><span class="mark bank" aria-hidden="true"></span>Bank accounts
-          {{ worth().bankPercent }}%</span
-        >
-        <span
-          ><span class="mark invested" aria-hidden="true"></span>Investments
-          {{ worth().investmentsPercent }}%</span
-        >
-      </p>
+  <app-line-chart
+    title="Net worth per month"
+    [labels]="labels()"
+    [series]="series()"
+    [format]="formatAxis"
+    emptyText="No history yet."
+  />
+
+  <div class="pair">
+    <section class="ui-card card" aria-label="What it is made of">
+      <h2 class="card-title">What it is made of today</h2>
+      <ul class="list">
+        @for (item of composition(); track item.label) {
+          <li class="row" [class.total]="item.isTotal">
+            <span>{{ item.label }}</span>
+            <span class="ui-tabular">{{ item.value }}</span>
+          </li>
+        }
+      </ul>
     </section>
-  }
+
+    <section class="ui-card card" aria-label="Month by month">
+      <h2 class="card-title">Month by month</h2>
+      @if (rows().length > 0) {
+        <table class="months">
+          <thead>
+            <tr>
+              <th scope="col">Month</th>
+              <th scope="col" class="number">Net worth</th>
+              <th scope="col" class="number">Change</th>
+              <th scope="col" class="number">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.month) {
+              <tr>
+                <th scope="row">{{ row.month }}</th>
+                <td class="number ui-tabular">{{ row.worth }}</td>
+                <td class="number ui-tabular" [class.loss]="row.isLoss" [class.gain]="!row.isLoss">
+                  {{ row.change }}
+                </td>
+                <td class="number ui-tabular" [class.loss]="row.isLoss" [class.gain]="!row.isLoss">
+                  {{ row.percent }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p class="ui-muted history-empty">No history yet.</p>
+      }
+    </section>
+  </div>
 
   <div class="columns">
     <section class="ui-card card" aria-label="Bank accounts">

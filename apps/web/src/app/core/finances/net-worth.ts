@@ -100,3 +100,60 @@ function shareOf(part: number, whole: number): number {
   if (whole <= 0) return 0;
   return Math.min(100, Math.max(0, Math.round((part / whole) * 100)));
 }
+
+/** The net worth at the end of one month; what the evolution chart and the monthly table are drawn from. */
+export interface NetWorthPoint {
+  /** `YYYY-MM`. */
+  readonly month: string;
+  readonly cents: number;
+}
+
+/** One row of the month-by-month table: the change against the month before. */
+export interface NetWorthRow {
+  readonly month: string;
+  readonly cents: number;
+  readonly changeCents: number;
+  /** Change as a percent of the month before; 0 when that was zero. */
+  readonly changePercent: number;
+}
+
+/** How the net worth moved over a run of months. */
+export interface NetWorthGrowth {
+  readonly growthCents: number;
+  readonly growthPercent: number;
+  /** Growth divided by the months between the first and the last point. */
+  readonly averageCents: number;
+  readonly best: NetWorthRow;
+}
+
+/**
+ * Each month with its change against the month before; the first month has no row, as there is nothing to
+ * compare it with. Oldest first.
+ * @example netWorthRows([{ month: '2026-09', cents: 100 }, { month: '2026-10', cents: 110 }])[0].changeCents // 10
+ */
+export function netWorthRows(points: readonly NetWorthPoint[]): NetWorthRow[] {
+  return points.slice(1).map((point, index) => {
+    const previous = points[index].cents;
+    const changeCents = point.cents - previous;
+    const changePercent = previous === 0 ? 0 : (changeCents / Math.abs(previous)) * 100;
+    return { month: point.month, cents: point.cents, changeCents, changePercent };
+  });
+}
+
+/**
+ * Growth, monthly average and best month; undefined with fewer than two months.
+ * @example netWorthGrowth(points)?.best.month // '2026-10'
+ */
+export function netWorthGrowth(points: readonly NetWorthPoint[]): NetWorthGrowth | undefined {
+  const rows = netWorthRows(points);
+  if (rows.length === 0) return undefined;
+  const first = points[0].cents;
+  const growthCents = points[points.length - 1].cents - first;
+  const best = rows.reduce((top, row) => (row.changeCents > top.changeCents ? row : top));
+  return {
+    growthCents,
+    growthPercent: first === 0 ? 0 : (growthCents / Math.abs(first)) * 100,
+    averageCents: Math.round(growthCents / rows.length),
+    best,
+  };
+}
