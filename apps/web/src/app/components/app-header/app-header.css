@@ -13,6 +13,12 @@
   padding: 28px var(--space-page-x);
 }
 
+.end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .brand {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);

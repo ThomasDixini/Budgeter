@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface Bar {
   readonly label: string;
@@ -30,6 +31,7 @@ const BAR_FILL = 0.6;
  */
 @Component({
   selector: 'app-bar-chart',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './bar-chart.html',
   styleUrl: './bar-chart.css',

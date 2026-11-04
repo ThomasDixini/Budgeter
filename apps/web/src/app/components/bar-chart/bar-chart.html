@@ -1,20 +1,20 @@
-<section class="ui-card chart-card" [attr.aria-label]="title()">
+<section class="ui-card chart-card" [attr.aria-label]="title() | t">
   <header class="head">
-    <h2 class="title">{{ title() }}</h2>
+    <h2 class="title">{{ title() | t }}</h2>
     @if (note()) {
       <span class="ui-muted note">{{ note() }}</span>
     }
     @if (positiveLabel()) {
       <ul class="legend">
-        <li><span class="swatch"></span>{{ positiveLabel() }}</li>
+        <li><span class="swatch"></span>{{ positiveLabel() | t }}</li>
         @if (negativeLabel()) {
-          <li><span class="swatch negative"></span>{{ negativeLabel() }}</li>
+          <li><span class="swatch negative"></span>{{ negativeLabel() | t }}</li>
         }
       </ul>
     }
   </header>
   @if (hasData()) {
-    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" role="img" [attr.aria-label]="title()">
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" role="img" [attr.aria-label]="title() | t">
       @for (tick of ticks(); track $index) {
         <line
           class="grid"
@@ -50,6 +50,6 @@
       }
     </svg>
   } @else {
-    <p class="empty ui-muted">{{ emptyText() }}</p>
+    <p class="empty ui-muted">{{ emptyText() | t }}</p>
   }
 </section>

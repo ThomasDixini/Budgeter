@@ -2,6 +2,7 @@ import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } f
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
+import { provideLanguage } from './core/i18n/locale-provider';
 import { NoticeErrorHandler } from './core/notices/notice-error-handler';
 import { CategoriesGateway } from './core/routines/categories-gateway';
 import { GoalsGateway } from './core/routines/goals-gateway';
@@ -35,6 +36,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(),
     provideRouter(routes),
+    provideLanguage(),
     { provide: ErrorHandler, useClass: NoticeErrorHandler },
     { provide: CategoriesGateway, useClass: HttpCategoriesGateway },
     { provide: GoalsGateway, useClass: HttpGoalsGateway },

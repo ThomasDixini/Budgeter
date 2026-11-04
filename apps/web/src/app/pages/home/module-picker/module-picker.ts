@@ -7,6 +7,7 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AppModule, accentRgbVariable } from '../../../core/modules/app-module';
 import { ModuleIcon } from '../../../components/module-icon/module-icon';
 
@@ -22,7 +23,7 @@ interface PickerOption {
 /** Full-screen ring that lists every module at once; picking one spins the wheel to it. */
 @Component({
   selector: 'app-module-picker',
-  imports: [ModuleIcon],
+  imports: [ModuleIcon, TranslatePipe],
   templateUrl: './module-picker.html',
   styleUrl: './module-picker.css',
   host: { '(document:keydown.escape)': 'dismiss.emit()' },

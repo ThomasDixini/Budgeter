@@ -1,22 +1,23 @@
 import { Component, input } from '@angular/core';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ModuleKind } from '../../core/modules/app-module';
 import { ModuleIcon } from '../module-icon/module-icon';
 
 /** Title block at the top of a module page; projected content becomes the page actions. */
 @Component({
   selector: 'app-page-heading',
-  imports: [ModuleIcon],
+  imports: [ModuleIcon, TranslatePipe],
   template: `<header class="page-heading">
     <div class="text">
       <p class="ui-eyebrow">
         @if (eyebrowIcon(); as icon) {
           <app-module-icon [kind]="icon" [size]="16" />
         }
-        {{ eyebrow() }}
+        {{ eyebrow() | t }}
       </p>
-      <h1 class="ui-page-title">{{ heading() }}</h1>
+      <h1 class="ui-page-title">{{ heading() | t }}</h1>
       @if (description(); as description) {
-        <p class="description">{{ description }}</p>
+        <p class="description">{{ description | t }}</p>
       }
     </div>
     <div class="actions"><ng-content /></div>
