@@ -1,8 +1,9 @@
 import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { TitleStrategy, provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideLanguage } from './core/i18n/locale-provider';
+import { TranslatedTitleStrategy } from './core/i18n/translated-title-strategy';
 import { NoticeErrorHandler } from './core/notices/notice-error-handler';
 import { CategoriesGateway } from './core/routines/categories-gateway';
 import { GoalsGateway } from './core/routines/goals-gateway';
@@ -37,6 +38,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideRouter(routes),
     provideLanguage(),
+    { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
     { provide: ErrorHandler, useClass: NoticeErrorHandler },
     { provide: CategoriesGateway, useClass: HttpCategoriesGateway },
     { provide: GoalsGateway, useClass: HttpGoalsGateway },

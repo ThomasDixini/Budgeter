@@ -283,6 +283,14 @@ export const PT_BR_SENTENCES: Readonly<Record<string, string>> = {
   'Show less': 'Mostrar menos',
 
   // Routine editor and today
+  '{minutes} min left': 'faltam {minutes} min',
+  'Until {date}': 'Até {date}',
+  '{name} completed': '{name} concluído',
+  '{name} skipped': '{name} ignorado',
+  'Click to take the mark back': 'Clique para desfazer a marcação',
+  "Couldn't save the routine. Fix what the message below says, then try again.":
+    'Não foi possível salvar a rotina. Corrija o que a mensagem abaixo diz e tente de novo.',
+  "Couldn't delete the routine. Try again.": 'Não foi possível excluir a rotina. Tente de novo.',
   'All changes saved': 'Todas as alterações salvas',
   Untitled: 'Sem título',
   'No routines yet. Create one with "New routine".':

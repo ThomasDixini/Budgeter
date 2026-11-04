@@ -75,7 +75,7 @@
           [attr.aria-label]="
             (item.isMet ? 'Take back achieved on ' : 'Mark achieved: ') + item.goal.title | t
           "
-          [attr.title]="item.isMet ? 'Click to take the mark back' : null"
+          [attr.title]="item.isMet ? ('Click to take the mark back' | t) : null"
           (click)="toggleAchieved(item.goal)"
         >
           @if (item.isMet) {
