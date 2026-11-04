@@ -2,6 +2,8 @@ import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Clock } from '../../../../core/calendar/clock';
 import { FixedClock } from '../../../../core/calendar/fixed-clock';
+import { AccountStatementsGateway } from '../../../../core/finances/account-statements-gateway';
+import { FakeAccountStatementsGateway } from '../../../../core/finances/fake-account-statements-gateway';
 import {
   FakeFinanceReferencesGateway,
   FakeTransactionsGateway,
@@ -37,12 +39,18 @@ class SilentErrorHandler extends ErrorHandler {
 interface Rendered {
   fixture: ComponentFixture<StatementImport>;
   gateway: FakeTransactionsGateway;
+  statements: FakeAccountStatementsGateway;
   results: ImportResult[];
 }
 
-function render(gateway = new FakeTransactionsGateway()): Rendered {
+function render(
+  gateway = new FakeTransactionsGateway(),
+  statements = new FakeAccountStatementsGateway(new Map()),
+  accounts = SAMPLE_ACCOUNTS,
+): Rendered {
   TestBed.configureTestingModule({
     providers: [
+      { provide: AccountStatementsGateway, useValue: statements },
       { provide: TransactionsGateway, useValue: gateway },
       { provide: FinanceReferencesGateway, useValue: new FakeFinanceReferencesGateway() },
       { provide: Clock, useValue: new FixedClock(new Date(2026, 9, 31, 20, 0)) },
@@ -57,11 +65,11 @@ function render(gateway = new FakeTransactionsGateway()): Rendered {
     { id: 'other', name: 'Other' },
     { id: 'invest', name: 'Investments' },
   ]);
-  fixture.componentRef.setInput('accounts', SAMPLE_ACCOUNTS);
+  fixture.componentRef.setInput('accounts', accounts);
   const results: ImportResult[] = [];
   fixture.componentInstance.imported.subscribe((result) => results.push(result));
   fixture.detectChanges();
-  return { fixture, gateway, results };
+  return { fixture, gateway, statements, results };
 }
 
 function element(fixture: ComponentFixture<StatementImport>): HTMLElement {
@@ -91,6 +99,13 @@ async function confirm(fixture: ComponentFixture<StatementImport>): Promise<void
   await new Promise((resolve) => setTimeout(resolve, 0));
   fixture.detectChanges();
 }
+
+const INVOICE_STATEMENT = [
+  HEADER,
+  '07/10/2026,-2064.28,pay-1,Pagamento de fatura',
+  '12/10/2026,-147.87,pay-2,Pagamento de fatura',
+  '05/10/2026,-20.00,pix-1,Transferência enviada pelo Pix - ANA SOUZA - •••.123.456-•• - NU PAGAMENTOS',
+].join('\n');
 
 describe('StatementImport', () => {
   it('lists the lines with short descriptions and leaves the money between own accounts out', async () => {
@@ -232,5 +247,110 @@ describe('StatementImport', () => {
     const { fixture } = render();
 
     expect(texts(fixture, 'select[name="account"] option')).toEqual(['Checking account']);
+  });
+
+  it('keeps a card invoice payment as a payment to the card, from the account it left', async () => {
+    const { fixture, gateway, statements, results } = render();
+    await choose(fixture, INVOICE_STATEMENT);
+
+    const before = [texts(fixture, '.lines .ui-tag'), texts(fixture, 'select[name="card"] option')];
+    await confirm(fixture);
+
+    expect([
+      before,
+      statements.savedPayments.map((payment) => [
+        payment.id,
+        payment.cardId,
+        payment.fromAccountId,
+        payment.amountCents,
+      ]),
+      gateway.saved.map((transaction) => transaction.id),
+      results,
+    ]).toEqual([
+      [
+        ['Invoice payment', 'Invoice payment'],
+        ['Credit card', 'Credit card'],
+      ],
+      [
+        ['pay-1', 'credit-card', 'checking-account', 206428],
+        ['pay-2', 'credit-card', 'checking-account', 14787],
+      ],
+      ['pix-1'],
+      [{ saved: 3, failed: 0, month: '2026-10' }],
+    ]);
+  });
+
+  it('can leave an invoice payment out by unticking it, and pays another card on one line', async () => {
+    const accounts = [
+      ...SAMPLE_ACCOUNTS,
+      { ...SAMPLE_ACCOUNTS[1], id: 'second-card', name: 'Second card' },
+    ];
+    const { fixture, statements } = render(
+      new FakeTransactionsGateway(),
+      new FakeAccountStatementsGateway(new Map()),
+      accounts,
+    );
+    await choose(fixture, INVOICE_STATEMENT);
+    const cards = element(fixture).querySelectorAll<HTMLSelectElement>('select[name="card"]');
+    cards[1].value = 'second-card';
+    cards[1].dispatchEvent(new Event('change'));
+    element(fixture).querySelectorAll<HTMLInputElement>('tbody .ui-checkbox')[0].click();
+    fixture.detectChanges();
+
+    await confirm(fixture);
+
+    expect(statements.savedPayments.map((payment) => [payment.id, payment.cardId])).toEqual([
+      ['pay-2', 'second-card'],
+    ]);
+  });
+
+  it('leaves the invoice payments out when there is no card to pay', async () => {
+    const { fixture, statements } = render(
+      new FakeTransactionsGateway(),
+      new FakeAccountStatementsGateway(new Map()),
+      [SAMPLE_ACCOUNTS[0]],
+    );
+    await choose(fixture, INVOICE_STATEMENT);
+
+    await confirm(fixture);
+
+    expect([
+      [...element(fixture).querySelectorAll<HTMLInputElement>('tbody .ui-checkbox')].map((box) => [
+        box.checked,
+        box.disabled,
+      ]),
+      statements.savedPayments,
+    ]).toEqual([
+      [
+        [false, true],
+        [false, true],
+        [true, false],
+      ],
+      [],
+    ]);
+  });
+
+  it('knows an invoice payment stored by an earlier import', async () => {
+    const statements = new FakeAccountStatementsGateway(
+      new Map([
+        [
+          '2026-10',
+          [
+            {
+              id: 'pay-1',
+              cardId: 'credit-card',
+              fromAccountId: 'checking-account',
+              date: '2026-10-07',
+              amountCents: 206428,
+            },
+          ],
+        ],
+      ]),
+    );
+    const { fixture } = render(new FakeTransactionsGateway(), statements);
+
+    await choose(fixture, INVOICE_STATEMENT);
+
+    expect(texts(fixture, '.lines .ui-tag')).toEqual(['Already imported', 'Invoice payment']);
   });
 });

@@ -7,9 +7,10 @@ import {
   parseStatement,
   statementMonths,
   suggestCategoryId,
+  toCardPayment,
 } from '../../../../core/finances/statement-import';
 import { Transaction } from '../../../../core/finances/transaction';
-import { TransactionsStore } from '../../../../core/finances/transactions-store';
+import { StatementImportStore } from '../../../../core/finances/statement-import-store';
 import { fieldValue } from '../../../../core/forms/field-value';
 import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
@@ -18,6 +19,8 @@ interface ImportLine {
   readonly row: StatementRow;
   readonly isIncluded: boolean;
   readonly categoryId: string;
+  /** The card an invoice payment goes to; empty for any other line. */
+  readonly cardId: string;
   /** The bank's identifier is already stored, so importing the line again would only overwrite it. */
   readonly isStored: boolean;
 }
@@ -52,7 +55,7 @@ export class StatementImport {
   /** How many transactions were stored once the import is over. */
   readonly imported = output<ImportResult>();
 
-  private readonly store = inject(TransactionsStore);
+  private readonly store = inject(StatementImportStore);
   private readonly locale = inject(LOCALE_ID);
 
   protected readonly fileName = signal<string | undefined>(undefined);
@@ -64,6 +67,10 @@ export class StatementImport {
 
   protected readonly bankAccounts = computed(() =>
     this.accounts().filter((account) => account.kind === 'bankAccount'),
+  );
+  /** The cards an invoice payment can be kept for. */
+  protected readonly cards = computed(() =>
+    this.accounts().filter((account) => account.kind === 'creditCard'),
   );
   protected readonly accountId = computed(
     () =>
@@ -79,6 +86,9 @@ export class StatementImport {
   );
   protected readonly internalCount = computed(
     () => this.lines().filter((line) => line.row.kind === 'internal' && !line.isStored).length,
+  );
+  protected readonly invoiceCount = computed(
+    () => this.selected().filter((line) => line.row.kind === 'invoicePayment').length,
   );
   protected readonly canImport = computed(
     () => this.selected().length > 0 && this.accountId() !== undefined && !this.isSaving(),
@@ -122,6 +132,17 @@ export class StatementImport {
     );
   }
 
+  /** Only the line changes: two invoices on the same day can belong to different cards. */
+  protected pickCard(index: number, cardId: string): void {
+    this.updateLine(index, (line) => ({ ...line, cardId }));
+  }
+
+  /** Whether the line can be ticked: stored lines cannot, and an invoice payment needs a card to go to. */
+  protected canTick(line: ImportLine): boolean {
+    if (line.isStored) return false;
+    return line.row.kind !== 'invoicePayment' || this.cards().length > 0;
+  }
+
   /** Every line with the same description takes the category, as they are almost always the same payee. */
   protected pickCategory(index: number, categoryId: string): void {
     const description = this.lines()[index].row.description;
@@ -135,8 +156,16 @@ export class StatementImport {
     if (!this.canImport() || accountId === undefined) return;
     this.isSaving.set(true);
     try {
-      const transactions = this.selected().map((line) => toTransaction(line, accountId));
-      const result = await this.store.addAll(transactions);
+      const kept = this.selected();
+      const isPayment = (line: ImportLine): boolean => line.row.kind === 'invoicePayment';
+      const result = await this.store.importAll({
+        transactions: kept
+          .filter((line) => !isPayment(line))
+          .map((line) => toTransaction(line, accountId)),
+        payments: kept
+          .filter((line) => isPayment(line) && line.cardId !== '')
+          .map((line) => toCardPayment(line.row, line.cardId, accountId)),
+      });
       const month = statementMonths(this.selected().map((line) => line.row)).at(-1) ?? '';
       this.imported.emit({ ...result, month });
     } finally {
@@ -161,10 +190,16 @@ export class StatementImport {
       statement.rows.map((row) => ({
         row,
         isStored: stored.has(row.id),
-        isIncluded: !stored.has(row.id) && row.kind === 'regular',
+        isIncluded: !stored.has(row.id) && this.startsTicked(row),
         categoryId: suggestCategoryId(row, this.categories()) ?? '',
+        cardId: row.kind === 'invoicePayment' ? (this.cards()[0]?.id ?? '') : '',
       })),
     );
+  }
+
+  /** What is earned or spent starts ticked, and so does an invoice payment when there is a card for it. */
+  private startsTicked(row: StatementRow): boolean {
+    return row.kind === 'regular' || (row.kind === 'invoicePayment' && this.cards().length > 0);
   }
 
   private updateLine(index: number, change: (line: ImportLine) => ImportLine): void {

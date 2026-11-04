@@ -142,6 +142,12 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
   'Line {number}: expected a quantity, a unit price and a value above zero for "{movement}", received "{quantity}", "{price}", "{value}".':
     'Linha {number}: esperava quantidade, preço unitário e valor acima de zero para "{movement}", mas recebi "{quantity}", "{price}", "{value}".',
 
+  // Card invoice payments in the statement import
+  'Invoice payment': 'Pagamento de fatura',
+  'Card of {description}': 'Cartão de {description}',
+  'No card yet': 'Nenhum cartão ainda',
+  '{count} card invoice payments': '{count} pagamentos de fatura',
+
   // Banks & Cards
   'Accounts and cards': 'Contas e cartões',
   'Add account or card': 'Adicionar conta ou cartão',
