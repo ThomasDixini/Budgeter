@@ -46,6 +46,9 @@
         </svg>
       </button>
     </div>
+    <button class="ui-button-ghost" type="button" [disabled]="!canRecord()" (click)="openImport()">
+      {{ 'Import statement' | t }}
+    </button>
     <button class="ui-button-primary" type="button" [disabled]="!canRecord()" (click)="openNew()">
       <svg
         width="16"
@@ -65,6 +68,29 @@
 
   @if (savedElsewhere(); as message) {
     <p class="saved-elsewhere ui-muted" role="status">{{ message | t }}</p>
+  }
+
+  @if (importResult(); as result) {
+    <p class="saved-elsewhere ui-muted" role="status">
+      {{
+        result.saved === 1
+          ? ('1 transaction imported.' | t)
+          : ('{count} transactions imported.' | t: { count: result.saved })
+      }}
+      @if (result.failed > 0) {
+        {{ '{count} could not be saved.' | t: { count: result.failed } }}
+      }
+    </p>
+  }
+
+  @if (isImportOpen()) {
+    <app-statement-import
+      [categories]="categories()"
+      [accounts]="accounts()"
+      [defaultAccountId]="defaultAccountId()"
+      (imported)="finishImport($event)"
+      (dismiss)="isImportOpen.set(false)"
+    />
   }
 
   @if (isFormOpen()) {

@@ -1,0 +1,152 @@
+<section class="import ui-enter" [attr.aria-label]="'Import statement' | t">
+  <header class="head">
+    <h2 class="title">{{ 'Import statement' | t }}</h2>
+    <p class="ui-muted hint">
+      {{ 'Pick the CSV your bank exported. Nothing is saved until you confirm.' | t }}
+    </p>
+  </header>
+
+  <div class="pickers">
+    <label class="ui-field">
+      {{ 'Statement file' | t }}
+      <input
+        class="ui-input file-input"
+        type="file"
+        accept=".csv,text/csv"
+        (change)="readFile($event)"
+      />
+    </label>
+
+    <label class="ui-field">
+      {{ 'Import into' | t }}
+      <select class="ui-input" name="account" (change)="pickAccount(valueOf($event))">
+        @for (account of bankAccounts(); track account.id) {
+          <option [value]="account.id" [selected]="account.id === accountId()">
+            {{ account.name }}
+          </option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (isReading()) {
+    <p class="ui-muted" role="status">{{ 'Reading the file…' | t }}</p>
+  }
+
+  @if (problems().length > 0) {
+    <div class="problems" role="alert">
+      <p class="problems-title">
+        {{ 'Some lines could not be read and were left out:' | t }}
+      </p>
+      <ul>
+        @for (problem of shownProblems(); track problem) {
+          <li>{{ problem | t }}</li>
+        }
+      </ul>
+      @if (hiddenProblems() > 0) {
+        <p class="ui-muted">{{ 'and {count} more' | t: { count: hiddenProblems() } }}</p>
+      }
+    </div>
+  }
+
+  @if (lines().length > 0) {
+    <p class="summary ui-tabular" role="status">
+      {{ '{count} to import' | t: { count: selected().length } }} · {{ money(totals().inCents) }} ·
+      {{ balance(totals().outCents) }}
+      @if (internalCount() > 0) {
+        · {{ '{count} between your own accounts, left out' | t: { count: internalCount() } }}
+      }
+      @if (storedCount() > 0) {
+        · {{ '{count} already imported' | t: { count: storedCount() } }}
+      }
+    </p>
+
+    <div class="table-wrap">
+      <table class="lines">
+        <thead>
+          <tr>
+            <th scope="col" class="check">
+              <input
+                type="checkbox"
+                [attr.aria-label]="'Select all' | t"
+                [checked]="allSelected()"
+                (change)="toggleAll()"
+              />
+            </th>
+            <th scope="col">{{ 'Date' | t }}</th>
+            <th scope="col">{{ 'Description' | t }}</th>
+            <th scope="col">{{ 'Category' | t }}</th>
+            <th scope="col" class="number">{{ 'Amount' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of lines(); track line.row.id; let index = $index) {
+            <tr [class.muted]="!line.isIncluded">
+              <td class="check">
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="
+                    'Import {description}' | t: { description: line.row.description }
+                  "
+                  [checked]="line.isIncluded"
+                  [disabled]="line.isStored"
+                  (change)="toggleLine(index)"
+                />
+              </td>
+              <td class="day">{{ dayOf(line.row) }}</td>
+              <td class="description">
+                <span>{{ line.row.description }}</span>
+                @if (line.isStored) {
+                  <span class="ui-tag">{{ 'Already imported' | t }}</span>
+                } @else if (line.row.kind === 'internal') {
+                  <span class="ui-tag">{{ 'Own accounts' | t }}</span>
+                }
+              </td>
+              <td>
+                <select
+                  class="ui-input category"
+                  [attr.aria-label]="
+                    'Category of {description}' | t: { description: line.row.description }
+                  "
+                  [disabled]="line.isStored"
+                  (change)="pickCategory(index, valueOf($event))"
+                >
+                  @for (category of categories(); track category.id) {
+                    <option [value]="category.id" [selected]="category.id === line.categoryId">
+                      {{ category.name | t }}
+                    </option>
+                  }
+                </select>
+              </td>
+              <td
+                class="number ui-tabular"
+                [class.gain]="line.row.amountCents > 0"
+                [class.loss]="line.row.amountCents < 0"
+              >
+                {{ amountOf(line.row) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="ui-muted hint">
+      {{ 'Changing a category changes every line with the same description.' | t }}
+    </p>
+  }
+
+  <div class="actions">
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
+    <button class="ui-button-primary" type="button" [disabled]="!canImport()" (click)="confirm()">
+      @if (isSaving()) {
+        {{ 'Importing…' | t }}
+      } @else if (selected().length === 1) {
+        {{ 'Import 1 transaction' | t }}
+      } @else {
+        {{ 'Import {count} transactions' | t: { count: selected().length } }}
+      }
+    </button>
+  </div>
+</section>

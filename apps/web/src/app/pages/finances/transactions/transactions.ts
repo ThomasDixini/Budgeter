@@ -21,6 +21,7 @@ import { summarize } from '../../../core/finances/transaction-summary';
 import { TransactionsStore } from '../../../core/finances/transactions-store';
 import { FiltersBar } from './filters-bar/filters-bar';
 import { MonthSummary } from './month-summary/month-summary';
+import { ImportResult, StatementImport } from './statement-import/statement-import';
 import { TransactionForm } from './transaction-form/transaction-form';
 import { TransactionHistory } from './transaction-history/transaction-history';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
@@ -36,6 +37,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
     FiltersBar,
     TransactionHistory,
     TransactionForm,
+    StatementImport,
   ],
   templateUrl: './transactions.html',
   styleUrl: './transactions.css',
@@ -51,6 +53,9 @@ export class Transactions {
   protected readonly hasLoadFailed = this.store.hasLoadFailed;
   protected readonly filters = signal<TransactionFilters>(NO_FILTERS);
   protected readonly isFormOpen = signal(false);
+  protected readonly isImportOpen = signal(false);
+  /** What the last import came to, shown until the person moves on. */
+  protected readonly importResult = signal<ImportResult | undefined>(undefined);
   /** The transaction open in the form; none while recording a new one. */
   protected readonly editing = signal<Transaction | undefined>(undefined);
   /** Says where a transaction dated in another month went, since it does not show in this one. */
@@ -89,7 +94,21 @@ export class Transactions {
     this.store.showMonth(shiftMonth(this.store.month(), step));
   }
 
+  protected openImport(): void {
+    this.closeForm();
+    this.importResult.set(undefined);
+    this.isImportOpen.set(true);
+  }
+
+  /** Closes the panel and shows the month the lines went to, where they can be checked. */
+  protected finishImport(result: ImportResult): void {
+    this.isImportOpen.set(false);
+    this.importResult.set(result);
+    if (result.month !== '') this.store.showMonth(result.month);
+  }
+
   protected openNew(): void {
+    this.isImportOpen.set(false);
     this.editing.set(undefined);
     this.isFormOpen.set(true);
   }

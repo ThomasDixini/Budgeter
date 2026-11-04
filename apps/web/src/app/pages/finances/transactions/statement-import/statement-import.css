@@ -1,0 +1,218 @@
+:host {
+  display: block;
+}
+
+.import {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid var(--color-border);
+  background: var(--color-surface-glass);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: var(--font-size-xs);
+}
+
+.pickers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px 16px;
+}
+
+.problems {
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.problems p,
+.problems ul {
+  margin: 0;
+}
+
+.problems ul {
+  padding-left: 18px;
+  color: var(--color-text-muted);
+}
+
+.summary {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-soft);
+}
+
+.table-wrap {
+  max-height: 420px;
+  overflow: auto;
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.lines th,
+.lines td {
+  padding: 8px 8px;
+  text-align: left;
+  font-weight: var(--font-weight-regular);
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+  vertical-align: middle;
+}
+
+.lines thead th {
+  position: sticky;
+  top: 0;
+  /* Above the dimmed rows, which are stacking contexts of their own. */
+  z-index: 2;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-top: 0;
+  border-bottom: var(--border-hairline) solid var(--color-border);
+  background: var(--color-option-bg);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+.lines .number {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.lines .check {
+  width: 32px;
+}
+
+.lines .day {
+  white-space: nowrap;
+}
+
+.lines .description {
+  min-width: 200px;
+  overflow-wrap: anywhere;
+}
+
+.description .ui-tag {
+  margin-left: 8px;
+}
+
+.muted {
+  opacity: 0.55;
+}
+
+.category {
+  height: 36px;
+  min-width: 150px;
+}
+
+.gain {
+  color: var(--color-income);
+}
+
+.loss {
+  color: var(--color-expense);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actions .ui-button-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* The file picker: the browser's grey button becomes a pill like the other ghost buttons. */
+.file-input {
+  display: flex;
+  align-items: center;
+  height: auto;
+  min-height: 48px;
+  padding: 6px 8px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.file-input::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  background: var(--color-surface-glass);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.file-input:hover::file-selector-button {
+  background: var(--color-surface-hover);
+}
+
+/* Checkboxes drawn to match the dark glass look instead of the browser default. */
+input[type='checkbox'] {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  cursor: pointer;
+  vertical-align: middle;
+  transition:
+    background var(--duration-fast),
+    border-color var(--duration-fast);
+}
+
+input[type='checkbox']::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--color-text-inverse);
+  clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 24%, 86% 10%, 38% 72%);
+  transform: scale(0);
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+
+input[type='checkbox']:hover:not(:disabled) {
+  border-color: var(--color-text-muted);
+}
+
+input[type='checkbox']:checked {
+  border-color: var(--color-mint);
+  background: var(--color-mint);
+}
+
+input[type='checkbox']:checked::after {
+  transform: scale(1);
+}
+
+input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+input[type='checkbox']:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
