@@ -1,10 +1,10 @@
 <form
   class="trade-form ui-enter"
-  [attr.aria-label]="'Trade ' + investmentName()"
+  [attr.aria-label]="'Trade {investmentName}' | t: { investmentName: investmentName() }"
   (submit)="submit($event)"
   (keydown.escape)="dismiss.emit()"
 >
-  <div class="chips" role="group" aria-label="Type">
+  <div class="chips" role="group" [attr.aria-label]="'Type' | t">
     @for (option of kindOptions; track option.value) {
       <button
         class="ui-chip"
@@ -12,14 +12,14 @@
         [attr.aria-pressed]="option.value === kind()"
         (click)="kind.set(option.value)"
       >
-        {{ option.label }}
+        {{ option.label | t }}
       </button>
     }
   </div>
 
   <div class="fields">
     <label class="ui-field">
-      Quantity
+      {{ 'Quantity' | t }}
       <input
         class="ui-input"
         name="quantity"
@@ -33,12 +33,12 @@
         (input)="quantity.set(valueOf($event))"
       />
       @if (quantityError(); as error) {
-        <span id="trade-quantity-error" class="error">{{ error }}</span>
+        <span id="trade-quantity-error" class="error">{{ error | t }}</span>
       }
     </label>
 
     <label class="ui-field">
-      Price per unit (R$)
+      {{ 'Price per unit (R$)' | t }}
       <input
         class="ui-input"
         name="price"
@@ -52,12 +52,12 @@
         (input)="price.set(valueOf($event))"
       />
       @if (priceError(); as error) {
-        <span id="trade-price-error" class="error">{{ error }}</span>
+        <span id="trade-price-error" class="error">{{ error | t }}</span>
       }
     </label>
 
     <label class="ui-field">
-      Date
+      {{ 'Date' | t }}
       <input
         class="ui-input"
         name="date"
@@ -70,11 +70,15 @@
 
   <div class="actions">
     @if (total(); as amount) {
-      <p class="total ui-tabular" aria-live="polite">Total {{ amount }}</p>
+      <p class="total ui-tabular" aria-live="polite">
+        {{ 'Total {amount}' | t: { amount: amount } }}
+      </p>
     }
-    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
     <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
-      {{ kind() === 'buy' ? 'Record purchase' : 'Record sale' }}
+      {{ kind() === 'buy' ? ('Record purchase' | t) : ('Record sale' | t) }}
     </button>
   </div>
 </form>

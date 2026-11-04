@@ -6,6 +6,7 @@ import {
   isValidAmount,
   parseAmountCents,
 } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * The monthly income the split is based on: typed in, or taken from what came in last month (all of
@@ -13,6 +14,7 @@ import {
  */
 @Component({
   selector: 'app-income-base',
+  imports: [TranslatePipe],
   templateUrl: './income-base.html',
   styleUrl: './income-base.css',
 })

@@ -13,7 +13,7 @@
     >
       <path d="M15 5l-7 7 7 7"></path>
     </svg>
-    Categories
+    {{ 'Categories' | t }}
   </a>
 
   @if (category(); as category) {
@@ -44,21 +44,25 @@
               type="button"
               (click)="startEditingCategory(category)"
             >
-              Edit category
+              {{ 'Edit category' | t }}
             </button>
             <button
               class="ui-button-ghost small danger-text"
               type="button"
               (click)="isConfirmingDelete.set(true)"
             >
-              Delete
+              {{ 'Delete' | t }}
             </button>
           </div>
         </div>
         @if (isEditingCategory()) {
-          <form class="edit-form" aria-label="Edit category" (submit)="saveCategory($event)">
+          <form
+            class="edit-form"
+            [attr.aria-label]="'Edit category' | t"
+            (submit)="saveCategory($event)"
+          >
             <label class="ui-field">
-              Category name
+              {{ 'Category name' | t }}
               <input
                 class="ui-input"
                 type="text"
@@ -66,12 +70,12 @@
                 (input)="draftName.set(valueOf($event))"
               />
             </label>
-            <div class="swatches" role="group" aria-label="Color">
+            <div class="swatches" role="group" [attr.aria-label]="'Color' | t">
               @for (swatch of swatches; track swatch.color) {
                 <button
                   class="swatch"
                   type="button"
-                  [attr.aria-label]="swatch.label"
+                  [attr.aria-label]="swatch.label | t"
                   [attr.aria-pressed]="swatch.color === draftColor()"
                   (click)="draftColor.set(swatch.color)"
                 >
@@ -80,18 +84,20 @@
               }
             </div>
             <div class="hero-actions">
-              <button class="ui-button-primary" type="submit">Save</button>
+              <button class="ui-button-primary" type="submit">{{ 'Save' | t }}</button>
               <button class="ui-button-ghost" type="button" (click)="isEditingCategory.set(false)">
-                Cancel
+                {{ 'Cancel' | t }}
               </button>
             </div>
           </form>
         }
         @if (isConfirmingDelete()) {
-          <div class="edit-form" role="group" aria-label="Confirm deletion">
+          <div class="edit-form" role="group" [attr.aria-label]="'Confirm deletion' | t">
             <span class="hero-caption">
-              Delete “{{ category.name }}” and its {{ stats().goalCount }} goals? Routine blocks and
-              tasks stay, without a category.
+              {{
+                'Delete “{name}” and its {goalCount} goals? Routine blocks and tasks stay, without a category.'
+                  | t: { name: category.name, goalCount: stats().goalCount }
+              }}
             </span>
             <div class="hero-actions">
               <button
@@ -99,51 +105,53 @@
                 type="button"
                 (click)="deleteCategory(category.id)"
               >
-                Yes, delete
+                {{ 'Yes, delete' | t }}
               </button>
               <button class="ui-button-ghost" type="button" (click)="isConfirmingDelete.set(false)">
-                Keep it
+                {{ 'Keep it' | t }}
               </button>
             </div>
           </div>
         }
         <div class="hero-text">
           <h1 id="category-title" class="hero-title">{{ category.name }}</h1>
-          <span class="hero-caption">{{ stats().blocksLabel }}</span>
+          <span class="hero-caption">{{ stats().blocksLabel | t }}</span>
         </div>
         <div class="hero-stats">
           <div class="stat">
             <span class="stat-value ui-tabular">{{ stats().goalCount }}</span>
-            <span class="stat-label">active goals</span>
+            <span class="stat-label">{{ 'active goals' | t }}</span>
           </div>
           <div class="stat">
             <span class="stat-value ui-tabular">{{ stats().average }}%</span>
-            <span class="stat-label">average progress</span>
+            <span class="stat-label">{{ 'average progress' | t }}</span>
           </div>
           <div class="stat">
             <span class="stat-value ui-tabular">{{ stats().weekly }}</span>
-            <span class="stat-label">in routine / week</span>
+            <span class="stat-label">{{ 'in routine / week' | t }}</span>
           </div>
         </div>
       </section>
 
       <section class="ui-card in-routine" aria-labelledby="blocks-title">
-        <h2 id="blocks-title" class="in-routine-title">In the routine</h2>
+        <h2 id="blocks-title" class="in-routine-title">{{ 'In the routine' | t }}</h2>
         @for (block of blocks(); track block.name + block.when) {
           <div class="routine-block">
             <span class="routine-block-name">{{ block.name }}</span>
-            <span class="routine-block-when ui-tabular">{{ block.when }}</span>
+            <span class="routine-block-when ui-tabular">{{ block.when | t }}</span>
           </div>
         } @empty {
-          <p class="no-blocks">No block uses this category yet.</p>
+          <p class="no-blocks">{{ 'No block uses this category yet.' | t }}</p>
         }
-        <a class="ui-link adjust" routerLink="/routines/routine">Adjust in routine</a>
+        <a class="ui-link adjust" routerLink="/routines/routine">{{ 'Adjust in routine' | t }}</a>
       </section>
     </div>
 
     <section class="goals" aria-labelledby="goals-title">
       <div class="goals-header">
-        <h2 id="goals-title" class="goals-title">{{ category.name }} goals</h2>
+        <h2 id="goals-title" class="goals-title">
+          {{ '{name} goals' | t: { name: category.name } }}
+        </h2>
         @if (!isAdding()) {
           <button
             class="ui-button-primary"
@@ -162,7 +170,7 @@
             >
               <path d="M12 5v14M5 12h14"></path>
             </svg>
-            New goal
+            {{ 'New goal' | t }}
           </button>
         }
       </div>
@@ -189,7 +197,7 @@
       }
 
       <div class="filters">
-        <div class="periods" role="group" aria-label="Period">
+        <div class="periods" role="group" [attr.aria-label]="'Period' | t">
           @for (option of periodOptions(); track option.value) {
             <button
               class="ui-chip period"
@@ -197,12 +205,12 @@
               [attr.aria-pressed]="option.value === periodFilter()"
               (click)="periodFilter.set(option.value)"
             >
-              {{ option.label }}
+              {{ option.label | t }}
               <span class="period-count ui-tabular">{{ option.count }}</span>
             </button>
           }
         </div>
-        <div class="types" role="group" aria-label="Goal type">
+        <div class="types" role="group" [attr.aria-label]="'Goal type' | t">
           @for (option of typeFilters; track option.value) {
             <button
               class="type"
@@ -210,7 +218,7 @@
               [attr.aria-pressed]="option.value === typeFilter()"
               (click)="typeFilter.set(option.value)"
             >
-              {{ option.label }}
+              {{ option.label | t }}
             </button>
           }
         </div>
@@ -233,11 +241,13 @@
         <!-- Not "no goals yet": the goals did not arrive, so saying so would be wrong. -->
         <app-load-failed message="Couldn't load the goals." (retry)="reload()" />
       } @else if (visibleGoals().length === 0) {
-        <div class="no-goals">No goals here yet. Use “New goal” to set the first one.</div>
+        <div class="no-goals">
+          {{ 'No goals here yet. Use “New goal” to set the first one.' | t }}
+        </div>
       }
     </section>
   } @else if (isLoaded()) {
-    <p class="ui-muted">This category does not exist anymore.</p>
+    <p class="ui-muted">{{ 'This category does not exist anymore.' | t }}</p>
   } @else if (hasLoadFailed()) {
     <app-load-failed message="Couldn't load this category." (retry)="reload()" />
   }

@@ -1,6 +1,6 @@
 <section class="ui-card overview" aria-labelledby="overview-title">
   <div class="header">
-    <h2 id="overview-title" class="ui-card-title">How your income is split</h2>
+    <h2 id="overview-title" class="ui-card-title">{{ 'How your income is split' | t }}</h2>
     <span class="status" [class.warn]="status().kind !== 'balanced'" role="status">
       @if (status().kind === 'balanced') {
         <svg
@@ -34,11 +34,11 @@
           ></path>
         </svg>
       }
-      {{ statusText() }}
+      {{ statusText() | t }}
     </span>
   </div>
 
-  <div class="bar" role="img" [attr.aria-label]="barLabel()">
+  <div class="bar" role="img" [attr.aria-label]="barLabel() | t">
     @for (segment of segments(); track segment.id) {
       <div
         class="segment"
@@ -48,25 +48,25 @@
         (mouseenter)="hoveredId.set(segment.id)"
         (mouseleave)="hoveredId.set(undefined)"
       >
-        {{ segment.inside }}
+        {{ segment.inside | t }}
         @if (hoveredId() === segment.id) {
           <span class="tip"
             ><span class="tip-name">{{ segment.name }}</span
-            ><span class="ui-tabular">{{ segment.detail }}</span></span
+            ><span class="ui-tabular">{{ segment.detail | t }}</span></span
           >
         }
       </div>
     }
     @if (freePercent() > 0) {
-      <div class="segment free" [style.flex-grow]="freePercent()">Free</div>
+      <div class="segment free" [style.flex-grow]="freePercent()">{{ 'Free' | t }}</div>
     }
   </div>
 
   <div class="presets">
-    <span class="presets-label">Start from a template:</span>
+    <span class="presets-label">{{ 'Start from a template:' | t }}</span>
     @for (preset of presets(); track preset.label) {
       <button class="ui-button-ghost" type="button" (click)="applyPreset.emit(preset)">
-        {{ preset.label }}
+        {{ preset.label | t }}
       </button>
     }
   </div>

@@ -21,12 +21,12 @@
           [attr.y2]="tick.y"
         />
         <text class="axis" [attr.x]="left - 6" [attr.y]="tick.y + 3" text-anchor="end">
-          {{ tick.label }}
+          {{ tick.label | t }}
         </text>
       }
       @for (column of columns(); track $index) {
         <text class="axis" [attr.x]="column.x" [attr.y]="height - 6" text-anchor="middle">
-          {{ column.label }}
+          {{ column.label | t }}
         </text>
       }
       @for (line of lines(); track line.name) {

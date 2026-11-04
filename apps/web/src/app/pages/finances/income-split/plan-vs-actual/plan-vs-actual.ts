@@ -1,6 +1,7 @@
 import { Component, LOCALE_ID, computed, inject, input } from '@angular/core';
 import { PartProgress, SPLIT_COLORS } from '../../../../core/finances/income-split';
 import { formatMoney } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 const WHOLE = 100;
 
@@ -19,6 +20,7 @@ interface ProgressRow {
 /** Each part's month so far: what the expenses of its categories used of what was planned. */
 @Component({
   selector: 'app-plan-vs-actual',
+  imports: [TranslatePipe],
   templateUrl: './plan-vs-actual.html',
   styleUrl: './plan-vs-actual.css',
 })

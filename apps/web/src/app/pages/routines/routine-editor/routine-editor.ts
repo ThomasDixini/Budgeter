@@ -16,6 +16,7 @@ import {
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { RoutinePartition } from './routine-partition/routine-partition';
 import { RoutineSummary } from './routine-summary/routine-summary';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 const UNCATEGORIZED_COLOR = '#8A8A94';
 
@@ -33,7 +34,7 @@ const SAVE_STATE_MESSAGES: Readonly<Record<SaveState, string>> = {
 /** Lets the user pick a day template, its weekdays and hours, and split the day into blocks. */
 @Component({
   selector: 'app-routine-editor',
-  imports: [PageHeading, RoutinePartition, RoutineSummary, LoadFailed],
+  imports: [TranslatePipe, PageHeading, RoutinePartition, RoutineSummary, LoadFailed],
   templateUrl: './routine-editor.html',
   styleUrl: './routine-editor.css',
 })

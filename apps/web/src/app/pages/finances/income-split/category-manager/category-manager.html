@@ -1,18 +1,18 @@
 <section class="ui-card manager" aria-labelledby="categories-title">
   <div class="header">
-    <h2 id="categories-title" class="ui-card-title">Categories</h2>
-    <span class="ui-muted">Used by transactions and by the parts above</span>
+    <h2 id="categories-title" class="ui-card-title">{{ 'Categories' | t }}</h2>
+    <span class="ui-muted">{{ 'Used by transactions and by the parts above' | t }}</span>
   </div>
 
-  <form class="new" aria-label="New category" (submit)="submitNew($event)">
+  <form class="new" [attr.aria-label]="'New category' | t" (submit)="submitNew($event)">
     <label class="ui-field grow">
-      New category
+      {{ 'New category' | t }}
       <input
         class="ui-input"
         name="newCategory"
         type="text"
         autocomplete="off"
-        placeholder="E.g. Courses"
+        [placeholder]="'E.g. Courses' | t"
         [attr.maxlength]="maxNameLength"
         [value]="newName()"
         [attr.aria-invalid]="newNameError() !== undefined"
@@ -20,10 +20,12 @@
         (input)="newName.set(valueOf($event))"
       />
       @if (newNameError(); as error) {
-        <span id="new-category-error" class="error">{{ error }}</span>
+        <span id="new-category-error" class="error">{{ error | t }}</span>
       }
     </label>
-    <button class="ui-button-primary" type="submit" [disabled]="!canAdd()">Add category</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canAdd()">
+      {{ 'Add category' | t }}
+    </button>
   </form>
 
   <ul class="list">
@@ -33,13 +35,13 @@
           @if (draft.id === category.id) {
             <form
               class="rename"
-              aria-label="Rename category"
+              [attr.aria-label]="'Rename category' | t"
               (submit)="submitRename($event)"
               (keydown.escape)="cancelRename()"
             >
-              <label class="ui-visually-hidden" [for]="'rename-' + category.id"
-                >Category name</label
-              >
+              <label class="ui-visually-hidden" [for]="'rename-' + category.id">{{
+                'Category name' | t
+              }}</label>
               <input
                 class="ui-input"
                 type="text"
@@ -51,40 +53,42 @@
                 (input)="typeRename($event)"
               />
               <button class="ui-button-primary" type="submit" [disabled]="!canRename()">
-                Save
+                {{ 'Save' | t }}
               </button>
-              <button class="ui-button-ghost" type="button" (click)="cancelRename()">Cancel</button>
+              <button class="ui-button-ghost" type="button" (click)="cancelRename()">
+                {{ 'Cancel' | t }}
+              </button>
               @if (renameError(); as error) {
-                <span class="error">{{ error }}</span>
+                <span class="error">{{ error | t }}</span>
               }
             </form>
           } @else {
-            <span class="name">{{ category.name }}</span>
+            <span class="name">{{ category.name | t }}</span>
           }
         } @else {
-          <span class="name">{{ category.name }}</span>
+          <span class="name">{{ category.name | t }}</span>
         }
         <span class="actions">
           <button
             class="ui-button-ghost small"
             type="button"
-            [attr.aria-label]="'Rename ' + category.name"
+            [attr.aria-label]="'Rename {name}' | t: { name: category.name }"
             (click)="startRename(category)"
           >
-            Rename
+            {{ 'Rename' | t }}
           </button>
           <button
             class="ui-button-ghost small delete"
             type="button"
-            [attr.aria-label]="'Delete ' + category.name"
+            [attr.aria-label]="'Delete {name}' | t: { name: category.name }"
             (click)="remove.emit(category.id)"
           >
-            Delete
+            {{ 'Delete' | t }}
           </button>
         </span>
       </li>
     } @empty {
-      <li class="ui-muted">No categories yet.</li>
+      <li class="ui-muted">{{ 'No categories yet.' | t }}</li>
     }
   </ul>
 </section>

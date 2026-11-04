@@ -3,6 +3,7 @@ import { shortDateLabel } from '../../../../core/calendar/date-label';
 import { AccountStatement, CardStatement } from '../../../../core/finances/account-statement';
 import { Account, accountKindLabel } from '../../../../core/finances/finance-references';
 import { formatBalance } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Shown instead of a balance that has not arrived yet (e.g. right after adding an account). */
 const PENDING_VALUE = '—';
@@ -24,6 +25,7 @@ interface AccountTile extends TileFigure {
 /** One tile per bank account and credit card, with its balance or invoice; a tile selects its account. */
 @Component({
   selector: 'app-account-tiles',
+  imports: [TranslatePipe],
   templateUrl: './account-tiles.html',
   styleUrl: './account-tiles.css',
 })

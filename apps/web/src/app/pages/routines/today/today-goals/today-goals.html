@@ -1,6 +1,6 @@
 <div class="card-header centered">
   <h2 id="goals-title" class="ui-card-title">
-    {{ isShowingAllGoals() ? 'All goals' : 'Goals in focus' }}
+    {{ isShowingAllGoals() ? ('All goals' | t) : ('Goals in focus' | t) }}
   </h2>
   @if (goalCount() > 0) {
     <button
@@ -10,7 +10,9 @@
       [attr.aria-expanded]="isShowingAllGoals()"
       (click)="isShowingAllGoals.set(!isShowingAllGoals())"
     >
-      {{ isShowingAllGoals() ? 'Show less' : 'See all (' + goalCount() + ')' }}
+      {{
+        isShowingAllGoals() ? ('Show less' | t) : ('See all ({count})' | t: { count: goalCount() })
+      }}
     </button>
   }
 </div>
@@ -18,7 +20,9 @@
   <div class="goal-summary">
     <div class="goal-summary-text">
       <span class="goal-summary-count ui-tabular">{{ metGoals().length }}</span>
-      <span class="ui-muted">of {{ goalCount() }} goals met this period</span>
+      <span class="ui-muted">{{
+        'of {goalCount} goals met this period' | t: { goalCount: goalCount() }
+      }}</span>
     </div>
     <div class="ui-track goal-summary-track" aria-hidden="true">
       <div class="ui-fill goal-summary-fill" [style.width.%]="metPercent()"></div>
@@ -27,7 +31,7 @@
   <div id="focus-goals" class="all-goals">
     @if (pendingGoals().length > 0) {
       <h3 class="goal-group">
-        In progress <span class="ui-tabular">{{ pendingGoals().length }}</span>
+        {{ 'In progress' | t }} <span class="ui-tabular">{{ pendingGoals().length }}</span>
       </h3>
       @for (item of pendingGoals(); track item.goal.id) {
         <ng-container *ngTemplateOutlet="goalRow; context: { $implicit: item }" />
@@ -35,7 +39,7 @@
     }
     @if (metGoals().length > 0) {
       <h3 class="goal-group">
-        Met <span class="ui-tabular">{{ metGoals().length }}</span>
+        {{ 'Met' | t }} <span class="ui-tabular">{{ metGoals().length }}</span>
       </h3>
       @for (item of metGoals(); track item.goal.id) {
         <ng-container *ngTemplateOutlet="goalRow; context: { $implicit: item }" />
@@ -48,7 +52,7 @@
       <ng-container *ngTemplateOutlet="goalRow; context: { $implicit: item }" />
     } @empty {
       <p class="ui-muted">
-        {{ goalCount() === 0 ? 'No goals yet.' : 'Every goal is complete. Nice work!' }}
+        {{ goalCount() === 0 ? ('No goals yet.' | t) : ('Every goal is complete. Nice work!' | t) }}
       </p>
     }
   </div>
@@ -60,7 +64,7 @@
       <span class="ui-dot goal-dot" aria-hidden="true" [style.background]="item.color"></span>
       <div class="focus-goal-text">
         <span class="focus-goal-title">{{ item.goal.title }}</span>
-        <span class="focus-goal-meta">{{ item.meta }}</span>
+        <span class="focus-goal-meta">{{ item.meta | t }}</span>
       </div>
       @if (item.goal.type === 'objective') {
         <button
@@ -69,7 +73,7 @@
           [class.is-achieved]="item.isMet"
           [attr.aria-pressed]="item.isMet"
           [attr.aria-label]="
-            (item.isMet ? 'Take back achieved on ' : 'Mark achieved: ') + item.goal.title
+            (item.isMet ? 'Take back achieved on ' : 'Mark achieved: ') + item.goal.title | t
           "
           [attr.title]="item.isMet ? 'Click to take the mark back' : null"
           (click)="toggleAchieved(item.goal)"
@@ -89,11 +93,11 @@
               <path d="M5 12.5l4.5 4.5L19 7.5"></path>
             </svg>
           }
-          {{ item.isMet ? item.value : 'Mark achieved' }}
+          {{ item.isMet ? (item.value | t) : ('Mark achieved' | t) }}
         </button>
       } @else {
         <span class="focus-goal-value ui-tabular" [style.color]="item.isMet ? item.color : null">
-          {{ item.value }}
+          {{ item.value | t }}
         </span>
       }
     </div>

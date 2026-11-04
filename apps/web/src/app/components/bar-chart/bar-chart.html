@@ -2,7 +2,7 @@
   <header class="head">
     <h2 class="title">{{ title() | t }}</h2>
     @if (note()) {
-      <span class="ui-muted note">{{ note() }}</span>
+      <span class="ui-muted note">{{ note() | t }}</span>
     }
     @if (positiveLabel()) {
       <ul class="legend">
@@ -24,7 +24,7 @@
           [attr.y2]="tick.y"
         />
         <text class="axis" [attr.x]="left - 6" [attr.y]="tick.y + 3" text-anchor="end">
-          {{ tick.label }}
+          {{ tick.label | t }}
         </text>
       }
       @for (bar of bars(); track $index) {
@@ -45,7 +45,7 @@
           [attr.y]="height - 6"
           text-anchor="middle"
         >
-          {{ bar.label }}
+          {{ bar.label | t }}
         </text>
       }
     </svg>

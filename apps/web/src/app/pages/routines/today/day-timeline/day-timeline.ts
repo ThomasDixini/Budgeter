@@ -9,6 +9,7 @@ import {
 } from '../../../../core/routines/day-timeline';
 import { Routine } from '../../../../core/routines/routine';
 import { NowLine } from './now-line/now-line';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface TimelineBlockView {
   readonly key: string;
@@ -46,7 +47,7 @@ const DONE_BORDER = 'rgba(46, 242, 166, 0.35)';
 /** Vertical hour grid of today's routine with its blocks and a live "now" line. */
 @Component({
   selector: 'app-day-timeline',
-  imports: [NowLine],
+  imports: [TranslatePipe, NowLine],
   templateUrl: './day-timeline.html',
   styleUrl: './day-timeline.css',
 })

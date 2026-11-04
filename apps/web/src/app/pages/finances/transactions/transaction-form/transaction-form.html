@@ -1,10 +1,10 @@
 <form
   class="transaction-form ui-enter"
-  [attr.aria-label]="isEditing() ? 'Edit transaction' : 'New transaction'"
+  [attr.aria-label]="(isEditing() ? 'Edit transaction' : 'New transaction') | t"
   (submit)="submit($event)"
   (keydown.escape)="dismiss.emit()"
 >
-  <div class="chips" role="group" aria-label="Type">
+  <div class="chips" role="group" [attr.aria-label]="'Type' | t">
     @for (option of typeOptions; track option.value) {
       <button
         class="ui-chip"
@@ -12,14 +12,14 @@
         [attr.aria-pressed]="option.value === type()"
         (click)="type.set(option.value)"
       >
-        {{ option.label }}
+        {{ option.label | t }}
       </button>
     }
   </div>
 
   <div class="fields">
     <label class="ui-field">
-      Amount (R$)
+      {{ 'Amount (R$)' | t }}
       <input
         class="ui-input"
         name="amount"
@@ -33,38 +33,42 @@
         (input)="amount.set(valueOf($event))"
       />
       @if (amountError(); as error) {
-        <span id="transaction-amount-error" class="error">{{ error }}</span>
+        <span id="transaction-amount-error" class="error">{{ error | t }}</span>
       }
     </label>
 
     <label class="ui-field description">
-      Description
+      {{ 'Description' | t }}
       <input
         class="ui-input"
         type="text"
         maxlength="80"
-        placeholder="E.g. Groceries"
+        [placeholder]="'E.g. Groceries' | t"
         [value]="description()"
         (input)="description.set(valueOf($event))"
       />
     </label>
 
     <label class="ui-field">
-      Category
+      {{ 'Category' | t }}
       <select class="ui-input" (change)="categoryId.set(valueOf($event))">
-        <option value="" disabled [selected]="categoryId() === ''">Choose a category</option>
+        <option value="" disabled [selected]="categoryId() === ''">
+          {{ 'Choose a category' | t }}
+        </option>
         @for (category of categories(); track category.id) {
           <option [value]="category.id" [selected]="category.id === categoryId()">
-            {{ category.name }}
+            {{ category.name | t }}
           </option>
         }
       </select>
     </label>
 
     <label class="ui-field">
-      Account
+      {{ 'Account' | t }}
       <select class="ui-input" (change)="accountId.set(valueOf($event))">
-        <option value="" disabled [selected]="accountId() === ''">Choose an account</option>
+        <option value="" disabled [selected]="accountId() === ''">
+          {{ 'Choose an account' | t }}
+        </option>
         @for (account of accounts(); track account.id) {
           <option [value]="account.id" [selected]="account.id === accountId()">
             {{ account.name }}
@@ -74,18 +78,22 @@
     </label>
 
     <label class="ui-field">
-      Date
+      {{ 'Date' | t }}
       <input class="ui-input" type="date" [value]="date()" (change)="date.set(valueOf($event))" />
     </label>
   </div>
 
   <div class="actions">
     @if (isEditing()) {
-      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">Delete</button>
+      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">
+        {{ 'Delete' | t }}
+      </button>
     }
-    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
     <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
-      {{ isEditing() ? 'Save transaction' : 'Add transaction' }}
+      {{ isEditing() ? ('Save transaction' | t) : ('Add transaction' | t) }}
     </button>
   </div>
 </form>

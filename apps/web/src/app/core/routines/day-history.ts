@@ -1,4 +1,3 @@
-import { formatDate } from '@angular/common';
 import { parseIsoDate } from '../calendar/date-label';
 import { toMinutes } from '../calendar/time-of-day';
 import { Category, findCategory } from './category';
@@ -6,8 +5,7 @@ import { MINUTES_PER_DAY } from './day-clock';
 import { BlockOutcome, BlockOutcomeKind } from './day-plan';
 import { Goal, GoalPeriod, isGoalMet, shortDate } from './goal';
 import { Routine } from './routine';
-
-const LOCALE = 'en-US';
+import { activeLocale } from '../i18n/active-locale';
 
 /** A routine block as it ended on a past day. */
 export interface HistoryBlock {
@@ -91,9 +89,11 @@ export function historyPeriodLabel(period: GoalPeriod, isoDay: string, deadline?
     case 'weekly':
       return `Week of ${shortDate(mondayOf(day))}`;
     case 'monthly':
-      return formatDate(day, 'MMMM y', LOCALE);
+      return new Intl.DateTimeFormat(activeLocale(), { month: 'long', year: 'numeric' }).format(
+        day,
+      );
     case 'yearly':
-      return formatDate(day, 'y', LOCALE);
+      return new Intl.DateTimeFormat(activeLocale(), { year: 'numeric' }).format(day);
     case 'custom':
       return deadline === undefined
         ? 'Custom period'

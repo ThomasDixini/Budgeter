@@ -1,4 +1,4 @@
-<ul class="tiles" aria-label="Accounts and cards">
+<ul class="tiles" [attr.aria-label]="'Accounts and cards' | t">
   @for (tile of tiles(); track tile.id) {
     <li>
       <button
@@ -9,7 +9,7 @@
         (click)="choose.emit(tile.id)"
       >
         <span class="top">
-          <span class="kind">{{ tile.kindLabel }}</span>
+          <span class="kind">{{ tile.kindLabel | t }}</span>
           @if (tile.isCard) {
             <span class="chip" aria-hidden="true"></span>
           } @else {
@@ -29,7 +29,7 @@
           }
         </span>
         <span class="figure">
-          <span class="value-label">{{ tile.valueLabel }}</span>
+          <span class="value-label">{{ tile.valueLabel | t }}</span>
           <span class="value ui-tabular">{{ tile.value }}</span>
         </span>
         <span class="name">{{ tile.name }}</span>

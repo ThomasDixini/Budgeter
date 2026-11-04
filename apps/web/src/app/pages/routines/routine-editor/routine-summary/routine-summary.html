@@ -1,17 +1,17 @@
 <aside class="ui-card summary" aria-labelledby="summary-title">
-  <h2 id="summary-title" class="ui-card-title">Summary</h2>
+  <h2 id="summary-title" class="ui-card-title">{{ 'Summary' | t }}</h2>
   <div class="tiles">
     <div class="tile">
-      <div class="tile-label">Planned / day</div>
+      <div class="tile-label">{{ 'Planned / day' | t }}</div>
       <div class="tile-value ui-tabular">{{ planned() }}</div>
     </div>
     <div class="tile">
-      <div class="tile-label">Free / day</div>
+      <div class="tile-label">{{ 'Free / day' | t }}</div>
       <div class="tile-value ui-tabular">{{ free() }}</div>
     </div>
   </div>
   <div class="categories">
-    <div class="ui-muted">Hours per category this week</div>
+    <div class="ui-muted">{{ 'Hours per category this week' | t }}</div>
     @for (item of categoryHours(); track item.category.id) {
       <div class="category">
         <div class="category-row">
@@ -32,7 +32,10 @@
     }
   </div>
   <p class="note">
-    Blocks without a category (like Work and Lunch) organize the day but don't count toward goals.
+    {{
+      "Blocks without a category (like Work and Lunch) organize the day but don't count toward goals."
+        | t
+    }}
   </p>
-  <a class="ui-link" routerLink="/routines/categories">Manage categories</a>
+  <a class="ui-link" routerLink="/routines/categories">{{ 'Manage categories' | t }}</a>
 </aside>

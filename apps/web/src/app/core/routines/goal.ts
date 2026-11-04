@@ -1,5 +1,5 @@
-import { formatDate } from '@angular/common';
 import { parseIsoDate } from '../calendar/date-label';
+import { activeLocale } from '../i18n/active-locale';
 
 export type GoalType = 'frequency' | 'objective';
 export type GoalPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
@@ -70,7 +70,6 @@ export const GOAL_TYPE_LABELS: Readonly<Record<GoalType, string>> = {
 
 /** Frequency goals up to this many repetitions are drawn as dots instead of a bar. */
 const MAX_DOTS = 10;
-const LOCALE = 'en-US';
 
 /**
  * Period metadata for a goal period.
@@ -163,5 +162,5 @@ export function periodFooter(period: GoalPeriod, today: Date, deadline?: string)
  * @example shortDate(new Date(2026, 11, 15)) // 'Dec 15'
  */
 export function shortDate(date: Date): string {
-  return formatDate(date, 'MMM d', LOCALE);
+  return new Intl.DateTimeFormat(activeLocale(), { month: 'short', day: 'numeric' }).format(date);
 }

@@ -1,12 +1,13 @@
 <div class="card-header">
   <div class="title-with-count">
-    <h2 id="tasks-title" class="ui-card-title">Today's tasks</h2>
+    <h2 id="tasks-title" class="ui-card-title">{{ "Today's tasks" | t }}</h2>
     <span class="ui-muted ui-tabular">{{ doneCount() }}/{{ tasks().length }}</span>
   </div>
   <button
     class="ui-icon-button"
     type="button"
-    aria-label="New task"
+    [attr.aria-label]="'New task' | t"
+    data-role="new-task"
     [attr.aria-expanded]="isAddingTask()"
     (click)="startAddingTask($event)"
   >
@@ -45,8 +46,8 @@
 }
 @if (selectedBlock(); as block) {
   <p class="block-filter" role="status">
-    <span>Tasks for {{ block.name }}</span>
-    <button class="ui-link" type="button" (click)="showAll.emit()">Show all</button>
+    <span>{{ 'Tasks for {name}' | t: { name: block.name } }}</span>
+    <button class="ui-link" type="button" (click)="showAll.emit()">{{ 'Show all' | t }}</button>
   </p>
 }
 <ul class="tasks">
@@ -56,7 +57,7 @@
         <input type="checkbox" [checked]="item.isDone" (change)="toggleTask(item.task.id)" />
         <span class="task-text">
           <span class="task-title">{{ item.task.title }}</span>
-          <span class="task-repeat">{{ item.repeat }}</span>
+          <span class="task-repeat">{{ item.repeat | t }}</span>
         </span>
         @if (item.category; as category) {
           <span class="task-category" [style.color]="category.color">
@@ -68,7 +69,7 @@
       <button
         class="task-action"
         type="button"
-        [attr.aria-label]="'Edit ' + item.task.title"
+        [attr.aria-label]="'Edit {title}' | t: { title: item.task.title }"
         (click)="startEditingTask(item.task.id, $event)"
       >
         <svg
@@ -88,7 +89,7 @@
       <button
         class="task-action task-delete"
         type="button"
-        [attr.aria-label]="'Delete ' + item.task.title"
+        [attr.aria-label]="'Delete {title}' | t: { title: item.task.title }"
         (click)="deleteTask(item.task.id)"
       >
         <svg
@@ -108,9 +109,9 @@
   } @empty {
     <li class="ui-muted no-tasks">
       @if (selectedBlock()) {
-        No tasks for this block today.
+        {{ 'No tasks for this block today.' | t }}
       } @else {
-        Nothing for today. Add a task with +.
+        {{ 'Nothing for today. Add a task with +.' | t }}
       }
     </li>
   }
@@ -122,12 +123,11 @@
     [attr.aria-expanded]="isNotTodayOpen()"
     (click)="isNotTodayOpen.set(!isNotTodayOpen())"
   >
-    Not today
-    <span class="ui-muted ui-tabular">{{ notToday().length }}</span>
+    {{ 'Not today' | t }} <span class="ui-muted ui-tabular">{{ notToday().length }}</span>
     <span class="chevron" aria-hidden="true">{{ isNotTodayOpen() ? '▾' : '▸' }}</span>
   </button>
   @if (isNotTodayOpen()) {
-    <ul class="tasks not-today" aria-label="Tasks not due today">
+    <ul class="tasks not-today" [attr.aria-label]="'Tasks not due today' | t">
       @for (item of notToday(); track item.task.id) {
         <li
           class="task-row other-task"
@@ -136,7 +136,7 @@
           <span class="task-text">
             <span class="task-title">{{ item.task.title }}</span>
             <span class="task-repeat">
-              {{ notTodayGroupLabels[item.group] }} · {{ item.repeat }}
+              {{ notTodayGroupLabels[item.group] | t }} · {{ item.repeat | t }}
             </span>
           </span>
           @if (item.category; as category) {
@@ -148,7 +148,7 @@
           <button
             class="task-action"
             type="button"
-            [attr.aria-label]="'Edit ' + item.task.title"
+            [attr.aria-label]="'Edit {title}' | t: { title: item.task.title }"
             (click)="startEditingTask(item.task.id, $event)"
           >
             <svg
@@ -168,7 +168,7 @@
           <button
             class="task-action task-delete"
             type="button"
-            [attr.aria-label]="'Delete ' + item.task.title"
+            [attr.aria-label]="'Delete {title}' | t: { title: item.task.title }"
             (click)="deleteTask(item.task.id)"
           >
             <svg

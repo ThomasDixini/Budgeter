@@ -6,7 +6,7 @@
     description="Decide where each part of what you earn goes. Create, rename and adjust as you like."
   >
     @if (store.hasChanges()) {
-      <span class="ui-muted unsaved" role="status">Unsaved changes</span>
+      <span class="ui-muted unsaved" role="status">{{ 'Unsaved changes' | t }}</span>
     }
     <button
       class="ui-button-primary"
@@ -14,7 +14,7 @@
       [disabled]="!store.hasChanges() || store.isSaving() || !store.isLoaded()"
       (click)="store.save()"
     >
-      {{ saveLabel() }}
+      {{ saveLabel() | t }}
     </button>
   </app-page-heading>
 

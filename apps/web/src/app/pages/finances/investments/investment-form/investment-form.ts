@@ -16,6 +16,7 @@ import {
 } from '../../../../core/finances/investments';
 import { amountText, isValidAmount, parseAmountCents } from '../../../../core/finances/money';
 import { fieldValue } from '../../../../core/forms/field-value';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 const MAX_NAME_LENGTH = 40;
 
@@ -25,6 +26,7 @@ const MAX_NAME_LENGTH = 40;
  */
 @Component({
   selector: 'app-investment-form',
+  imports: [TranslatePipe],
   templateUrl: './investment-form.html',
   styleUrl: './investment-form.css',
 })

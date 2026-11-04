@@ -1,4 +1,4 @@
-<section class="ui-card group" [attr.aria-label]="title()">
+<section class="ui-card group" [attr.aria-label]="title() | t">
   <h2 class="group-header">
     <span>{{ title() }}</span>
     <span class="ui-tabular">{{ total() }}</span>
@@ -11,7 +11,7 @@
           <button
             class="row"
             type="button"
-            [attr.aria-label]="rowLabel(item)"
+            [attr.aria-label]="rowLabel(item) | t"
             (click)="edit.emit(item.bill)"
           >
             <ng-container *ngTemplateOutlet="content; context: { $implicit: item }" />
@@ -24,10 +24,10 @@
         <button
           class="ui-button-ghost action"
           type="button"
-          [attr.aria-label]="actionLabel(item) + ': ' + item.description"
+          [attr.aria-label]="actionLabel(item) + ': ' + item.description | t"
           (click)="act(item)"
         >
-          {{ actionLabel(item) }}
+          {{ actionLabel(item) | t }}
         </button>
       </li>
     }
@@ -55,10 +55,10 @@
   </span>
   <span class="text">
     <span class="description">{{ item.description }}</span>
-    <span class="detail">{{ detail(item) }}</span>
+    <span class="detail">{{ detail(item) | t }}</span>
   </span>
   @if (series(item); as label) {
-    <span class="ui-tag series">{{ label }}</span>
+    <span class="ui-tag series">{{ label | t }}</span>
   }
   <span class="amount ui-tabular">{{ signed(item) }}</span>
 </ng-template>

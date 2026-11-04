@@ -1,16 +1,16 @@
 <form
   class="settle-form ui-enter"
-  [attr.aria-label]="'Mark ' + description() + ' ' + verb()"
+  [attr.aria-label]="'Mark {description} {verb}' | t: { description: description(), verb: verb() }"
   (submit)="submit($event)"
   (keydown.escape)="dismiss.emit()"
 >
   @if (accounts().length === 0) {
-    <p class="ui-muted empty">Add an account to record the movement on.</p>
+    <p class="ui-muted empty">{{ 'Add an account to record the movement on.' | t }}</p>
   }
 
   <div class="fields">
     <label class="ui-field">
-      {{ accountLabel() }}
+      {{ accountLabel() | t }}
       <select class="ui-input" name="account" (change)="accountId.set(valueOf($event))">
         @for (account of accounts(); track account.id) {
           <option [value]="account.id" [selected]="account.id === accountId()">
@@ -21,7 +21,7 @@
     </label>
 
     <label class="ui-field">
-      Date
+      {{ 'Date' | t }}
       <input
         class="ui-input"
         name="date"
@@ -33,9 +33,11 @@
   </div>
 
   <div class="actions">
-    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
     <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
-      Mark as {{ verb() }}
+      {{ 'Mark as {verb}' | t: { verb: verb() } }}
     </button>
   </div>
 </form>

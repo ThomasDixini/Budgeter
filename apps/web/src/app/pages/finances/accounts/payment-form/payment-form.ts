@@ -12,6 +12,7 @@ import { fieldValue } from '../../../../core/forms/field-value';
 import { CardPaymentDraft } from '../../../../core/finances/account-statement';
 import { Account } from '../../../../core/finances/finance-references';
 import { amountText, isValidAmount, parseAmountCents } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * Inline form to pay a credit card's invoice from a bank account: which account, how much (the
@@ -19,6 +20,7 @@ import { amountText, isValidAmount, parseAmountCents } from '../../../../core/fi
  */
 @Component({
   selector: 'app-payment-form',
+  imports: [TranslatePipe],
   templateUrl: './payment-form.html',
   styleUrl: './payment-form.css',
 })

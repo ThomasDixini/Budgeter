@@ -27,6 +27,20 @@ describe('Translator', () => {
     expect(translatorIn('pt-BR').translate('{count} unlisted', { count: 3 })).toBe('3 unlisted');
   });
 
+  it('recognises a sentence the code already filled in and translates each filled value', () => {
+    const translator = translatorIn('pt-BR');
+
+    expect([
+      translator.translate('Overdue by 4 days'),
+      translator.translate('Due today (nov. 3)'),
+      translator.translate('Food · Due in 1 day (Oct 30)'),
+    ]).toEqual([
+      'Atrasada há 4 dias',
+      'Vence hoje (nov. 3)',
+      'Alimentação · Vence em 1 dia (Oct 30)',
+    ]);
+  });
+
   it('keeps every placeholder of the English text in its translation', () => {
     const placeholders = (text: string): string[] => (text.match(/\{\w+\}/g) ?? []).sort();
 

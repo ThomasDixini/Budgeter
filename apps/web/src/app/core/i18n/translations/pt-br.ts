@@ -1,8 +1,15 @@
+import { PT_BR_FINANCES } from './pt-br-finances';
+import { PT_BR_ROUTINES } from './pt-br-routines';
+import { PT_BR_SENTENCES } from './pt-br-sentences';
+
 /**
  * Brazilian Portuguese, keyed by the English text shown in the app. Add an entry for each new text; one
  * left out shows in English. Keep every `{placeholder}` of the key in the translation.
  */
 export const PT_BR: Readonly<Record<string, string>> = {
+  ...PT_BR_FINANCES,
+  ...PT_BR_ROUTINES,
+  ...PT_BR_SENTENCES,
   // Shell: header, dock, home
   Profile: 'Perfil',
   'Coming soon': 'Em breve',
@@ -13,6 +20,7 @@ export const PT_BR: Readonly<Record<string, string>> = {
   'Next module: {name}': 'Próximo módulo: {name}',
   'Choose a module': 'Escolher um módulo',
   Close: 'Fechar',
+  Dismiss: 'Dispensar',
   Modules: 'Módulos',
   'Choose one': 'Escolha um',
   'All modules': 'Todos os módulos',

@@ -3,10 +3,12 @@ import { longDateLabel, parseIsoDate } from '../../../../core/calendar/date-labe
 import { formatSignedMoney } from '../../../../core/finances/money';
 import { Transaction } from '../../../../core/finances/transaction';
 import { TransactionDay } from '../../../../core/finances/transaction-days';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** The month's transactions grouped by day, each day with its total; a row opens it for editing. */
 @Component({
   selector: 'app-transaction-history',
+  imports: [TranslatePipe],
   templateUrl: './transaction-history.html',
   styleUrl: './transaction-history.css',
 })

@@ -5,7 +5,9 @@ import { formatDate } from '@angular/common';
  * @example longDateLabel(new Date(2026, 9, 26), 'en-US') // 'Monday, October 26'
  */
 export function longDateLabel(date: Date, locale: string): string {
-  return formatDate(date, 'EEEE, MMMM d', locale);
+  return new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(
+    date,
+  );
 }
 
 /**
@@ -13,7 +15,9 @@ export function longDateLabel(date: Date, locale: string): string {
  * @example shortDateLabel('2026-11-03', 'en-US') // 'Nov 3'
  */
 export function shortDateLabel(isoDay: string, locale: string): string {
-  return formatDate(parseIsoDate(isoDay), 'MMM d', locale);
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(
+    parseIsoDate(isoDay),
+  );
 }
 
 /**

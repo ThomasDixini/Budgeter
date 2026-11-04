@@ -9,6 +9,7 @@ import {
 import { DistributionSlice } from '../../../../core/finances/investments-analytics';
 import { investmentKindLabel } from '../../../../core/finances/investments';
 import { formatMoney } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface SliceView {
   readonly kind: string;
@@ -24,6 +25,7 @@ interface SliceView {
  */
 @Component({
   selector: 'app-portfolio-distribution',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './portfolio-distribution.html',
   styleUrl: './portfolio-distribution.css',

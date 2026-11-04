@@ -18,7 +18,7 @@
       >
         <path d="M12 5v14M5 12h14"></path>
       </svg>
-      Add investment
+      {{ 'Add investment' | t }}
     </button>
   </app-page-heading>
 
@@ -70,15 +70,15 @@
     <app-load-failed message="Couldn't load your investments." (retry)="reload()" />
   }
 
-  <div class="filters" aria-label="Filters">
-    <div class="chips" role="group" aria-label="Kind">
+  <div class="filters" [attr.aria-label]="'Filters' | t">
+    <div class="chips" role="group" [attr.aria-label]="'Kind' | t">
       <button
         class="ui-chip"
         type="button"
         [attr.aria-pressed]="filters().kind === undefined"
         (click)="pickKind(undefined)"
       >
-        Whole portfolio
+        {{ 'Whole portfolio' | t }}
       </button>
       @for (option of kindOptions; track option.value) {
         <button
@@ -87,25 +87,25 @@
           [attr.aria-pressed]="filters().kind === option.value"
           (click)="pickKind(option.value)"
         >
-          {{ option.label }}
+          {{ option.label | t }}
         </button>
       }
     </div>
     <label class="asset-picker">
-      <span class="ui-muted">Asset</span>
+      <span class="ui-muted">{{ 'Asset' | t }}</span>
       <select
         class="ui-input"
         name="asset"
         [value]="filters().investmentId ?? ''"
         (change)="pickAsset($any($event.target).value || undefined)"
       >
-        <option value="">All</option>
+        <option value="">{{ 'All' | t }}</option>
         @for (line of tableLines(); track line.investment.id) {
           <option [value]="line.investment.id">{{ line.investment.name }}</option>
         }
       </select>
     </label>
-    <div class="chips periods" role="group" aria-label="Period">
+    <div class="chips periods" role="group" [attr.aria-label]="'Period' | t">
       @for (months of periodOptions; track months) {
         <button
           class="ui-chip"
@@ -113,44 +113,44 @@
           [attr.aria-pressed]="filters().months === months"
           (click)="pickPeriod(months)"
         >
-          {{ months }}M
+          {{ '{months}M' | t: { months: months } }}
         </button>
       }
     </div>
   </div>
 
-  <section class="stats" aria-label="Portfolio">
+  <section class="stats" [attr.aria-label]="'Portfolio' | t">
     @for (stat of stats(); track stat.label) {
       <div class="stat">
-        <p class="label">{{ stat.label }}</p>
+        <p class="label">{{ stat.label | t }}</p>
         <p class="value ui-tabular">{{ stat.value }}</p>
         @if (stat.note) {
-          <p class="note ui-tabular">{{ stat.note }}</p>
+          <p class="note ui-tabular">{{ stat.note | t }}</p>
         }
       </div>
     }
   </section>
   @if (cdiNote(); as note) {
-    <p class="ui-muted cdi-note">{{ note }}</p>
+    <p class="ui-muted cdi-note">{{ note | t }}</p>
   }
 
-  <section class="charts" aria-label="Charts">
+  <section class="charts" [attr.aria-label]="'Charts' | t">
     <app-line-chart
-      title="Value over time"
+      [title]="'Value over time' | t"
       [labels]="monthLabels()"
       [series]="valueSeries()"
       [format]="formatAxisMoney"
       emptyText="No history yet."
     />
     <app-line-chart
-      title="Accumulated return vs CDI"
+      [title]="'Accumulated return vs CDI' | t"
       [labels]="monthLabels()"
       [series]="returnSeries()"
       [format]="formatAxisPercent"
       emptyText="No history yet."
     />
     <app-bar-chart
-      title="Return per month"
+      [title]="'Return per month' | t"
       positiveLabel="Gain"
       negativeLabel="Loss"
       [labels]="monthLabels()"
@@ -159,7 +159,7 @@
       emptyText="No history yet."
     />
     <app-bar-chart
-      title="Proventos received"
+      [title]="'Proventos received' | t"
       [note]="incomeNote()"
       [labels]="monthLabels()"
       [values]="monthlyIncome()"
@@ -170,24 +170,26 @@
 
   <app-portfolio-distribution [slices]="slices()" />
 
-  <section class="ui-card card" aria-label="Holdings">
+  <section class="ui-card card" [attr.aria-label]="'Holdings' | t">
     <div class="card-head">
-      <h2 class="card-title">Your assets</h2>
-      <span class="ui-muted hint">Click an asset to see only it above.</span>
+      <h2 class="card-title">{{ 'Your assets' | t }}</h2>
+      <span class="ui-muted hint">{{ 'Click an asset to see only it above.' | t }}</span>
     </div>
     @if (tableLines().length > 0) {
       <div class="table-wrap">
         <table class="assets">
           <thead>
             <tr>
-              <th scope="col">Asset</th>
-              <th scope="col" class="number">Units</th>
-              <th scope="col" class="number">Average price</th>
-              <th scope="col" class="number">Current price</th>
-              <th scope="col" class="number">Invested</th>
-              <th scope="col" class="number sorted">Current value ↓</th>
-              <th scope="col" class="number">Return</th>
-              <th scope="col"><span class="ui-visually-hidden">Actions</span></th>
+              <th scope="col">{{ 'Asset' | t }}</th>
+              <th scope="col" class="number">{{ 'Units' | t }}</th>
+              <th scope="col" class="number">{{ 'Average price' | t }}</th>
+              <th scope="col" class="number">{{ 'Current price' | t }}</th>
+              <th scope="col" class="number">{{ 'Invested' | t }}</th>
+              <th scope="col" class="number sorted">{{ 'Current value ↓' | t }}</th>
+              <th scope="col" class="number">{{ 'Return' | t }}</th>
+              <th scope="col">
+                <span class="ui-visually-hidden">{{ 'Actions' | t }}</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -202,11 +204,11 @@
                     class="asset-button"
                     type="button"
                     [attr.aria-pressed]="filters().investmentId === line.investment.id"
-                    [attr.aria-label]="'Show only ' + line.investment.name"
+                    [attr.aria-label]="'Show only {name}' | t: { name: line.investment.name }"
                     (click)="toggleAsset(line.investment.id)"
                   >
                     <span class="name">{{ line.investment.name }}</span>
-                    <span class="detail">{{ kindLabel(line.investment) }}</span>
+                    <span class="detail">{{ kindLabel(line.investment) | t }}</span>
                   </button>
                 </th>
                 <td class="number ui-tabular">{{ quantity(line) }}</td>
@@ -229,26 +231,26 @@
                     <button
                       class="ui-button-ghost"
                       type="button"
-                      [attr.aria-label]="'Trade ' + line.investment.name"
+                      [attr.aria-label]="'Trade {name}' | t: { name: line.investment.name }"
                       (click)="open({ kind: 'trade', investmentId: line.investment.id })"
                     >
-                      Buy / sell
+                      {{ 'Buy / sell' | t }}
                     </button>
                     <button
                       class="ui-button-ghost"
                       type="button"
-                      [attr.aria-label]="'Add income to ' + line.investment.name"
+                      [attr.aria-label]="'Add income to {name}' | t: { name: line.investment.name }"
                       (click)="open({ kind: 'income', investmentId: line.investment.id })"
                     >
-                      Income
+                      {{ 'Income' | t }}
                     </button>
                     <button
                       class="ui-button-ghost"
                       type="button"
-                      [attr.aria-label]="'Edit ' + line.investment.name"
+                      [attr.aria-label]="'Edit {name}' | t: { name: line.investment.name }"
                       (click)="open({ kind: 'edit', investmentId: line.investment.id })"
                     >
-                      Edit
+                      {{ 'Edit' | t }}
                     </button>
                   </div>
                 </td>
@@ -259,34 +261,37 @@
       </div>
     } @else if (isLoaded()) {
       <p class="ui-muted empty">
-        No investments yet. Add one, then record your purchases to follow it here.
+        {{ 'No investments yet. Add one, then record your purchases to follow it here.' | t }}
       </p>
     }
   </section>
 
-  <section class="ui-card card" aria-label="Movements">
-    <h2 class="card-title">Purchases, sales and proventos</h2>
+  <section class="ui-card card" [attr.aria-label]="'Movements' | t">
+    <h2 class="card-title">{{ 'Purchases, sales and proventos' | t }}</h2>
     @if (movements().length > 0) {
       <ul class="list">
         @for (movement of movements(); track movement.key) {
           <li class="movement">
             <span class="text">
-              <span class="name">{{ movementDetail(movement) }}</span>
+              <span class="name">{{ movementDetail(movement) | t }}</span>
             </span>
             <span class="amount ui-tabular">{{ signed(movement.cents) }}</span>
             <button
               class="ui-button-ghost"
               type="button"
-              [attr.aria-label]="'Delete ' + movement.label + ' of ' + movement.investmentName"
+              [attr.aria-label]="
+                'Delete {label} of {investmentName}'
+                  | t: { label: movement.label, investmentName: movement.investmentName }
+              "
               (click)="removeMovement(movement)"
             >
-              Delete
+              {{ 'Delete' | t }}
             </button>
           </li>
         }
       </ul>
     } @else if (isLoaded()) {
-      <p class="ui-muted empty">Nothing recorded yet.</p>
+      <p class="ui-muted empty">{{ 'Nothing recorded yet.' | t }}</p>
     }
   </section>
 </div>

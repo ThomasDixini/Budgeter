@@ -10,6 +10,7 @@ import {
   isGoalMet,
 } from '../../../../core/routines/goal';
 import { RoutinesStore } from '../../../../core/routines/routines-store';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Goals shown while the card is closed. */
 const FOCUS_GOAL_COUNT = 3;
@@ -29,7 +30,7 @@ interface FocusGoalView {
  */
 @Component({
   selector: 'app-today-goals',
-  imports: [NgTemplateOutlet],
+  imports: [TranslatePipe, NgTemplateOutlet],
   templateUrl: './today-goals.html',
   styleUrl: './today-goals.css',
   host: { role: 'region', 'aria-labelledby': 'goals-title' },

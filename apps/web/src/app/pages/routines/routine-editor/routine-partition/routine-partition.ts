@@ -8,6 +8,7 @@ import {
   scheduleIssues,
 } from '../../../../core/routines/routine';
 import { partitionLaneCount, partitionSegments } from '../../../../core/routines/routine-edits';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Height of one lane of the bar; overlapping blocks add lanes and the bar grows. */
 const LANE_HEIGHT = 34;
@@ -49,6 +50,7 @@ interface LegendEntry {
  */
 @Component({
   selector: 'app-routine-partition',
+  imports: [TranslatePipe],
   templateUrl: './routine-partition.html',
   styleUrl: './routine-partition.css',
   host: { '(document:click)': 'unpinOutsideBlocks($event)' },

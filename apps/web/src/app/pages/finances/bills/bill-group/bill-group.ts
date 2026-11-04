@@ -9,6 +9,7 @@ import {
   seriesLabel,
 } from '../../../../core/finances/bills';
 import { formatSignedMoney } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * One block of the agenda (overdue, due soon, later or settled): a row per bill or card invoice, with
@@ -16,7 +17,7 @@ import { formatSignedMoney } from '../../../../core/finances/money';
  */
 @Component({
   selector: 'app-bill-group',
-  imports: [NgTemplateOutlet],
+  imports: [TranslatePipe, NgTemplateOutlet],
   templateUrl: './bill-group.html',
   styleUrl: './bill-group.css',
 })

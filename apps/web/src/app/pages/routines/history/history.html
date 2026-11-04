@@ -5,11 +5,11 @@
     [heading]="dayLabel()"
     description="Pick a day to see the blocks you completed and the goals you met."
   >
-    <div class="day-picker" role="group" aria-label="Day">
+    <div class="day-picker" role="group" [attr.aria-label]="'Day' | t">
       <button
         class="ui-icon-button"
         type="button"
-        aria-label="Previous day"
+        [attr.aria-label]="'Previous day' | t"
         (click)="previousDay()"
       >
         <svg
@@ -29,7 +29,7 @@
       <input
         class="ui-input day-input"
         type="date"
-        aria-label="Day to show"
+        [attr.aria-label]="'Day to show' | t"
         [max]="todayIso"
         [value]="day()"
         (change)="pick(valueOf($event))"
@@ -37,7 +37,7 @@
       <button
         class="ui-icon-button"
         type="button"
-        aria-label="Next day"
+        [attr.aria-label]="'Next day' | t"
         [disabled]="isToday()"
         (click)="nextDay()"
       >
@@ -59,12 +59,12 @@
   </app-page-heading>
 
   @if (isLoading()) {
-    <p class="ui-muted">Loading…</p>
+    <p class="ui-muted">{{ 'Loading…' | t }}</p>
   } @else {
     <div class="columns">
       <section class="ui-card" aria-labelledby="blocks-title">
         <div class="card-header">
-          <h2 id="blocks-title" class="ui-card-title">Blocks completed</h2>
+          <h2 id="blocks-title" class="ui-card-title">{{ 'Blocks completed' | t }}</h2>
           <span class="ui-muted ui-tabular">{{ completed().length }}</span>
         </div>
         <ul class="rows">
@@ -83,11 +83,11 @@
               }
             </li>
           } @empty {
-            <li class="ui-muted empty">No block was completed this day.</li>
+            <li class="ui-muted empty">{{ 'No block was completed this day.' | t }}</li>
           }
         </ul>
         @if (skipped().length > 0) {
-          <h3 class="subheading">Skipped</h3>
+          <h3 class="subheading">{{ 'Skipped' | t }}</h3>
           <ul class="rows">
             @for (block of skipped(); track block.key) {
               <li class="row block-row is-skipped">
@@ -104,7 +104,7 @@
 
       <section class="ui-card" aria-labelledby="goals-title">
         <div class="card-header">
-          <h2 id="goals-title" class="ui-card-title">Goals met</h2>
+          <h2 id="goals-title" class="ui-card-title">{{ 'Goals met' | t }}</h2>
           <span class="ui-muted ui-tabular">{{ goalsMet().length }}</span>
         </div>
         <ul class="rows">
@@ -126,26 +126,26 @@
               </svg>
               <span class="row-text">
                 <span class="row-title">{{ item.goal.title }}</span>
-                <span class="row-meta">{{ item.meta }}</span>
+                <span class="row-meta">{{ item.meta | t }}</span>
               </span>
               <span class="value ui-tabular" [style.color]="item.category?.color">{{
                 item.value
               }}</span>
             </li>
           } @empty {
-            <li class="ui-muted empty">No goal was met by this day.</li>
+            <li class="ui-muted empty">{{ 'No goal was met by this day.' | t }}</li>
           }
         </ul>
         @if (goalsShort().length > 0) {
-          <h3 class="subheading">Not met yet</h3>
+          <h3 class="subheading">{{ 'Not met yet' | t }}</h3>
           <ul class="rows">
             @for (item of goalsShort(); track item.goal.id) {
               <li class="row goal-row">
                 <span class="row-text">
                   <span class="row-title">{{ item.goal.title }}</span>
-                  <span class="row-meta">{{ item.meta }}</span>
+                  <span class="row-meta">{{ item.meta | t }}</span>
                 </span>
-                <span class="value ui-tabular">{{ item.value }}</span>
+                <span class="value ui-tabular">{{ item.value | t }}</span>
               </li>
             }
           </ul>

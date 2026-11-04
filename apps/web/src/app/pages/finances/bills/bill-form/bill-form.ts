@@ -25,6 +25,7 @@ import {
 import { FinanceCategory } from '../../../../core/finances/finance-references';
 import { amountText, isValidAmount, parseAmountCents } from '../../../../core/finances/money';
 import { fieldValue } from '../../../../core/forms/field-value';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Choices of the pay/receive switch. */
 const KIND_OPTIONS: readonly { value: BillKind; label: string }[] = [
@@ -38,6 +39,7 @@ const KIND_OPTIONS: readonly { value: BillKind; label: string }[] = [
  */
 @Component({
   selector: 'app-bill-form',
+  imports: [TranslatePipe],
   templateUrl: './bill-form.html',
   styleUrl: './bill-form.css',
 })

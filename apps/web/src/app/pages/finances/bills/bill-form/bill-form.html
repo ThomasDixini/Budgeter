@@ -1,10 +1,10 @@
 <form
   class="bill-form ui-enter"
-  [attr.aria-label]="isEditing() ? 'Edit bill' : 'New bill'"
+  [attr.aria-label]="(isEditing() ? 'Edit bill' : 'New bill') | t"
   (submit)="submit($event)"
   (keydown.escape)="dismiss.emit()"
 >
-  <div class="chips" role="group" aria-label="Type">
+  <div class="chips" role="group" [attr.aria-label]="'Type' | t">
     @for (option of kindOptions; track option.value) {
       <button
         class="ui-chip"
@@ -12,20 +12,20 @@
         [attr.aria-pressed]="option.value === kind()"
         (click)="kind.set(option.value)"
       >
-        {{ option.label }}
+        {{ option.label | t }}
       </button>
     }
   </div>
 
   <div class="fields">
     <label class="ui-field description">
-      Description
+      {{ 'Description' | t }}
       <input
         class="ui-input"
         name="description"
         type="text"
         autocomplete="off"
-        placeholder="E.g. Rent"
+        [placeholder]="'E.g. Rent' | t"
         [maxLength]="maxDescriptionLength"
         [value]="description()"
         (input)="description.set(valueOf($event))"
@@ -33,7 +33,7 @@
     </label>
 
     <label class="ui-field">
-      Amount (R$)
+      {{ 'Amount (R$)' | t }}
       <input
         class="ui-input"
         name="amount"
@@ -47,24 +47,26 @@
         (input)="amount.set(valueOf($event))"
       />
       @if (amountError(); as error) {
-        <span id="bill-amount-error" class="error">{{ error }}</span>
+        <span id="bill-amount-error" class="error">{{ error | t }}</span>
       }
     </label>
 
     <label class="ui-field">
-      Category
+      {{ 'Category' | t }}
       <select class="ui-input" name="category" (change)="categoryId.set(valueOf($event))">
-        <option value="" disabled [selected]="categoryId() === ''">Choose a category</option>
+        <option value="" disabled [selected]="categoryId() === ''">
+          {{ 'Choose a category' | t }}
+        </option>
         @for (category of categories(); track category.id) {
           <option [value]="category.id" [selected]="category.id === categoryId()">
-            {{ category.name }}
+            {{ category.name | t }}
           </option>
         }
       </select>
     </label>
 
     <label class="ui-field">
-      Due date
+      {{ 'Due date' | t }}
       <input
         class="ui-input"
         name="dueDate"
@@ -76,15 +78,17 @@
 
     @if (isEditing()) {
       @if (seriesNote(); as note) {
-        <p class="ui-muted note">{{ note }} · Changes apply to this one only.</p>
+        <p class="ui-muted note">
+          {{ '{note} · Changes apply to this one only.' | t: { note: note } }}
+        </p>
       }
     } @else {
       <label class="ui-field">
-        Repeat
+        {{ 'Repeat' | t }}
         <select class="ui-input" name="repeat" (change)="chooseRepeat(valueOf($event))">
           @for (option of repeatOptions; track option.value) {
             <option [value]="option.value" [selected]="option.value === repeatKind()">
-              {{ option.label }}
+              {{ option.label | t }}
             </option>
           }
         </select>
@@ -92,7 +96,7 @@
 
       @if (isRepeating()) {
         <label class="ui-field">
-          {{ repeatKind() === 'installments' ? 'Installments' : 'Occurrences' }}
+          {{ repeatKind() === 'installments' ? ('Installments' | t) : ('Occurrences' | t) }}
           <input
             class="ui-input"
             name="count"
@@ -106,7 +110,7 @@
             (input)="repeatCount.set(valueOf($event))"
           />
           @if (countError(); as error) {
-            <span id="bill-count-error" class="error">{{ error }}</span>
+            <span id="bill-count-error" class="error">{{ error | t }}</span>
           }
         </label>
       }
@@ -115,11 +119,15 @@
 
   <div class="actions">
     @if (isEditing()) {
-      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">Delete</button>
+      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">
+        {{ 'Delete' | t }}
+      </button>
     }
-    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
     <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
-      {{ isEditing() ? 'Save bill' : 'Add bill' }}
+      {{ isEditing() ? ('Save bill' | t) : ('Add bill' | t) }}
     </button>
   </div>
 </form>

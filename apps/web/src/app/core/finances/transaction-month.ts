@@ -1,4 +1,3 @@
-import { formatDate } from '@angular/common';
 import { isoDate, parseIsoDate } from '../calendar/date-label';
 
 /*
@@ -36,7 +35,9 @@ export function shiftMonth(month: string, step: number): string {
  * @example monthLabel('2026-10', 'en-US') // 'October 2026'
  */
 export function monthLabel(month: string, locale: string): string {
-  return formatDate(parseIsoDate(`${month}-01`), 'MMMM y', locale);
+  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
+    parseIsoDate(`${month}-01`),
+  );
 }
 
 /**

@@ -12,6 +12,7 @@ import { fieldValue } from '../../../../core/forms/field-value';
 import { Category } from '../../../../core/routines/category';
 import { WEEKDAY_LABELS } from '../../../../core/routines/routine';
 import { TASK_REPEAT_OPTIONS, Task, TaskDraft, TaskRepeat } from '../../../../core/routines/task';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * Inline form on the Today card: what the task is, how often it repeats (or on which day, for a
@@ -19,6 +20,7 @@ import { TASK_REPEAT_OPTIONS, Task, TaskDraft, TaskRepeat } from '../../../../co
  */
 @Component({
   selector: 'app-task-form',
+  imports: [TranslatePipe],
   templateUrl: './task-form.html',
   styleUrl: './task-form.css',
 })

@@ -11,6 +11,7 @@ import {
 } from '../../../core/routines/category';
 import { averageProgress } from '../../../core/routines/goal';
 import { RoutinesStore } from '../../../core/routines/routines-store';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface CategoryCardView {
   readonly category: Category;
@@ -23,7 +24,7 @@ interface CategoryCardView {
 /** Grid of categories, each opening its goals, plus an inline form to create a new one. */
 @Component({
   selector: 'app-routines-categories',
-  imports: [RouterLink, PageHeading],
+  imports: [TranslatePipe, RouterLink, PageHeading],
   templateUrl: './categories.html',
   styleUrl: './categories.css',
 })

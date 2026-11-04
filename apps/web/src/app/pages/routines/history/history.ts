@@ -16,6 +16,7 @@ import {
 import { DayRecord, DayRecords } from '../../../core/routines/day-records';
 import { GOAL_TYPE_LABELS, Goal, goalExtra } from '../../../core/routines/goal';
 import { RoutinesStore } from '../../../core/routines/routines-store';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface HistoryGoalView {
   readonly goal: Goal;
@@ -32,7 +33,7 @@ interface HistoryGoalView {
  */
 @Component({
   selector: 'app-routines-history',
-  imports: [PageHeading],
+  imports: [TranslatePipe, PageHeading],
   templateUrl: './history.html',
   styleUrl: './history.css',
 })

@@ -6,7 +6,7 @@
   >
     <div class="save-area">
       <span class="save-message" [class.failed]="hasSaveFailed()" aria-live="polite">
-        {{ saveMessage() }}
+        {{ saveMessage() | t }}
       </span>
       <button
         class="ui-button-primary save"
@@ -14,13 +14,13 @@
         [disabled]="!hasChanges() || isSaving()"
         (click)="save()"
       >
-        Save routine
+        {{ 'Save routine' | t }}
       </button>
     </div>
   </app-page-heading>
 
   @if (isLoaded()) {
-    <div class="templates" role="tablist" aria-label="Routines">
+    <div class="templates" role="tablist" [attr.aria-label]="'Routines' | t">
       @for (routine of routines(); track routine.id) {
         <button
           class="ui-chip template"
@@ -29,7 +29,7 @@
           [attr.aria-selected]="routine.id === draft()?.id"
           (click)="selectRoutine(routine.id)"
         >
-          {{ routine.name || 'Untitled' }}
+          {{ routine.name || ('Untitled' | t) }}
         </button>
       }
       <button class="ui-dashed-button new-routine" type="button" (click)="createRoutine()">
@@ -45,7 +45,7 @@
         >
           <path d="M12 5v14M5 12h14"></path>
         </svg>
-        New routine
+        {{ 'New routine' | t }}
       </button>
     </div>
   }
@@ -54,9 +54,9 @@
     <div class="columns">
       <div class="main">
         <section class="ui-card settings" aria-labelledby="settings-title">
-          <h2 id="settings-title" class="ui-visually-hidden">Settings</h2>
+          <h2 id="settings-title" class="ui-visually-hidden">{{ 'Settings' | t }}</h2>
           <label class="ui-field routine-name">
-            Routine name
+            {{ 'Routine name' | t }}
             <input
               class="ui-input"
               type="text"
@@ -66,7 +66,7 @@
             />
           </label>
           <fieldset class="ui-fieldset">
-            <legend class="ui-legend days-legend">Days of the week</legend>
+            <legend class="ui-legend days-legend">{{ 'Days of the week' | t }}</legend>
             <div class="days">
               @for (label of weekdayLabels; track label; let day = $index) {
                 <button
@@ -75,14 +75,14 @@
                   [attr.aria-pressed]="draft.days.includes(day)"
                   (click)="toggleWeekday(day)"
                 >
-                  {{ label }}
+                  {{ label | t }}
                 </button>
               }
             </div>
           </fieldset>
           <div class="hours">
             <label class="ui-field">
-              Day start
+              {{ 'Day start' | t }}
               <input
                 class="ui-input"
                 type="time"
@@ -91,7 +91,7 @@
               />
             </label>
             <label class="ui-field">
-              Day end
+              {{ 'Day end' | t }}
               <input
                 class="ui-input"
                 type="time"
@@ -102,17 +102,19 @@
           </div>
           <div class="danger-zone">
             @if (isConfirmingDelete()) {
-              <div class="delete-confirm" role="group" aria-label="Confirm deletion">
-                <span>Delete "{{ draft.name || 'Untitled' }}" and its blocks?</span>
+              <div class="delete-confirm" role="group" [attr.aria-label]="'Confirm deletion' | t">
+                <span>{{
+                  'Delete "{Untitled}" and its blocks?' | t: { Untitled: draft.name || 'Untitled' }
+                }}</span>
                 <button class="ui-button-ghost delete-yes" type="button" (click)="deleteRoutine()">
-                  Delete
+                  {{ 'Delete' | t }}
                 </button>
                 <button
                   class="ui-button-ghost"
                   type="button"
                   (click)="isConfirmingDelete.set(false)"
                 >
-                  Cancel
+                  {{ 'Cancel' | t }}
                 </button>
               </div>
             } @else {
@@ -121,7 +123,7 @@
                 type="button"
                 (click)="isConfirmingDelete.set(true)"
               >
-                Delete routine
+                {{ 'Delete routine' | t }}
               </button>
             }
           </div>
@@ -129,7 +131,7 @@
 
         <section class="ui-card partition-card" aria-labelledby="partition-title">
           <div class="card-header">
-            <h2 id="partition-title" class="ui-card-title">Day partition</h2>
+            <h2 id="partition-title" class="ui-card-title">{{ 'Day partition' | t }}</h2>
             <span class="ui-muted">{{ draft.start }} – {{ draft.end }}</span>
           </div>
 
@@ -137,10 +139,10 @@
 
           <div class="rows">
             <div class="rows-header" aria-hidden="true">
-              <span class="col-name">Block</span>
-              <span class="col-time">Start</span>
-              <span class="col-time">End</span>
-              <span class="col-category">Category</span>
+              <span class="col-name">{{ 'Block' | t }}</span>
+              <span class="col-time">{{ 'Start' | t }}</span>
+              <span class="col-time">{{ 'End' | t }}</span>
+              <span class="col-category">{{ 'Category' | t }}</span>
               <span class="col-action"></span>
             </div>
             @for (row of rows(); track row.block.id) {
@@ -150,7 +152,7 @@
                   <input
                     class="ui-input name-input"
                     type="text"
-                    aria-label="Block name"
+                    [attr.aria-label]="'Block name' | t"
                     [value]="row.block.name"
                     (change)="changeBlock(row.block.id, { name: valueOf($event) })"
                   />
@@ -158,24 +160,24 @@
                 <input
                   class="ui-input col-time time-input"
                   type="time"
-                  aria-label="Start"
+                  [attr.aria-label]="'Start' | t"
                   [value]="row.block.start"
                   (change)="changeBlockTime(row.block.id, 'start', valueOf($event))"
                 />
                 <input
                   class="ui-input col-time time-input"
                   type="time"
-                  aria-label="End"
+                  [attr.aria-label]="'End' | t"
                   [value]="row.block.end"
                   (change)="changeBlockTime(row.block.id, 'end', valueOf($event))"
                 />
                 <select
                   class="ui-input col-category select-input"
-                  aria-label="Category"
+                  [attr.aria-label]="'Category' | t"
                   (change)="changeBlockCategory(row.block.id, valueOf($event))"
                 >
                   <option value="" [selected]="row.block.categoryId === undefined">
-                    No category
+                    {{ 'No category' | t }}
                   </option>
                   @for (category of categories(); track category.id) {
                     <option [value]="category.id" [selected]="row.block.categoryId === category.id">
@@ -186,7 +188,7 @@
                 <button
                   class="remove"
                   type="button"
-                  aria-label="Remove block"
+                  [attr.aria-label]="'Remove block' | t"
                   (click)="deleteBlock(row.block.id)"
                 >
                   <svg
@@ -218,7 +220,7 @@
               >
                 <path d="M12 5v14M5 12h14"></path>
               </svg>
-              Add block
+              {{ 'Add block' | t }}
             </button>
           </div>
         </section>
@@ -231,7 +233,9 @@
   } @else {
     <p class="ui-muted empty">
       {{
-        isLoaded() ? 'No routines yet. Create one with "New routine".' : 'Loading your routines…'
+        isLoaded()
+          ? ('No routines yet. Create one with "New routine".' | t)
+          : ('Loading your routines…' | t)
       }}
     </p>
   }

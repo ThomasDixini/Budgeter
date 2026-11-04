@@ -1,7 +1,7 @@
-<section class="ui-card card" aria-label="Portfolio distribution">
-  <h2 class="title">Portfolio distribution</h2>
+<section class="ui-card card" [attr.aria-label]="'Portfolio distribution' | t">
+  <h2 class="title">{{ 'Portfolio distribution' | t }}</h2>
   @if (views().length > 0) {
-    <div class="bar" role="img" aria-label="Share of each kind of investment">
+    <div class="bar" role="img" [attr.aria-label]="'Share of each kind of investment' | t">
       @for (view of views(); track view.kind) {
         <span class="segment" [attr.data-kind]="view.kind" [style.flex-grow]="view.percent"></span>
       }
@@ -10,13 +10,13 @@
       @for (view of views(); track view.kind) {
         <li>
           <span class="dot" [attr.data-kind]="view.kind"></span>
-          <span class="kind">{{ view.label }}</span
+          <span class="kind">{{ view.label | t }}</span
           >{{ ' ' }}
           <span class="share ui-tabular">{{ view.percentText }} · {{ view.valueText }}</span>
         </li>
       }
     </ul>
   } @else {
-    <p class="empty ui-muted">Nothing invested yet.</p>
+    <p class="empty ui-muted">{{ 'Nothing invested yet.' | t }}</p>
   }
 </section>

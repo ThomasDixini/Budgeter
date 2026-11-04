@@ -23,6 +23,7 @@ import {
 } from '../../../../core/routines/task';
 import { TasksStore } from '../../../../core/routines/tasks-store';
 import { TaskForm } from '../task-form/task-form';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface NotTodayView {
   readonly task: Task;
@@ -52,7 +53,7 @@ interface TaskView {
  */
 @Component({
   selector: 'app-today-tasks',
-  imports: [TaskForm],
+  imports: [TranslatePipe, TaskForm],
   templateUrl: './today-tasks.html',
   styleUrl: './today-tasks.css',
   host: { role: 'region', 'aria-labelledby': 'tasks-title' },
@@ -162,7 +163,7 @@ export class TodayTasks {
         const host = this.host.nativeElement;
         const fallback =
           host.querySelector<HTMLElement>('.not-today-toggle') ??
-          host.querySelector<HTMLElement>('[aria-label="New task"]');
+          host.querySelector<HTMLElement>('[data-role="new-task"]');
         (this.opener?.isConnected ? this.opener : fallback)?.focus();
       },
       { injector: this.injector },

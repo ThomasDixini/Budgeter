@@ -18,7 +18,7 @@
       >
         <path d="M12 5v14M5 12h14"></path>
       </svg>
-      Add account or card
+      {{ 'Add account or card' | t }}
     </button>
   </app-page-heading>
 
@@ -48,7 +48,9 @@
       (choose)="choose($event)"
     />
   } @else if (isLoaded()) {
-    <p class="ui-card empty">No accounts yet. Add your bank account or card to see its balance.</p>
+    <p class="ui-card empty">
+      {{ 'No accounts yet. Add your bank account or card to see its balance.' | t }}
+    </p>
   }
 
   @if (selected(); as account) {

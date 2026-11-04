@@ -24,6 +24,8 @@ export default defineConfig({
   reporter: isContinuousIntegration ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: baseUrl,
+    // The tests read English texts; the app follows the browser language otherwise.
+    locale: 'en-US',
     trace: 'retain-on-failure',
   },
   projects: [

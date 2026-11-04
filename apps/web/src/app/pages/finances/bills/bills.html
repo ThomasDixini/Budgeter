@@ -13,30 +13,34 @@
       >
         <path d="M12 5v14M5 12h14"></path>
       </svg>
-      Add bill
+      {{ 'Add bill' | t }}
     </button>
   </app-page-heading>
 
-  <section class="stats" aria-label="Month at a glance">
+  <section class="stats" [attr.aria-label]="'Month at a glance' | t">
     <div class="stat">
-      <p class="label"><span class="mark expense" aria-hidden="true"></span>Left to pay</p>
+      <p class="label">
+        <span class="mark expense" aria-hidden="true"></span>{{ 'Left to pay' | t }}
+      </p>
       <p class="value ui-tabular">{{ leftToPay() }}</p>
     </div>
     <div class="stat">
-      <p class="label"><span class="mark income" aria-hidden="true"></span>Left to receive</p>
+      <p class="label">
+        <span class="mark income" aria-hidden="true"></span>{{ 'Left to receive' | t }}
+      </p>
       <p class="value ui-tabular">{{ leftToReceive() }}</p>
     </div>
     <div class="stat">
-      <p class="label">Projected balance</p>
+      <p class="label">{{ 'Projected balance' | t }}</p>
       <p class="value ui-tabular">{{ projectedBalance() }}</p>
     </div>
     <div class="stat late">
-      <p class="label">Overdue</p>
-      <p class="value ui-tabular">{{ overdueCount() }}</p>
+      <p class="label">{{ 'Overdue' | t }}</p>
+      <p class="value ui-tabular">{{ overdueCount() | t }}</p>
     </div>
   </section>
 
-  <div class="chips" role="group" aria-label="Show">
+  <div class="chips" role="group" [attr.aria-label]="'Show' | t">
     @for (option of kindOptions; track option.value) {
       <button
         class="ui-chip"
@@ -50,7 +54,7 @@
           [class.income]="option.value === 'receivable'"
           aria-hidden="true"
         ></span>
-        {{ option.label }}
+        {{ option.label | t }}
       </button>
     }
   </div>
@@ -106,7 +110,7 @@
 
   @if (visible().overdue.length > 0) {
     <app-bill-group
-      title="Overdue"
+      [title]="'Overdue' | t"
       [items]="visible().overdue"
       [categoryNames]="categoryNames()"
       [accountNames]="accountNames()"
@@ -119,7 +123,7 @@
 
   @if (visible().soon.length > 0) {
     <app-bill-group
-      title="Next 7 days"
+      [title]="'Next 7 days' | t"
       [items]="visible().soon"
       [categoryNames]="categoryNames()"
       [accountNames]="accountNames()"
@@ -132,7 +136,7 @@
 
   @if (visible().later.length > 0) {
     <app-bill-group
-      title="Later"
+      [title]="'Later' | t"
       [items]="visible().later"
       [categoryNames]="categoryNames()"
       [accountNames]="accountNames()"
@@ -145,7 +149,7 @@
 
   @if (visible().settled.length > 0) {
     <app-bill-group
-      title="Paid & received (last 30 days)"
+      [title]="'Paid & received (last 30 days)' | t"
       [settled]="true"
       [items]="visible().settled"
       [categoryNames]="categoryNames()"
@@ -157,7 +161,7 @@
 
   @if (isLoaded() && isEmpty()) {
     <p class="ui-card empty">
-      Nothing to pay or receive. Add a bill to keep track of its due date.
+      {{ 'Nothing to pay or receive. Add a bill to keep track of its due date.' | t }}
     </p>
   }
 </div>

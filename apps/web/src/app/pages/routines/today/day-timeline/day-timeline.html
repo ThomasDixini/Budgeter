@@ -1,12 +1,12 @@
 <div class="timeline" [style.height.px]="height()">
   @for (hour of hours(); track hour.label) {
     <div class="hour" aria-hidden="true" [style.top.px]="hour.top">
-      <span class="hour-label ui-tabular">{{ hour.label }}</span>
+      <span class="hour-label ui-tabular">{{ hour.label | t }}</span>
       <span class="hour-line"></span>
     </div>
   }
 
-  <ol class="blocks" aria-label="Blocks of the day">
+  <ol class="blocks" [attr.aria-label]="'Blocks of the day' | t">
     @for (block of blocks(); track block.key) {
       <li
         class="block-slot"
@@ -35,7 +35,7 @@
             class="block-text block-select"
             type="button"
             [attr.aria-pressed]="block.isSelected"
-            [attr.aria-label]="'Show tasks for ' + block.name"
+            [attr.aria-label]="'Show tasks for {name}' | t: { name: block.name }"
             (click)="pick.emit(block.blockId)"
           >
             <span class="block-name">
@@ -72,15 +72,15 @@
               }
               {{ block.name }}
             </span>
-            <span class="block-range ui-tabular">{{ block.range }}</span>
+            <span class="block-range ui-tabular">{{ block.range | t }}</span>
           </button>
           <div class="block-badges">
             @if (block.isNow && !block.isCompact) {
-              <span class="ui-badge-now">Now</span>
+              <span class="ui-badge-now">{{ 'Now' | t }}</span>
             }
             @if (block.outcome; as outcome) {
               <span class="outcome-label" [class.ui-visually-hidden]="block.isCompact">
-                {{ outcomeLabels[outcome] }}
+                {{ outcomeLabels[outcome] | t }}
               </span>
             }
             @if (block.category; as category) {
@@ -88,7 +88,7 @@
                 <span
                   class="ui-dot"
                   role="img"
-                  [attr.aria-label]="category.name"
+                  [attr.aria-label]="category.name | t"
                   [style.background]="category.color"
                 ></span>
               } @else {
@@ -102,8 +102,8 @@
               <button
                 class="step complete-block"
                 type="button"
-                [attr.aria-label]="'Complete ' + block.name"
-                title="Complete"
+                [attr.aria-label]="'Complete {name}' | t: { name: block.name }"
+                [title]="'Complete' | t"
                 (click)="complete.emit(block.blockId)"
               >
                 <svg
@@ -123,8 +123,8 @@
               <button
                 class="step skip-block"
                 type="button"
-                [attr.aria-label]="'Skip ' + block.name"
-                title="Skip"
+                [attr.aria-label]="'Skip {name}' | t: { name: block.name }"
+                [title]="'Skip' | t"
                 (click)="skip.emit(block.blockId)"
               >
                 <svg
@@ -145,8 +145,8 @@
               <button
                 class="undo"
                 type="button"
-                [attr.aria-label]="'Undo ' + block.name"
-                title="Undo"
+                [attr.aria-label]="'Undo {name}' | t: { name: block.name }"
+                [title]="'Undo' | t"
                 (click)="undo.emit(block.blockId)"
               >
                 <svg

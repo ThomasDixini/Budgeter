@@ -1,13 +1,20 @@
 import { Component, inject } from '@angular/core';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { UserNotices } from '../../core/notices/user-notices';
 
 /** Banner telling the user that something went wrong, on every screen, until dismissed. */
 @Component({
   selector: 'app-notice',
+  imports: [TranslatePipe],
   template: `@if (notices.message(); as message) {
     <div class="notice" role="alert">
-      <p class="text">{{ message }}</p>
-      <button class="dismiss" type="button" aria-label="Dismiss" (click)="notices.dismiss()">
+      <p class="text">{{ message | t }}</p>
+      <button
+        class="dismiss"
+        type="button"
+        [attr.aria-label]="'Dismiss' | t"
+        (click)="notices.dismiss()"
+      >
         <svg
           width="16"
           height="16"
