@@ -126,3 +126,65 @@ describe('InvestmentsStore changes', () => {
     ]);
   });
 });
+
+describe('InvestmentsStore import', () => {
+  const BATCH = {
+    investments: [
+      { id: 'import-inv-vino11', draft: { name: 'VINO11', kind: 'realEstateFund' as const } },
+    ],
+    trades: [
+      {
+        id: 'import-buy',
+        draft: {
+          investmentId: 'import-inv-vino11',
+          date: '2026-10-10',
+          kind: 'buy' as const,
+          quantityThousandths: 10000,
+          unitPriceCents: 500,
+        },
+      },
+    ],
+    incomes: [
+      {
+        id: 'import-income',
+        draft: {
+          investmentId: 'import-inv-vino11',
+          date: '2026-10-15',
+          kind: 'yield' as const,
+          amountCents: 500,
+        },
+      },
+    ],
+  };
+
+  it('writes the investments, then the trades, then the proventos, and reads the portfolio once', async () => {
+    const { store, gateway } = createStore();
+    const readsBefore = gateway.askedDays.length;
+
+    const result = await store.importBatch(BATCH);
+
+    expect([
+      result,
+      gateway.savedInvestments.map((request) => request.id),
+      gateway.savedTrades.map((request) => request.id),
+      gateway.savedIncomes.map((request) => request.id),
+      gateway.askedDays.length - readsBefore,
+    ]).toEqual([
+      { saved: 3, failed: 0 },
+      ['import-inv-vino11'],
+      ['import-buy'],
+      ['import-income'],
+      1,
+    ]);
+  });
+
+  it('counts and reports what the gateway refuses, without stopping the rest', async () => {
+    const { store, gateway, errors } = createStore();
+    gateway.failure = new Error('offline');
+
+    const result = await store.importBatch(BATCH);
+
+    // One report for each refused write, and one for the portfolio that could not be read again.
+    expect([result, errors.errors.length]).toEqual([{ saved: 0, failed: 3 }, 4]);
+  });
+});

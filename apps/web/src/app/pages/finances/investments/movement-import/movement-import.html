@@ -1,0 +1,144 @@
+<section class="import ui-enter" [attr.aria-label]="'Import movements' | t">
+  <header class="head">
+    <h2 class="title">{{ 'Import movements' | t }}</h2>
+    <p class="ui-muted hint">
+      {{
+        'Pick the Excel (.xlsx) the broker exported with your movements. Nothing is saved until you confirm.'
+          | t
+      }}
+    </p>
+  </header>
+
+  <label class="ui-field">
+    {{ 'Movements file' | t }}
+    <input
+      class="ui-input ui-file"
+      type="file"
+      accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      (change)="readFile($event)"
+    />
+  </label>
+
+  @if (isReading()) {
+    <p class="ui-muted" role="status">{{ 'Reading the file…' | t }}</p>
+  }
+
+  @if (problems().length > 0) {
+    <div class="problems" role="alert">
+      <p class="problems-title">{{ 'Some lines could not be read and were left out:' | t }}</p>
+      <ul>
+        @for (problem of shownProblems(); track problem) {
+          <li>{{ problem | t }}</li>
+        }
+      </ul>
+      @if (hiddenProblems() > 0) {
+        <p class="ui-muted">{{ 'and {count} more' | t: { count: hiddenProblems() } }}</p>
+      }
+    </div>
+  }
+
+  @if (lines().length > 0) {
+    <p class="summary ui-tabular" role="status">
+      {{ '{buys} purchases · {sells} sales · {incomes} proventos' | t: counts() }}
+      @if (counts().left > 0) {
+        · {{ '{count} without a value, left out' | t: { count: counts().left } }}
+      }
+      @if (counts().stored > 0) {
+        · {{ '{count} already recorded' | t: { count: counts().stored } }}
+      }
+    </p>
+
+    @if (newInvestments().length > 0) {
+      <div class="created" role="group" [attr.aria-label]="'New investments' | t">
+        <p class="created-title">{{ 'These investments will be created:' | t }}</p>
+        <ul>
+          @for (name of newInvestments(); track name) {
+            <li>
+              <span class="created-name">{{ name }}</span>
+              <select
+                class="ui-input kind"
+                [attr.aria-label]="'Kind of {name}' | t: { name: name }"
+                (change)="pickKind(name, valueOf($event))"
+              >
+                @for (option of kindOptions; track option.value) {
+                  <option [value]="option.value" [selected]="option.value === kindOf(name)">
+                    {{ option.label | t }}
+                  </option>
+                }
+              </select>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="table-wrap">
+      <table class="lines">
+        <thead>
+          <tr>
+            <th scope="col" class="check">
+              <input
+                class="ui-checkbox"
+                type="checkbox"
+                [attr.aria-label]="'Select all' | t"
+                [checked]="allSelected()"
+                (change)="toggleAll()"
+              />
+            </th>
+            <th scope="col">{{ 'Date' | t }}</th>
+            <th scope="col">{{ 'Asset' | t }}</th>
+            <th scope="col">{{ 'Movement' | t }}</th>
+            <th scope="col" class="number">{{ 'Units' | t }}</th>
+            <th scope="col" class="number">{{ 'Amount' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of lines(); track line.row.id; let index = $index) {
+            <tr [class.muted]="!line.isIncluded">
+              <td class="check">
+                <input
+                  class="ui-checkbox"
+                  type="checkbox"
+                  [attr.aria-label]="
+                    'Import {description}'
+                      | t: { description: line.row.name + ' ' + labelOf(line.row) }
+                  "
+                  [checked]="line.isIncluded"
+                  [disabled]="line.isStored || line.row.action === 'ignored'"
+                  (change)="toggleLine(index)"
+                />
+              </td>
+              <td class="day">{{ dayOf(line.row) }}</td>
+              <td class="asset">{{ line.row.name }}</td>
+              <td>
+                {{ line.row.action === 'ignored' ? line.row.movement : (labelOf(line.row) | t) }}
+                @if (line.isStored) {
+                  <span class="ui-tag">{{ 'Already recorded' | t }}</span>
+                } @else if (line.row.action === 'ignored') {
+                  <span class="ui-tag">{{ 'No value' | t }}</span>
+                }
+              </td>
+              <td class="number ui-tabular">{{ quantityOf(line.row) }}</td>
+              <td class="number ui-tabular">{{ amountOf(line.row) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <div class="actions">
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
+    <button class="ui-button-primary" type="button" [disabled]="!canImport()" (click)="confirm()">
+      @if (isSaving()) {
+        {{ 'Importing…' | t }}
+      } @else if (selected().length === 1) {
+        {{ 'Import 1 line' | t }}
+      } @else {
+        {{ 'Import {count} lines' | t: { count: selected().length } }}
+      }
+    </button>
+  </div>
+</section>

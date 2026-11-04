@@ -5,6 +5,9 @@
     heading="Investments"
     [description]="summary()"
   >
+    <button class="ui-button-ghost" type="button" (click)="openImport()">
+      {{ 'Import movements' | t }}
+    </button>
     <button class="ui-button-ghost" type="button" (click)="open({ kind: 'new' })">
       <svg
         width="16"
@@ -21,6 +24,23 @@
       {{ 'Add investment' | t }}
     </button>
   </app-page-heading>
+
+  @if (importResult(); as result) {
+    <p class="ui-muted import-result" role="status">
+      {{
+        result.saved === 1
+          ? ('1 record imported.' | t)
+          : ('{count} records imported.' | t: { count: result.saved })
+      }}
+      @if (result.failed > 0) {
+        {{ '{count} could not be saved.' | t: { count: result.failed } }}
+      }
+    </p>
+  }
+
+  @if (isImportOpen()) {
+    <app-movement-import (imported)="finishImport($event)" (dismiss)="isImportOpen.set(false)" />
+  }
 
   @switch (panel().kind) {
     @case ('new') {

@@ -3,8 +3,12 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { Clock } from '../calendar/clock';
 import { isoDate } from '../calendar/date-label';
 import { IdGenerator } from '../ids/id-generator';
+import { ImportBatch } from './investment-import';
 import { IncomeDraft, InvestmentDraft, Portfolio, TradeDraft, movements } from './investments';
 import { InvestmentsGateway } from './investments-gateway';
+
+/** How many proventos of an import are sent at the same time. */
+const IMPORT_BATCH_SIZE = 8;
 
 /**
  * What the Investments page shows: the portfolio worked out by the API, with the trades and proventos
@@ -80,6 +84,46 @@ export class InvestmentsStore {
   /** @example await store.deleteIncome('dividend-petr4') */
   deleteIncome(incomeId: string): Promise<boolean> {
     return this.write(this.gateway.deleteIncome(incomeId));
+  }
+
+  /**
+   * Writes what a file import brought: the new investments first, then the trades from the oldest (a sale
+   * is refused when written before the purchase behind it), then the proventos a few at a time. A refusal
+   * is reported and counted, and the rest still go through. The portfolio is read once at the end.
+   * @example await store.importBatch(batch) // { saved: 40, failed: 0 }
+   */
+  async importBatch(batch: ImportBatch): Promise<{ saved: number; failed: number }> {
+    this.saving.set(true);
+    let failed = 0;
+    try {
+      const count = async (writes: readonly Observable<unknown>[]): Promise<void> => {
+        const results = await Promise.all(writes.map((write) => this.tryToWrite(write)));
+        failed += results.filter((isDone) => !isDone).length;
+      };
+      await count(
+        batch.investments.map((item) => this.gateway.saveInvestment(item.id, item.draft)),
+      );
+      for (const item of batch.trades) await count([this.gateway.saveTrade(item.id, item.draft)]);
+      for (let start = 0; start < batch.incomes.length; start += IMPORT_BATCH_SIZE) {
+        const incomes = batch.incomes.slice(start, start + IMPORT_BATCH_SIZE);
+        await count(incomes.map((item) => this.gateway.saveIncome(item.id, item.draft)));
+      }
+    } finally {
+      this.saving.set(false);
+    }
+    await this.refresh();
+    const total = batch.investments.length + batch.trades.length + batch.incomes.length;
+    return { saved: total - failed, failed };
+  }
+
+  private async tryToWrite(change: Observable<unknown>): Promise<boolean> {
+    try {
+      await firstValueFrom(change, { defaultValue: undefined });
+      return true;
+    } catch (error) {
+      this.errorHandler.handleError(error);
+      return false;
+    }
   }
 
   private async write(change: Observable<unknown>): Promise<boolean> {

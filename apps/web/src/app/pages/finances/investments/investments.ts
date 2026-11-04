@@ -31,6 +31,7 @@ import {
 } from '../../../core/finances/investments-analytics';
 import { InvestmentsStore } from '../../../core/finances/investments-store';
 import { IncomeFields, IncomeForm } from './income-form/income-form';
+import { MovementImport, MovementImportResult } from './movement-import/movement-import';
 import { InvestmentForm } from './investment-form/investment-form';
 import { PortfolioDistribution } from './portfolio-distribution/portfolio-distribution';
 import { TradeFields, TradeForm } from './trade-form/trade-form';
@@ -71,6 +72,7 @@ const DEFAULT_FILTERS: InvestmentFilters = { months: 12 };
     LineChart,
     BarChart,
     PortfolioDistribution,
+    MovementImport,
   ],
   providers: [InvestmentsStore],
   templateUrl: './investments.html',
@@ -86,6 +88,9 @@ export class Investments {
   protected readonly hasLoadFailed = this.store.hasLoadFailed;
   protected readonly movements = this.store.movements;
   protected readonly panel = signal<Panel>(CLOSED);
+  protected readonly isImportOpen = signal(false);
+  /** What the last import came to, shown until the person moves on. */
+  protected readonly importResult = signal<MovementImportResult | undefined>(undefined);
   protected readonly filters = signal<InvestmentFilters>(DEFAULT_FILTERS);
   protected readonly kindOptions = INVESTMENT_KIND_OPTIONS;
   protected readonly periodOptions = PERIOD_OPTIONS;
@@ -110,7 +115,19 @@ export class Investments {
   private readonly months = computed(() => monthKeys(this.today, this.filters().months));
 
   protected open(panel: Panel): void {
+    this.isImportOpen.set(false);
     this.panel.set(panel);
+  }
+
+  protected openImport(): void {
+    this.panel.set(CLOSED);
+    this.importResult.set(undefined);
+    this.isImportOpen.set(true);
+  }
+
+  protected finishImport(result: MovementImportResult): void {
+    this.isImportOpen.set(false);
+    this.importResult.set(result);
   }
 
   protected close(): void {
