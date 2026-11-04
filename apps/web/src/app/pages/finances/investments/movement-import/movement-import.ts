@@ -4,10 +4,13 @@ import { readFirstSheet } from '../../../../core/files/xlsx-reader';
 import {
   MovementRow,
   PlannedMovement,
+  StoredPortfolio,
+  applyMerges,
   buildBatch,
   investmentKindOf,
   parseMovements,
   planMovements,
+  suggestMerges,
 } from '../../../../core/finances/investment-import';
 import {
   INVESTMENT_KIND_OPTIONS,
@@ -25,6 +28,17 @@ interface MovementLine extends PlannedMovement {
   readonly isIncluded: boolean;
 }
 
+/** One investment named in the file, and where its lines go. */
+interface FileInvestment {
+  readonly name: string;
+  /** The investment its lines end up on: itself, or the one it is merged into. */
+  readonly target: string;
+  /** Whether the target does not exist yet, so its kind can still be picked. */
+  readonly isNew: boolean;
+  /** The other names it can be merged into: the rest of the file's and the ones already stored. */
+  readonly mergeOptions: readonly string[];
+}
+
 /** What an import came to: how many records were stored or refused. */
 export interface MovementImportResult {
   readonly saved: number;
@@ -38,7 +52,9 @@ const PROBLEMS_SHOWN = 5;
  * Panel above the investments to import the "Movimentação" workbook the broker exports (`.xlsx`): pick the
  * file, review the purchases, sales and proventos it holds and confirm. Investments that do not exist yet
  * are created (their kind can be changed first); lines already stored, and the ones that move no money
- * (rights, updates), are left out. Nothing is saved until the person confirms.
+ * (rights, updates), are left out. A fund that changed its ticker shows under both: the older one is
+ * suggested to be merged into the newer, and any investment can be merged into another. Nothing is saved
+ * until the person confirms.
  */
 @Component({
   selector: 'app-movement-import',
@@ -57,15 +73,23 @@ export class MovementImport {
   protected readonly fileName = signal<string | undefined>(undefined);
   protected readonly isReading = signal(false);
   protected readonly isSaving = signal(false);
-  protected readonly lines = signal<readonly MovementLine[]>([]);
   protected readonly problems = signal<readonly string[]>([]);
+  /** The lines as the file has them, with their own names. */
+  private readonly rows = signal<readonly MovementRow[]>([]);
+  /** What was stored when the file was read. */
+  private readonly stored = signal<StoredPortfolio>({ investments: [], trades: [], incomes: [] });
+  /** Investment name -> the name it is merged into; the file's own suggestion until the person changes it. */
+  private readonly merges = signal<Readonly<Record<string, string>>>({});
+  /** Ids of the lines the person unticked, which stay unticked whatever else changes. */
+  private readonly unticked = signal<ReadonlySet<string>>(new Set());
   private readonly chosenKinds = signal<Readonly<Record<string, InvestmentKind>>>({});
 
+  protected readonly lines = computed<readonly MovementLine[]>(() => this.planLines());
+  protected readonly investments = computed(() => this.listInvestments());
   protected readonly shownProblems = computed(() => this.problems().slice(0, PROBLEMS_SHOWN));
   protected readonly hiddenProblems = computed(() => this.problems().length - PROBLEMS_SHOWN);
   protected readonly selected = computed(() => this.lines().filter((line) => line.isIncluded));
   protected readonly counts = computed(() => this.describeCounts());
-  protected readonly newInvestments = computed(() => this.listNewInvestments());
   protected readonly canImport = computed(() => this.selected().length > 0 && !this.isSaving());
   protected readonly allSelected = computed(() => {
     const open = this.lines().filter(isOpen);
@@ -82,7 +106,7 @@ export class MovementImport {
     if (file === undefined) return;
     this.fileName.set(file.name);
     this.isReading.set(true);
-    this.lines.set([]);
+    this.rows.set([]);
     try {
       await this.readWorkbook(await file.arrayBuffer());
     } catch (error) {
@@ -93,22 +117,29 @@ export class MovementImport {
   }
 
   protected toggleLine(index: number): void {
-    this.lines.update((lines) =>
-      lines.map((line, position) =>
-        position === index ? { ...line, isIncluded: !line.isIncluded } : line,
-      ),
-    );
+    const id = this.lines()[index].row.id;
+    this.unticked.update((ids) => {
+      const next = new Set(ids);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
   }
 
   protected toggleAll(): void {
-    const isIncluded = !this.allSelected();
-    this.lines.update((lines) =>
-      lines.map((line) => (isOpen(line) ? { ...line, isIncluded } : line)),
-    );
+    const open = this.lines().filter(isOpen);
+    this.unticked.set(this.allSelected() ? new Set(open.map((line) => line.row.id)) : new Set());
   }
 
   protected pickKind(name: string, kind: string): void {
     this.chosenKinds.update((kinds) => ({ ...kinds, [name]: kind as InvestmentKind }));
+  }
+
+  /** Sends the lines of an investment to another one, or back to its own name. */
+  protected pickMerge(name: string, target: string): void {
+    this.merges.update((merges) => {
+      const rest = Object.fromEntries(Object.entries(merges).filter(([source]) => source !== name));
+      return target === name ? rest : { ...rest, [name]: target };
+    });
   }
 
   protected async confirm(): Promise<void> {
@@ -151,12 +182,41 @@ export class MovementImport {
     const parsed = parseMovements(await readFirstSheet(new Uint8Array(workbook)));
     this.problems.set(parsed.problems);
     const portfolio = this.store.portfolio();
-    const planned = planMovements(parsed.rows, {
+    this.stored.set({
       investments: (portfolio?.lines ?? []).map((line) => line.investment),
       trades: portfolio?.trades ?? [],
       incomes: portfolio?.incomes ?? [],
     });
-    this.lines.set(planned.map((line) => ({ ...line, isIncluded: isOpen(line) })));
+    this.unticked.set(new Set());
+    this.chosenKinds.set({});
+    this.merges.set(suggestMerges(parsed.rows));
+    this.rows.set(parsed.rows);
+  }
+
+  private planLines(): MovementLine[] {
+    const merged = applyMerges(this.rows(), this.merges());
+    return planMovements(merged, this.stored()).map((line) => ({
+      ...line,
+      isIncluded: isOpen(line) && !this.unticked().has(line.row.id),
+    }));
+  }
+
+  /** The investments the file names, in the order they first appear, with where their lines go. */
+  private listInvestments(): FileInvestment[] {
+    const rows = this.rows().filter((row) => row.action !== 'ignored');
+    const merged = applyMerges(rows, this.merges());
+    const names = [...new Set(rows.map((row) => row.name))];
+    const targets = new Map(rows.map((row, index) => [row.name, merged[index].name]));
+    const known = this.stored().investments.map((investment) => investment.name);
+    return names.map((name) => {
+      const target = targets.get(name) ?? name;
+      return {
+        name,
+        target,
+        isNew: !known.some((existing) => existing.toLowerCase() === target.toLowerCase()),
+        mergeOptions: [...new Set([...names, ...known])].filter((other) => other !== name),
+      };
+    });
   }
 
   private describeCounts(): {
@@ -177,13 +237,6 @@ export class MovementImport {
       left: lines.filter((line) => line.row.action === 'ignored').length,
       stored: lines.filter((line) => line.isStored).length,
     };
-  }
-
-  private listNewInvestments(): string[] {
-    const names = this.selected()
-      .filter((line) => line.investmentId === undefined)
-      .map((line) => line.row.name);
-    return [...new Set(names)];
   }
 }
 
