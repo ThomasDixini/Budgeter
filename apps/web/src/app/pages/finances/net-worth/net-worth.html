@@ -10,18 +10,7 @@
     <app-load-failed message="Couldn't load your net worth." (retry)="reload()" />
   }
 
-  <div class="chips" role="group" [attr.aria-label]="'Period' | t">
-    @for (option of periodOptions; track option) {
-      <button
-        class="ui-chip"
-        type="button"
-        [attr.aria-pressed]="months() === option"
-        (click)="pickPeriod(option)"
-      >
-        {{ '{option} months' | t: { option: option } }}
-      </button>
-    }
-  </div>
+  <app-period-filter [period]="period()" [today]="today" (periodChange)="period.set($event)" />
 
   <section class="stats" [attr.aria-label]="'Net worth' | t">
     @for (stat of stats(); track stat.label) {

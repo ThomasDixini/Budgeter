@@ -82,3 +82,22 @@ svg {
   padding: 56px 0;
   text-align: center;
 }
+
+.bar.dimmed {
+  opacity: 0.35;
+}
+
+.hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.hit:hover {
+  fill: rgba(255, 255, 255, 0.05);
+}
+
+.hit:focus-visible {
+  outline: none;
+  stroke: var(--color-focus);
+  stroke-width: 1.5;
+}

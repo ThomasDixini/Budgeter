@@ -121,6 +121,21 @@ describe('Net worth page', () => {
     ]).toEqual(['R$9,742.20', ['Nothing invested yet.']]);
   });
 
+  it('lets the person pick the days of a period', () => {
+    const fixture = render();
+    const custom = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
+      (candidate) => candidate.textContent?.trim() === 'Custom',
+    )!;
+
+    custom.click();
+    fixture.detectChanges();
+
+    expect([
+      custom.getAttribute('aria-pressed'),
+      (fixture.nativeElement as HTMLElement).querySelectorAll('input[type="date"]').length,
+    ]).toEqual(['true', 2]);
+  });
+
   it('offers to try again when the net worth does not load', () => {
     const investments = new FakeInvestmentsGateway();
     investments.failure = new Error('offline');

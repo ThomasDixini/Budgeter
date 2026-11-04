@@ -316,3 +316,42 @@
     margin-left: 0;
   }
 }
+
+.month-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 24px;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+  font-size: var(--font-size-sm);
+}
+
+.month-title {
+  flex-basis: 100%;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Only the first letter: capitalizing every word would turn "março de 2026" into "Março De 2026". */
+.month-title::first-letter {
+  text-transform: uppercase;
+}
+
+.month-detail div {
+  display: flex;
+  gap: 8px;
+}
+
+.month-detail dt {
+  color: var(--color-text-muted);
+}
+
+.month-detail dd {
+  margin: 0;
+}
+
+.month-hint {
+  margin: 12px 0 0;
+  font-size: var(--font-size-xs);
+}

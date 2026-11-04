@@ -125,18 +125,13 @@
         }
       </select>
     </label>
-    <div class="chips periods" role="group" [attr.aria-label]="'Period' | t">
-      @for (months of periodOptions; track months) {
-        <button
-          class="ui-chip"
-          type="button"
-          [attr.aria-pressed]="filters().months === months"
-          (click)="pickPeriod(months)"
-        >
-          {{ '{months}M' | t: { months: months } }}
-        </button>
-      }
-    </div>
+    <app-period-filter
+      class="periods"
+      [shortLabels]="true"
+      [period]="filters().period"
+      [today]="today"
+      (periodChange)="pickPeriod($event)"
+    />
   </div>
 
   <section class="stats" [attr.aria-label]="'Portfolio' | t">
@@ -177,7 +172,38 @@
       [values]="monthlyGains()"
       [format]="formatCentsAxis"
       emptyText="No history yet."
-    />
+      [selectable]="true"
+      [selectedIndex]="selectedMonthIndex()"
+      (pick)="pickMonth($event)"
+    >
+      @if (monthDetail(); as detail) {
+        <dl class="month-detail" aria-live="polite">
+          <dt class="month-title">{{ detail.title }}</dt>
+          <div>
+            <dt>{{ detail.gainLabel | t }}</dt>
+            <dd
+              class="ui-tabular"
+              [class.gain]="detail.gainCents > 0"
+              [class.loss]="detail.gainCents < 0"
+            >
+              {{ detail.gain }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ 'Value at month end' | t }}</dt>
+            <dd class="ui-tabular">{{ detail.value }}</dd>
+          </div>
+          <div>
+            <dt>{{ 'Applied' | t }}</dt>
+            <dd class="ui-tabular">{{ detail.applied }}</dd>
+          </div>
+        </dl>
+      } @else {
+        <p class="ui-muted month-hint">
+          {{ 'Click a bar to see that month. Click it again to clear.' | t }}
+        </p>
+      }
+    </app-bar-chart>
     <app-bar-chart
       [title]="'Proventos received' | t"
       [note]="incomeNote()"

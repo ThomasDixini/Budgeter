@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 interface Bar {
   readonly label: string;
+  /** Left edge of the slot the bar sits in, which is what can be clicked. */
+  readonly slotX: number;
   readonly x: number;
   readonly y: number;
   readonly height: number;
@@ -45,6 +47,11 @@ export class BarChart {
   readonly emptyText = input.required<string>();
   readonly positiveLabel = input<string>('');
   readonly negativeLabel = input<string>('');
+  /** Whether a bar can be picked, with the mouse or the keyboard. */
+  readonly selectable = input(false);
+  /** The bar picked, if any; the page owns the choice and passes it back. */
+  readonly selectedIndex = input<number | undefined>(undefined);
+  readonly pick = output<number>();
 
   protected readonly width = WIDTH;
   protected readonly height = HEIGHT;
@@ -55,6 +62,7 @@ export class BarChart {
   protected readonly bounds = computed(() => this.valueBounds());
   protected readonly ticks = computed<Tick[]>(() => this.buildTicks());
   protected readonly barWidth = computed(() => this.slotWidth() * BAR_FILL);
+  protected readonly slot = computed(() => this.slotWidth());
   protected readonly bars = computed<Bar[]>(() =>
     this.values().map((value, index) => this.buildBar(value, index)),
   );
@@ -78,6 +86,7 @@ export class BarChart {
     const label = this.labels()[index] ?? '';
     return {
       label,
+      slotX: PAD_LEFT + slot * index,
       x: PAD_LEFT + slot * index + (slot * (1 - BAR_FILL)) / 2,
       y: Math.min(this.yOf(value), this.yOf(0)),
       height: Math.abs(this.yOf(value) - this.yOf(0)),

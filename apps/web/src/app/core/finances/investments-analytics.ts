@@ -1,15 +1,12 @@
 import { Income, InvestmentKind, PortfolioLine, Trade, tradeTotalCents } from './investments';
 
-/** How many months the charts and the proventos card look back. */
-export type PeriodMonths = 3 | 6 | 12;
-
-export const PERIOD_OPTIONS: readonly PeriodMonths[] = [3, 6, 12];
+import { DayRange, Period } from './period';
 
 /** What the page narrows the portfolio to; an absent field means everything. */
 export interface InvestmentFilters {
   readonly kind?: InvestmentKind;
   readonly investmentId?: string;
-  readonly months: PeriodMonths;
+  readonly period: Period;
 }
 
 /** One class of investment and its share of the portfolio. */
@@ -18,8 +15,6 @@ export interface DistributionSlice {
   readonly valueCents: number;
   readonly percent: number;
 }
-
-const MONTHS_PER_YEAR = 12;
 
 /**
  * What a line is worth: its value, or what it cost while no price is known.
@@ -45,28 +40,21 @@ export function filterLines(
 }
 
 /**
- * The `count` months ending at the month of `today`, oldest first, as `YYYY-MM`.
- * @example monthKeys('2026-02-10', 3) // ['2025-12', '2026-01', '2026-02']
- */
-export function monthKeys(today: string, count: number): string[] {
-  const lastIndex = Number(today.slice(0, 4)) * MONTHS_PER_YEAR + Number(today.slice(5, 7)) - 1;
-  return Array.from({ length: count }, (_, position) => {
-    const index = lastIndex - (count - 1 - position);
-    const month = (index % MONTHS_PER_YEAR) + 1;
-    return `${Math.floor(index / MONTHS_PER_YEAR)}-${String(month).padStart(2, '0')}`;
-  });
-}
-
-/**
- * Proventos received in each month, for the given investments.
+ * Proventos received in each month, for the given investments; with a `range`, only the ones received
+ * on its days count.
  * @example incomeByMonth(incomes, new Set(['petr4']), ['2026-10', '2026-11']) // [1500, 0]
  */
 export function incomeByMonth(
   incomes: readonly Income[],
   investmentIds: ReadonlySet<string>,
   months: readonly string[],
+  range?: DayRange,
 ): number[] {
-  const mine = incomes.filter((income) => investmentIds.has(income.investmentId));
+  const mine = incomes.filter(
+    (income) =>
+      investmentIds.has(income.investmentId) &&
+      (range === undefined || (income.date >= range.from && income.date <= range.to)),
+  );
   return months.map((month) =>
     mine
       .filter((income) => income.date.slice(0, 7) === month)

@@ -3,7 +3,7 @@ import { BarChart } from '../../../components/bar-chart/bar-chart';
 import { ChartSeries, LineChart } from '../../../components/line-chart/line-chart';
 import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { PageHeading } from '../../../components/page-heading/page-heading';
-import { shortDateLabel } from '../../../core/calendar/date-label';
+import { parseIsoDate, shortDateLabel } from '../../../core/calendar/date-label';
 import { formatBalance, formatMoney, formatSignedMoney } from '../../../core/finances/money';
 import {
   INVESTMENT_KIND_OPTIONS,
@@ -20,16 +20,15 @@ import {
 } from '../../../core/finances/investments';
 import {
   InvestmentFilters,
-  PERIOD_OPTIONS,
-  PeriodMonths,
   appliedByMonth,
   distribution,
   filterLines,
   incomeByMonth,
   lineValueCents,
-  monthKeys,
 } from '../../../core/finances/investments-analytics';
 import { InvestmentsStore } from '../../../core/finances/investments-store';
+import { Period, periodMonths, periodRange } from '../../../core/finances/period';
+import { PeriodFilter } from '../../../components/period-filter/period-filter';
 import { IncomeFields, IncomeForm } from './income-form/income-form';
 import { MovementImport, MovementImportResult } from './movement-import/movement-import';
 import { InvestmentForm } from './investment-form/investment-form';
@@ -52,7 +51,7 @@ interface Stat {
 }
 
 const CLOSED: Panel = { kind: 'closed' };
-const DEFAULT_FILTERS: InvestmentFilters = { months: 12 };
+const DEFAULT_FILTERS: InvestmentFilters = { period: { kind: 'months', months: 12 } };
 
 /**
  * Investments: the portfolio (what is held, what it cost, what it is worth) narrowed by kind, asset and
@@ -73,6 +72,7 @@ const DEFAULT_FILTERS: InvestmentFilters = { months: 12 };
     BarChart,
     PortfolioDistribution,
     MovementImport,
+    PeriodFilter,
   ],
   providers: [InvestmentsStore],
   templateUrl: './investments.html',
@@ -93,7 +93,7 @@ export class Investments {
   protected readonly importResult = signal<MovementImportResult | undefined>(undefined);
   protected readonly filters = signal<InvestmentFilters>(DEFAULT_FILTERS);
   protected readonly kindOptions = INVESTMENT_KIND_OPTIONS;
-  protected readonly periodOptions = PERIOD_OPTIONS;
+  protected readonly range = computed(() => periodRange(this.filters().period, this.today));
   protected readonly lines = computed(() => this.store.portfolio()?.lines ?? []);
   protected readonly tableLines = computed(() => this.sortedTableLines());
   protected readonly selected = computed(() => filterLines(this.lines(), this.filters()));
@@ -106,13 +106,20 @@ export class Investments {
   protected readonly valueSeries = computed(() => this.describeValueSeries());
   protected readonly returnSeries = computed(() => this.describeReturnSeries());
   protected readonly monthlyGains = computed(() => this.describeMonthlyGains());
+  /** The month picked on the gains chart, `YYYY-MM`; it is forgotten once the period no longer holds it. */
+  private readonly pickedMonth = signal<string | undefined>(undefined);
+  protected readonly selectedMonthIndex = computed(() => {
+    const index = this.months().indexOf(this.pickedMonth() ?? '');
+    return index < 0 ? undefined : index;
+  });
+  protected readonly monthDetail = computed(() => this.describeMonthDetail());
   protected readonly monthlyIncome = computed(() => this.describeMonthlyIncome());
   protected readonly incomeNote = computed(() => this.describeIncomeNote());
   protected readonly formatAxisMoney = (reais: number): string => this.compact(reais);
   protected readonly formatAxisPercent = (percent: number): string => `${Math.round(percent)}%`;
   protected readonly formatCentsAxis = (cents: number): string => this.compact(cents / 100);
 
-  private readonly months = computed(() => monthKeys(this.today, this.filters().months));
+  private readonly months = computed(() => periodMonths(this.filters().period, this.today));
 
   protected open(panel: Panel): void {
     this.isImportOpen.set(false);
@@ -134,12 +141,18 @@ export class Investments {
     this.panel.set(CLOSED);
   }
 
+  /** Picks the month of a bar, or clears the choice when it is the month already picked. */
+  protected pickMonth(index: number): void {
+    const month = this.months()[index];
+    this.pickedMonth.update((current) => (current === month ? undefined : month));
+  }
+
   protected pickKind(kind: InvestmentKind | undefined): void {
     this.filters.update((current) => ({ ...current, kind, investmentId: undefined }));
   }
 
-  protected pickPeriod(months: PeriodMonths): void {
-    this.filters.update((current) => ({ ...current, months }));
+  protected pickPeriod(period: Period): void {
+    this.filters.update((current) => ({ ...current, period }));
   }
 
   protected pickAsset(investmentId: string | undefined): void {
@@ -274,7 +287,7 @@ export class Investments {
         note: this.describeCdiComparison(),
       },
       {
-        label: `Proventos · ${this.filters().months} months`,
+        label: this.incomeLabel(),
         value: formatBalance(this.incomeInPeriod(), this.locale),
         note: 'Dividends and yields',
       },
@@ -305,7 +318,7 @@ export class Investments {
 
   private describeMonthlyIncome(): number[] {
     const incomes = this.store.portfolio()?.incomes ?? [];
-    return incomeByMonth(incomes, this.selectedIds(), this.months());
+    return incomeByMonth(incomes, this.selectedIds(), this.months(), this.range());
   }
 
   private describeIncomeNote(): string {
@@ -338,6 +351,35 @@ export class Investments {
     ];
   }
 
+  private describeMonthDetail():
+    | {
+        title: string;
+        gainLabel: string;
+        gainCents: number;
+        gain: string;
+        value: string;
+        applied: string;
+      }
+    | undefined {
+    const index = this.selectedMonthIndex();
+    if (index === undefined) return undefined;
+    const point = this.wholeHistory()[index];
+    const gainCents = this.monthlyGains()[index];
+    return {
+      title: this.monthLong(this.months()[index]),
+      gainLabel: gainCents < 0 ? 'Loss' : 'Gain',
+      gainCents,
+      gain: formatSignedMoney(gainCents, this.locale),
+      value: point === undefined ? '—' : formatMoney(point.valueCents, this.locale),
+      applied: point === undefined ? '—' : formatMoney(point.appliedCents, this.locale),
+    };
+  }
+
+  private monthLong(key: string): string {
+    const date = new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 1);
+    return new Intl.DateTimeFormat(this.locale, { month: 'long', year: 'numeric' }).format(date);
+  }
+
   private describeMonthlyGains(): number[] {
     const history = this.wholeHistory();
     return history.map((point, index) => {
@@ -368,9 +410,26 @@ export class Investments {
   private readonly toReais = (cents: number | undefined): number | undefined =>
     cents === undefined ? undefined : cents / 100;
 
+  private incomeLabel(): string {
+    const period = this.filters().period;
+    if (period.kind === 'months') return `Proventos · ${period.months} months`;
+    const day = (isoDay: string): string =>
+      new Intl.DateTimeFormat(this.locale, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }).format(parseIsoDate(isoDay));
+    return `Proventos · ${day(period.from)} – ${day(period.to)}`;
+  }
+
+  /** The month, with a short year once the chart reaches past a year so the same month is not read twice. */
   private monthName(key: string): string {
     const date = new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 1);
-    return new Intl.DateTimeFormat(this.locale, { month: 'short' }).format(date);
+    const withYear = this.months().length > 12;
+    return new Intl.DateTimeFormat(this.locale, {
+      month: 'short',
+      ...(withYear ? { year: '2-digit' as const } : {}),
+    }).format(date);
   }
 
   private compact(reais: number): string {

@@ -100,6 +100,18 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
   'Line {number}: expected an identifier of letters, digits and dashes, received "{value}".':
     'Linha {number}: esperava um identificador de letras, números e hifens, mas recebi "{value}".',
 
+  // Month picked on the gains chart
+  'Value at month end': 'Valor no fim do mês',
+  'Click a bar to see that month. Click it again to clear.':
+    'Clique em uma barra para ver aquele mês. Clique de novo para limpar.',
+
+  // Custom period
+  From: 'De',
+  To: 'Até',
+  'Pick a start day that is not after the end, within 10 years.':
+    'Escolha um dia de início que não seja depois do fim, dentro de 10 anos.',
+  'Proventos · {from} – {to}': 'Proventos · {from} – {to}',
+
   // Movements import
   'Import movements': 'Importar movimentações',
   'Pick the Excel (.xlsx) the broker exported with your movements. Nothing is saved until you confirm.':
@@ -246,7 +258,7 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
   'Total {amount}': 'Total {amount}',
 
   // Net worth
-  '{option} months': '{option} meses',
+  '{months} months': '{months} meses',
   'What it is made of': 'Do que é feito',
   'What it is made of today': 'Do que é feito hoje',
   'Month by month': 'Mês a mês',
