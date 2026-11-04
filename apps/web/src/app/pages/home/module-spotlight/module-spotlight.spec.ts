@@ -36,10 +36,10 @@ describe('ModuleSpotlight', () => {
     expect(element.querySelector('.open-link')?.getAttribute('href')).toBe('/routines');
   });
 
-  it('offers no link to Finances, which is not built yet', () => {
+  it('links to Finances, opened at its first page', () => {
     const element = renderSpotlight(APP_MODULES[1]);
 
-    expect(element.querySelector('.open-link')).toBeNull();
+    expect(element.querySelector('.open-link')?.getAttribute('href')).toBe('/finances');
   });
 
   it('hides the open link for a coming-soon module', () => {

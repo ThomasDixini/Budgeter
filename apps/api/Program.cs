@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Budgeter.Api.Application.Categories;
+using Budgeter.Api.Application.Finances;
 using Budgeter.Api.Application.Goals;
 using Budgeter.Api.Application.Routines;
 using Budgeter.Api.Application.Tasks;
@@ -51,6 +52,11 @@ builder.Services.AddScoped<ListTasks>();
 builder.Services.AddScoped<SaveTask>();
 builder.Services.AddScoped<DeleteTask>();
 builder.Services.AddScoped<TaskCompletions>();
+builder.Services.AddScoped<ListFinanceCategories>();
+builder.Services.AddScoped<ListAccounts>();
+builder.Services.AddScoped<ListTransactions>();
+builder.Services.AddScoped<SaveTransaction>();
+builder.Services.AddScoped<DeleteTransaction>();
 
 var app = builder.Build();
 
@@ -63,5 +69,7 @@ app.MapGoalEndpoints();
 app.MapRoutineEndpoints();
 app.MapBlockOutcomeEndpoints();
 app.MapTaskEndpoints();
+app.MapFinanceReferenceEndpoints();
+app.MapTransactionEndpoints();
 
 await app.RunAsync();

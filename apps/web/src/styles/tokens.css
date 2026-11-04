@@ -44,6 +44,10 @@
   --color-danger-rgb: 252, 165, 165;
   --color-focus: var(--color-mint);
 
+  /* Money direction (Finances): what came in and what went out */
+  --color-income: #14a877;
+  --color-expense: #cc7030;
+
   /* Module pages: hairline glass cards and form controls */
   --color-border-card: rgba(255, 255, 255, 0.12);
   --color-border-control: rgba(255, 255, 255, 0.16);

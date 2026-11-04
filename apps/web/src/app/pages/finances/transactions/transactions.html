@@ -1,0 +1,106 @@
+<div class="page">
+  <app-page-heading
+    [eyebrow]="'Finances · ' + monthTitle()"
+    eyebrowIcon="finances"
+    heading="Transactions"
+  >
+    <div class="month-nav" role="group" aria-label="Month">
+      <button
+        class="ui-icon-button"
+        type="button"
+        aria-label="Previous month"
+        (click)="showMonth(-1)"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15 6l-6 6 6 6"></path>
+        </svg>
+      </button>
+      <button class="ui-icon-button" type="button" aria-label="Next month" (click)="showMonth(1)">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 6l6 6-6 6"></path>
+        </svg>
+      </button>
+    </div>
+    <button class="ui-button-primary" type="button" [disabled]="!canRecord()" (click)="openNew()">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      New transaction
+    </button>
+  </app-page-heading>
+
+  @if (savedElsewhere(); as message) {
+    <p class="saved-elsewhere ui-muted" role="status">{{ message }}</p>
+  }
+
+  @if (isFormOpen()) {
+    <app-transaction-form
+      [categories]="categories()"
+      [accounts]="accounts()"
+      [transaction]="editing()"
+      [defaultDate]="defaultDate()"
+      [defaultAccountId]="defaultAccountId()"
+      (save)="save($event)"
+      (dismiss)="closeForm()"
+      (remove)="remove()"
+    />
+  }
+
+  @if (hasLoadFailed()) {
+    <app-load-failed message="Couldn't load your transactions." (retry)="reload()" />
+  }
+
+  <app-month-summary [summary]="summary()" [isLoading]="!isLoaded()" />
+
+  <app-filters-bar
+    [accounts]="accounts()"
+    [filters]="filters()"
+    (filtersChange)="filters.set($event)"
+  />
+
+  @if (days().length > 0) {
+    <app-transaction-history
+      [days]="days()"
+      [categoryNames]="categoryNames()"
+      [accountNames]="accountNames()"
+      (edit)="openEdit($event)"
+    />
+  } @else if (isLoaded()) {
+    <p class="ui-card empty">
+      @if (isFiltered()) {
+        No transactions match these filters.
+      } @else {
+        No transactions in {{ monthTitle() }} yet.
+      }
+    </p>
+  }
+</div>

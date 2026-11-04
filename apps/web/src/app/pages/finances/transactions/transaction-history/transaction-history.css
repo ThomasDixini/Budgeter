@@ -1,0 +1,106 @@
+:host {
+  display: block;
+}
+
+.history {
+  padding: 8px 24px 16px;
+}
+
+.day {
+  padding-top: 16px;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-faint);
+  border-bottom: var(--border-hairline) solid rgba(255, 255, 255, 0.06);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.mark {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--border-hairline) solid rgba(255, 255, 255, 0.1);
+  color: var(--color-expense);
+}
+
+.mark.income {
+  color: var(--color-income);
+}
+
+.text {
+  flex: 1 1 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.description {
+  font-size: var(--font-size-md);
+  overflow-wrap: anywhere;
+}
+
+.account {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.category {
+  align-self: center;
+  font-size: var(--font-size-xs);
+}
+
+.amount {
+  min-width: 130px;
+  margin-left: auto;
+  text-align: right;
+  font-size: var(--font-size-md);
+}
+
+/* Phones: the row keeps its arrow and text on the first line, category and amount below. */
+@media (max-width: 479px) {
+  .history {
+    padding: 4px 8px 12px;
+  }
+
+  .amount {
+    min-width: 0;
+  }
+}

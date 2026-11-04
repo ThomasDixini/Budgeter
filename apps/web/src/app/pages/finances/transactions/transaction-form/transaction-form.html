@@ -1,0 +1,91 @@
+<form
+  class="transaction-form ui-enter"
+  [attr.aria-label]="isEditing() ? 'Edit transaction' : 'New transaction'"
+  (submit)="submit($event)"
+  (keydown.escape)="dismiss.emit()"
+>
+  <div class="chips" role="group" aria-label="Type">
+    @for (option of typeOptions; track option.value) {
+      <button
+        class="ui-chip"
+        type="button"
+        [attr.aria-pressed]="option.value === type()"
+        (click)="type.set(option.value)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  <div class="fields">
+    <label class="ui-field">
+      Amount (R$)
+      <input
+        class="ui-input"
+        name="amount"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="0.00"
+        [value]="amount()"
+        [attr.aria-invalid]="amountError() !== undefined"
+        [attr.aria-describedby]="amountError() === undefined ? null : 'transaction-amount-error'"
+        (input)="amount.set(valueOf($event))"
+      />
+      @if (amountError(); as error) {
+        <span id="transaction-amount-error" class="error">{{ error }}</span>
+      }
+    </label>
+
+    <label class="ui-field description">
+      Description
+      <input
+        class="ui-input"
+        type="text"
+        maxlength="80"
+        placeholder="E.g. Groceries"
+        [value]="description()"
+        (input)="description.set(valueOf($event))"
+      />
+    </label>
+
+    <label class="ui-field">
+      Category
+      <select class="ui-input" (change)="categoryId.set(valueOf($event))">
+        <option value="" disabled [selected]="categoryId() === ''">Choose a category</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id" [selected]="category.id === categoryId()">
+            {{ category.name }}
+          </option>
+        }
+      </select>
+    </label>
+
+    <label class="ui-field">
+      Account
+      <select class="ui-input" (change)="accountId.set(valueOf($event))">
+        <option value="" disabled [selected]="accountId() === ''">Choose an account</option>
+        @for (account of accounts(); track account.id) {
+          <option [value]="account.id" [selected]="account.id === accountId()">
+            {{ account.name }}
+          </option>
+        }
+      </select>
+    </label>
+
+    <label class="ui-field">
+      Date
+      <input class="ui-input" type="date" [value]="date()" (change)="date.set(valueOf($event))" />
+    </label>
+  </div>
+
+  <div class="actions">
+    @if (isEditing()) {
+      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">Delete</button>
+    }
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ isEditing() ? 'Save transaction' : 'Add transaction' }}
+    </button>
+  </div>
+</form>

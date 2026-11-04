@@ -1,4 +1,4 @@
-import { AppModule, accentRgbVariable, isModuleAvailable } from './app-module';
+import { AppModule, accentRgbVariable, accentVariable, isModuleAvailable } from './app-module';
 import { APP_MODULES } from './module-catalog';
 
 describe('isModuleAvailable', () => {
@@ -18,6 +18,12 @@ describe('isModuleAvailable', () => {
 describe('accentRgbVariable', () => {
   it('points at the RGB token of the accent', () => {
     expect(accentRgbVariable('violet')).toBe('var(--color-violet-rgb)');
+  });
+});
+
+describe('accentVariable', () => {
+  it('points at the color token of the accent', () => {
+    expect(accentVariable('violet')).toBe('var(--color-violet)');
   });
 });
 

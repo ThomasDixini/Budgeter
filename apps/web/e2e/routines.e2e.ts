@@ -233,8 +233,12 @@ test.describe('routine editor', () => {
     await routines.goto('/routines/routine');
 
     await page.getByRole('button', { name: 'New routine' }).click();
+    // Change detection runs after the click: typing before the draft shows lands in the previous
+    // routine's field, which the draft's default name then overwrites (CI run 41549520542).
+    await expect(page.getByLabel('Routine name')).toHaveValue('New routine');
     await page.getByLabel('Routine name').fill(name);
     await page.getByLabel('Routine name').blur();
+    await expect(page.getByRole('tab', { name })).toBeVisible();
     await page.getByRole('button', { name: 'Save routine' }).click();
 
     await expect(page.getByText('All changes saved')).toBeVisible();

@@ -4,7 +4,7 @@ import { isoDate } from '../calendar/date-label';
 import { Observable } from 'rxjs';
 import { IdGenerator } from '../ids/id-generator';
 import { CategoryCreations } from './category-creations';
-import { Positioned, positionOf, restoredAt, sameId } from './list-positions';
+import { Positioned, positionOf, restoredAt, sameId } from '../lists/list-positions';
 import { NotTodayTask, Task, TaskDraft, occursOn, tasksNotToday } from './task';
 import { TasksGateway } from './tasks-gateway';
 

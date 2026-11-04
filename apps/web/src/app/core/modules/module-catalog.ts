@@ -14,6 +14,7 @@ export const APP_MODULES: readonly AppModule[] = [
     name: 'Finances',
     description: 'Track income, expenses and the monthly budget in one place.',
     accent: 'violet',
+    route: '/finances',
   },
   {
     kind: 'upcoming',

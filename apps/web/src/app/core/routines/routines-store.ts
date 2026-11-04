@@ -15,7 +15,7 @@ import {
   restoredAllAt,
   restoredAt,
   sameId,
-} from './list-positions';
+} from '../lists/list-positions';
 import { Routine, blockMinutesWithin, weekdaysLabel, weeklyMinutesByCategory } from './routine';
 import { RoutinesGateway } from './routines-gateway';
 

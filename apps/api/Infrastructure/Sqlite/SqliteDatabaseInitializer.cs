@@ -10,6 +10,7 @@ internal sealed class SqliteDatabaseInitializer(
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         await SqliteSchema.EnsureCreatedAsync(connection, cancellationToken);
+        await FinanceStarterSeed.ApplyOnceAsync(connection, cancellationToken);
         if (options.SeedSampleData) await SampleData.ApplyOnceAsync(connection, cancellationToken);
         logger.LogInformation(
             "SQLite database ready at {DataSource} (sample data seeded: {Seeded})",

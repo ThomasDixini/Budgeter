@@ -1,9 +1,10 @@
 import { formatDate } from '@angular/common';
+import { parseIsoDate } from '../calendar/date-label';
 import { toMinutes } from '../calendar/time-of-day';
 import { Category, findCategory } from './category';
 import { MINUTES_PER_DAY } from './day-clock';
 import { BlockOutcome, BlockOutcomeKind } from './day-plan';
-import { Goal, GoalPeriod, isGoalMet, parseIsoDate, shortDate } from './goal';
+import { Goal, GoalPeriod, isGoalMet, shortDate } from './goal';
 import { Routine } from './routine';
 
 const LOCALE = 'en-US';

@@ -1,5 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { AppHeader } from '../../components/app-header/app-header';
+import { FireGlow } from '../../components/fire-glow/fire-glow';
 import { accentRgbVariable } from '../../core/modules/app-module';
 import { APP_MODULES } from '../../core/modules/module-catalog';
 import { activeModuleIndex, rotationTowards } from '../../core/modules/module-wheel';
@@ -10,7 +11,7 @@ import { ModuleWheelNav } from './module-wheel-nav/module-wheel-nav';
 /** Home screen: a wheel of modules where the one facing up is highlighted and can be opened. */
 @Component({
   selector: 'app-home',
-  imports: [AppHeader, ModuleSpotlight, ModuleWheelNav, ModulePicker],
+  imports: [AppHeader, FireGlow, ModuleSpotlight, ModuleWheelNav, ModulePicker],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

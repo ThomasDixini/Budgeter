@@ -70,6 +70,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
+            "setupFiles": ["src/jsdom-canvas.testing.ts"],
             "coverageReporters": ["text-summary", "html", "lcov"],
             "coverageExclude": [
               "src/main.ts",

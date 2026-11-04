@@ -1,4 +1,5 @@
 import { formatDate } from '@angular/common';
+import { parseIsoDate } from '../calendar/date-label';
 
 export type GoalType = 'frequency' | 'objective';
 export type GoalPeriod = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
@@ -155,15 +156,6 @@ export function periodFooter(period: GoalPeriod, today: Date, deadline?: string)
     case 'custom':
       return deadline === undefined ? '' : `until ${shortDate(parseIsoDate(deadline))}`;
   }
-}
-
-/**
- * Local date for an ISO `YYYY-MM-DD` string (avoids the UTC shift of `new Date(iso)`).
- * @example parseIsoDate('2026-12-15').getDate() // 15
- */
-export function parseIsoDate(isoDate: string): Date {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return new Date(year, month - 1, day);
 }
 
 /**
