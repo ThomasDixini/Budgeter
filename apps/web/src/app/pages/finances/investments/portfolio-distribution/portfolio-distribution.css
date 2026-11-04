@@ -1,0 +1,80 @@
+:host {
+  display: block;
+}
+
+.card {
+  padding: 20px 24px;
+}
+
+.title {
+  margin: 0 0 14px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.bar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.segment {
+  flex-basis: 0;
+  min-width: 4px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kind {
+  color: var(--color-text-secondary);
+}
+
+.share {
+  color: var(--color-text-muted);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+[data-kind='fixedIncome'] {
+  background: var(--color-violet);
+}
+
+[data-kind='stock'] {
+  background: var(--color-income);
+}
+
+[data-kind='realEstateFund'] {
+  background: var(--color-amber);
+}
+
+[data-kind='fund'] {
+  background: var(--color-sky);
+}
+
+[data-kind='other'] {
+  background: var(--color-orchid);
+}
+
+.empty {
+  margin: 0;
+}

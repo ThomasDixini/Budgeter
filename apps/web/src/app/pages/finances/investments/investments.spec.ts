@@ -93,9 +93,14 @@ describe('Investments page', () => {
       texts(fixture, '.stat .value'),
       texts(fixture, '.stat .note'),
     ]).toEqual([
-      ['Current value', 'Invested', 'Gain', 'CDI on the same money', 'Proventos · 12 months'],
-      ['R$1,310.00', 'R$1,110.00', '+R$215.00', '+R$4.00', 'R$15.00'],
-      ['+19.37%', '+0.36%'],
+      ['Current value · whole portfolio', 'Invested', 'Return', 'Proventos · 12 months'],
+      ['R$1,310.00', 'R$1,110.00', '+18.02%', 'R$15.00'],
+      [
+        '+R$200.00 (+18.02%) since purchase',
+        'Sum at cost',
+        'CDI on the same money: +0.36%',
+        'Dividends and yields',
+      ],
     ]);
   });
 
@@ -119,18 +124,85 @@ describe('Investments page', () => {
     expect(texts(fixture, '.cdi-note')[0]).toContain('CDI rates could not be loaded.');
   });
 
-  it('lists each holding with its units, price, value and gain', async () => {
+  it('lists each asset with its units, prices, value and return, biggest first', async () => {
     const { fixture } = await render();
 
-    expect(texts(fixture, '[aria-label="Holdings"] .holding .detail')).toEqual([
-      '100 units · average R$10.00',
-      'R$12.00 · Nov 2',
-      '+R$200.00 (+20.00%)',
-      '10 units · average R$11.00',
-      'No price yet',
-      '',
+    expect([
+      texts(fixture, '.assets .asset .name'),
+      texts(fixture, '.assets tbody .number'),
+    ]).toEqual([
+      ['PETR4', 'XPML11'],
+      [
+        '100',
+        'R$10.00',
+        'R$12.00 Nov 2',
+        'R$1,000.00',
+        'R$1,200.00',
+        '+R$200.00 (+20.00%)',
+        '10',
+        'R$11.00',
+        'No price yet',
+        'R$110.00',
+        'At cost',
+        '',
+      ],
     ]);
-    expect(texts(fixture, '.value-text')).toEqual(['R$1,200.00', 'At cost']);
+  });
+
+  it('narrows the cards to one kind and the table to its assets', async () => {
+    const { fixture } = await render();
+
+    await clickButton(fixture, 'Real estate fund');
+
+    expect([texts(fixture, '.stat .value')[0], texts(fixture, '.assets .asset .name')]).toEqual([
+      'R$110.00',
+      ['XPML11'],
+    ]);
+  });
+
+  it('narrows the cards to one asset picked in the table, and back to all', async () => {
+    const { fixture } = await render();
+
+    await clickButton(fixture, 'Show only PETR4');
+    const picked = texts(fixture, '.stat .value')[0];
+    await clickButton(fixture, 'Show only PETR4');
+
+    expect([picked, texts(fixture, '.stat .value')[0]]).toEqual(['R$1,200.00', 'R$1,310.00']);
+  });
+
+  it('charts proventos by month over the period and leaves the history charts empty', async () => {
+    const { fixture } = await render();
+
+    expect([
+      texts(fixture, 'app-bar-chart .title'),
+      texts(fixture, 'app-bar-chart .note'),
+      texts(fixture, '.empty.ui-muted'),
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-bar-chart .bar').length,
+    ]).toEqual([
+      ['Return per month', 'Proventos received'],
+      ['Average R$1.25 per month'],
+      ['No history yet.', 'No history yet.'],
+      12,
+    ]);
+  });
+
+  it('shortens the period of the charts', async () => {
+    const { fixture } = await render();
+
+    await clickButton(fixture, '3M');
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-bar-chart .bar').length,
+    ).toBe(3);
+  });
+
+  it('splits the portfolio between kinds of investment', async () => {
+    const { fixture } = await render();
+
+    expect(texts(fixture, 'app-portfolio-distribution .legend li')).toEqual([
+      'Stock 92% · R$1,200.00',
+      'Real estate fund 8% · R$110.00',
+    ]);
   });
 
   it('lists purchases and proventos newest first, signed', async () => {
@@ -256,7 +328,9 @@ describe('Investments page', () => {
     };
     const { fixture } = await render(gateway);
 
-    expect(texts(fixture, '.empty')).toEqual([
+    expect(
+      texts(fixture, '[aria-label="Holdings"] .empty, [aria-label="Movements"] .empty'),
+    ).toEqual([
       'No investments yet. Add one, then record your purchases to follow it here.',
       'Nothing recorded yet.',
     ]);

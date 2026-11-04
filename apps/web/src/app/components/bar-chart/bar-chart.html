@@ -1,0 +1,55 @@
+<section class="ui-card chart-card" [attr.aria-label]="title()">
+  <header class="head">
+    <h2 class="title">{{ title() }}</h2>
+    @if (note()) {
+      <span class="ui-muted note">{{ note() }}</span>
+    }
+    @if (positiveLabel()) {
+      <ul class="legend">
+        <li><span class="swatch"></span>{{ positiveLabel() }}</li>
+        @if (negativeLabel()) {
+          <li><span class="swatch negative"></span>{{ negativeLabel() }}</li>
+        }
+      </ul>
+    }
+  </header>
+  @if (hasData()) {
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" role="img" [attr.aria-label]="title()">
+      @for (tick of ticks(); track $index) {
+        <line
+          class="grid"
+          [attr.x1]="left"
+          [attr.x2]="right"
+          [attr.y1]="tick.y"
+          [attr.y2]="tick.y"
+        />
+        <text class="axis" [attr.x]="left - 6" [attr.y]="tick.y + 3" text-anchor="end">
+          {{ tick.label }}
+        </text>
+      }
+      @for (bar of bars(); track $index) {
+        <rect
+          class="bar"
+          [class.negative]="bar.isNegative"
+          rx="2"
+          [attr.x]="bar.x"
+          [attr.y]="bar.y"
+          [attr.width]="barWidth()"
+          [attr.height]="bar.height"
+        >
+          <title>{{ bar.description }}</title>
+        </rect>
+        <text
+          class="axis"
+          [attr.x]="bar.x + barWidth() / 2"
+          [attr.y]="height - 6"
+          text-anchor="middle"
+        >
+          {{ bar.label }}
+        </text>
+      }
+    </svg>
+  } @else {
+    <p class="empty ui-muted">{{ emptyText() }}</p>
+  }
+</section>

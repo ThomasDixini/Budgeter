@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.chart-card {
+  padding: 20px 24px;
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.note {
+  font-size: var(--font-size-xs);
+}
+
+.legend {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--color-income);
+}
+
+.swatch.negative {
+  background: var(--color-expense);
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.grid {
+  stroke: var(--color-track);
+  stroke-width: 1;
+}
+
+.axis {
+  fill: var(--color-text-faint);
+  font-size: 9px;
+}
+
+.bar {
+  fill: var(--color-income);
+}
+
+.bar.negative {
+  fill: var(--color-expense);
+}
+
+.empty {
+  margin: 0;
+  padding: 56px 0;
+  text-align: center;
+}
