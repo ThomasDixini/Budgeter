@@ -54,7 +54,7 @@
     </svg>
   </span>
   <span class="text">
-    <span class="description">{{ item.description }}</span>
+    <span class="description">{{ item.invoice ? (item.description | t) : item.description }}</span>
     <span class="detail">{{ detail(item) | t }}</span>
   </span>
   @if (series(item); as label) {

@@ -17,6 +17,7 @@
 ## Investments
 - [x] Filter
 - [ ] Cards (validate): "Return" is since purchase, not for the period as in the design
+- [x] Demo data for every Finances tab (turn on with the DEMO button in the header or ?demo=on)
 - [x] Charts
 - [ ] Real month-end price history (today made up, see below): fetch quotes from a public source and keep one record per month
 
