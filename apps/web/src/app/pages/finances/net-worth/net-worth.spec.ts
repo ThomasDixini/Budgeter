@@ -1,4 +1,4 @@
-import { ErrorHandler } from '@angular/core';
+import { ErrorHandler, computed } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Clock } from '../../../core/calendar/clock';
 import { FixedClock } from '../../../core/calendar/fixed-clock';
@@ -11,6 +11,8 @@ import {
 } from '../../../core/finances/fake-investments-gateway';
 import { InvestmentsGateway } from '../../../core/finances/investments-gateway';
 import { FinanceReferencesGateway } from '../../../core/finances/transactions-gateway';
+import { NetWorthStore } from '../../../core/finances/net-worth-store';
+import { NetWorthPoint } from '../../../core/finances/net-worth';
 import { NetWorth } from './net-worth';
 
 /** Saturday, October 31, 2026, the day the sample statements are from. */
@@ -21,6 +23,15 @@ class SilentErrorHandler extends ErrorHandler {
   override handleError(): void {
     // Reported failures are part of what these tests play out.
   }
+}
+
+/** A store that already knows three month-ends, since nothing keeps them yet. */
+class StoreWithHistory extends NetWorthStore {
+  override readonly history = computed<readonly NetWorthPoint[]>(() => [
+    { month: '2026-08', cents: 1_000_000 },
+    { month: '2026-09', cents: 1_100_000 },
+    { month: '2026-10', cents: 1_050_000 },
+  ]);
 }
 
 function render(investments = new FakeInvestmentsGateway()): ComponentFixture<NetWorth> {
@@ -45,13 +56,45 @@ function texts(fixture: ComponentFixture<NetWorth>, selector: string): string[] 
 }
 
 describe('Net worth page', () => {
-  it('adds the balances and investments and takes away what the cards owe', () => {
+  it('shows the net worth of today and leaves the history figures blank', () => {
     const fixture = render();
 
     expect([texts(fixture, '.stat .label'), texts(fixture, '.stat .value')]).toEqual([
-      ['Net worth', 'Assets', 'Owed on cards'],
-      ['R$11,052.20', 'R$11,338.60', 'R$286.40'],
+      ['Net worth today', 'Growth in period', 'Average per month', 'Best month'],
+      ['R$11,052.20', '—', '—', '—'],
     ]);
+  });
+
+  it('adds the balances and investments and takes away what the cards owe', () => {
+    const fixture = render();
+
+    expect(texts(fixture, '[aria-label="What it is made of"] .row')).toEqual([
+      'Cash in accountsR$10,028.60',
+      'InvestmentsR$1,310.00',
+      'Open invoices−R$286.40',
+      'Net worthR$11,052.20',
+    ]);
+  });
+
+  it('says there is no history yet, in the chart and in the table', () => {
+    const fixture = render();
+
+    expect([texts(fixture, 'app-line-chart .empty'), texts(fixture, '.history-empty')]).toEqual([
+      ['No history yet.'],
+      ['No history yet.'],
+    ]);
+  });
+
+  it('changes the period', () => {
+    const fixture = render();
+
+    const button = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
+      (candidate) => candidate.textContent?.trim() === '3 months',
+    )!;
+    button.click();
+    fixture.detectChanges();
+
+    expect(button.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('lists each account, investment and card behind the totals', () => {
@@ -66,12 +109,6 @@ describe('Net worth page', () => {
       ['PETR4R$1,200.00', 'XPML11R$110.00'],
       ['Credit cardR$286.40'],
     ]);
-  });
-
-  it('splits the assets between bank accounts and investments', () => {
-    const fixture = render();
-
-    expect(texts(fixture, '.legend')).toEqual(['Bank accounts 88%Investments 12%']);
   });
 
   it('says what is valued at cost for lack of a price', () => {
@@ -89,10 +126,10 @@ describe('Net worth page', () => {
     };
     const fixture = render(investments);
 
-    expect([texts(fixture, '.stat .value')[0], texts(fixture, '.empty')]).toEqual([
-      'R$9,742.20',
-      ['Nothing invested yet.'],
-    ]);
+    expect([
+      texts(fixture, '.stat .value')[0],
+      texts(fixture, '[aria-label="Investments"] .empty'),
+    ]).toEqual(['R$9,742.20', ['Nothing invested yet.']]);
   });
 
   it('offers to try again when the net worth does not load', () => {
@@ -103,5 +140,21 @@ describe('Net worth page', () => {
     expect(texts(fixture, 'app-load-failed')).toEqual([
       expect.stringContaining("Couldn't load your net worth."),
     ]);
+  });
+
+  it('shows the growth, the best month and one table row per month when there is history', () => {
+    TestBed.overrideComponent(NetWorth, {
+      set: { providers: [{ provide: NetWorthStore, useClass: StoreWithHistory }] },
+    });
+    const fixture = render();
+
+    expect(texts(fixture, '.stat .value')).toEqual([
+      expect.any(String),
+      expect.stringContaining('500'),
+      expect.stringContaining('250'),
+      expect.stringContaining('1,000'),
+    ]);
+    expect(texts(fixture, '.history-empty')).toEqual([]);
+    expect(texts(fixture, 'table tbody tr')).toHaveLength(2);
   });
 });

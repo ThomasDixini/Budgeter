@@ -7,7 +7,7 @@ import { AccountStatementsGateway } from './account-statements-gateway';
 import { FinanceReferencesStore } from './finance-references-store';
 import { Portfolio } from './investments';
 import { InvestmentsGateway } from './investments-gateway';
-import { netWorth } from './net-worth';
+import { NetWorthPoint, netWorth } from './net-worth';
 
 /**
  * What the Net worth page shows, put together from data that already exists: today's balances and the
@@ -29,6 +29,11 @@ export class NetWorthStore {
   readonly hasLoadFailed = computed(() => this.loadFailed() || this.references.hasLoadFailed());
   /** How many held investments are valued at cost for lack of a price. */
   readonly unpricedCount = computed(() => this.portfolio()?.totals.unpricedCount ?? 0);
+  /**
+   * The net worth at the end of each month. Nothing keeps it yet, so it is empty and the evolution chart
+   * and the monthly table say so; it is the one place to feed once month-end balances are stored.
+   */
+  readonly history = computed<readonly NetWorthPoint[]>(() => []);
   readonly netWorth = computed(() => {
     const balances = new Map(
       this.statementList().map((statement) => [statement.accountId, statement.balanceCents]),

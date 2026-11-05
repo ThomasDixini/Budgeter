@@ -1,5 +1,5 @@
 import { Account } from './finance-references';
-import { netWorth } from './net-worth';
+import { netWorth, netWorthGrowth, netWorthRows } from './net-worth';
 
 const CHECKING: Account = {
   id: 'checking-account',
@@ -95,5 +95,40 @@ describe('netWorth', () => {
     ]);
 
     expect([result.bankPercent, result.investmentsPercent]).toEqual([0, 100]);
+  });
+});
+
+describe('net worth history', () => {
+  const points = [
+    { month: '2026-08', cents: 100_000 },
+    { month: '2026-09', cents: 110_000 },
+    { month: '2026-10', cents: 105_000 },
+    { month: '2026-11', cents: 125_000 },
+  ];
+
+  it('compares each month with the one before', () => {
+    expect(
+      netWorthRows(points).map((row) => [row.month, row.changeCents, row.changePercent]),
+    ).toEqual([
+      ['2026-09', 10_000, 10],
+      ['2026-10', -5_000, (-5_000 / 110_000) * 100],
+      ['2026-11', 20_000, (20_000 / 105_000) * 100],
+    ]);
+  });
+
+  it('works out growth, monthly average and best month', () => {
+    expect(netWorthGrowth(points)).toMatchObject({
+      growthCents: 25_000,
+      growthPercent: 25,
+      averageCents: 8_333,
+      best: { month: '2026-11', changeCents: 20_000 },
+    });
+  });
+
+  it('has no growth to tell with fewer than two months', () => {
+    expect([netWorthGrowth([]), netWorthGrowth(points.slice(0, 1))]).toEqual([
+      undefined,
+      undefined,
+    ]);
   });
 });

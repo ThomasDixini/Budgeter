@@ -36,6 +36,12 @@
   font-size: 30px;
 }
 
+.sub {
+  margin: 2px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
 .card {
   padding: 20px 24px;
 }
@@ -142,5 +148,72 @@
 
   .columns {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 24px;
+}
+
+.row.total {
+  padding-top: 12px;
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+  font-weight: var(--font-weight-medium);
+}
+
+.months {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.months th,
+.months td {
+  padding: 8px 6px;
+  text-align: left;
+  font-weight: var(--font-weight-regular);
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+  white-space: nowrap;
+}
+
+.months thead th {
+  border-top: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+.months .number {
+  text-align: right;
+}
+
+.gain {
+  color: var(--color-income);
+}
+
+.loss {
+  color: var(--color-expense);
+}
+
+.history-empty {
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (max-width: 767px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .chips {
+    justify-content: flex-start;
   }
 }

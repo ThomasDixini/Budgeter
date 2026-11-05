@@ -17,4 +17,4 @@
 - [x] Charts (history-based ones stay empty until price history exists)
 
 ## Net worth
-- [ ] Charts
+- [x] Charts (history-based ones stay empty until month-end history exists)
