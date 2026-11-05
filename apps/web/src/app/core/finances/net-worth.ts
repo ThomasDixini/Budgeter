@@ -148,8 +148,8 @@ export function netWorthGrowth(points: readonly NetWorthPoint[]): NetWorthGrowth
   const rows = netWorthRows(points);
   if (rows.length === 0) return undefined;
   const first = points[0].cents;
-  const growthCents = points[points.length - 1].cents - first;
-  const best = rows.reduce((top, row) => (row.changeCents > top.changeCents ? row : top));
+  const growthCents = (points.at(-1)?.cents ?? first) - first;
+  const best = rows.reduce((top, row) => (row.changeCents > top.changeCents ? row : top), rows[0]);
   return {
     growthCents,
     growthPercent: first === 0 ? 0 : (growthCents / Math.abs(first)) * 100,

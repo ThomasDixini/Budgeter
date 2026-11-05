@@ -1,4 +1,4 @@
-import { ErrorHandler } from '@angular/core';
+import { ErrorHandler, computed } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Clock } from '../../../core/calendar/clock';
 import { FixedClock } from '../../../core/calendar/fixed-clock';
@@ -11,6 +11,8 @@ import {
 } from '../../../core/finances/fake-investments-gateway';
 import { InvestmentsGateway } from '../../../core/finances/investments-gateway';
 import { FinanceReferencesGateway } from '../../../core/finances/transactions-gateway';
+import { NetWorthStore } from '../../../core/finances/net-worth-store';
+import { NetWorthPoint } from '../../../core/finances/net-worth';
 import { NetWorth } from './net-worth';
 
 /** Saturday, October 31, 2026, the day the sample statements are from. */
@@ -21,6 +23,15 @@ class SilentErrorHandler extends ErrorHandler {
   override handleError(): void {
     // Reported failures are part of what these tests play out.
   }
+}
+
+/** A store that already knows three month-ends, since nothing keeps them yet. */
+class StoreWithHistory extends NetWorthStore {
+  override readonly history = computed<readonly NetWorthPoint[]>(() => [
+    { month: '2026-08', cents: 1_000_000 },
+    { month: '2026-09', cents: 1_100_000 },
+    { month: '2026-10', cents: 1_050_000 },
+  ]);
 }
 
 function render(investments = new FakeInvestmentsGateway()): ComponentFixture<NetWorth> {
@@ -129,5 +140,21 @@ describe('Net worth page', () => {
     expect(texts(fixture, 'app-load-failed')).toEqual([
       expect.stringContaining("Couldn't load your net worth."),
     ]);
+  });
+
+  it('shows the growth, the best month and one table row per month when there is history', () => {
+    TestBed.overrideComponent(NetWorth, {
+      set: { providers: [{ provide: NetWorthStore, useClass: StoreWithHistory }] },
+    });
+    const fixture = render();
+
+    expect(texts(fixture, '.stat .value')).toEqual([
+      expect.any(String),
+      expect.stringContaining('500'),
+      expect.stringContaining('250'),
+      expect.stringContaining('1,000'),
+    ]);
+    expect(texts(fixture, '.history-empty')).toEqual([]);
+    expect(texts(fixture, 'table tbody tr')).toHaveLength(2);
   });
 });
