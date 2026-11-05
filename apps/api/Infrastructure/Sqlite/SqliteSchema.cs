@@ -111,6 +111,22 @@ internal static class SqliteSchema
             amount_cents INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS ix_card_payments_date ON card_payments (date);
+        CREATE TABLE IF NOT EXISTS bills (
+            id TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            description TEXT NOT NULL,
+            category_id TEXT NOT NULL REFERENCES finance_categories (id),
+            amount_cents INTEGER NOT NULL,
+            due_date TEXT NOT NULL,
+            settled_on TEXT NULL,
+            settled_account_id TEXT NULL,
+            series_id TEXT NULL,
+            recurrence TEXT NULL,
+            series_number INTEGER NULL,
+            series_count INTEGER NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_bills_due_date ON bills (due_date);
+        CREATE INDEX IF NOT EXISTS ix_bills_settled_on ON bills (settled_on);
         CREATE TABLE IF NOT EXISTS income_split (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             base_income_cents INTEGER NOT NULL

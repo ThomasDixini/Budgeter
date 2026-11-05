@@ -4,10 +4,11 @@ namespace Budgeter.Api.Application.Finances;
 
 /// <summary>
 /// Deletes a finance category nothing was recorded under; deleting one already gone succeeds, so retries
-/// are harmless. A category with transactions is kept, since removing it would change the totals of
-/// months already closed. It leaves the income split on its own.
+/// are harmless. A category with transactions or bills is kept, since removing it would change the totals
+/// of months already closed. It leaves the income split on its own.
 /// </summary>
-public sealed class DeleteFinanceCategory(IFinanceCategoryRepository categories, IMoneyTransactionRepository transactions)
+public sealed class DeleteFinanceCategory(
+    IFinanceCategoryRepository categories, IMoneyTransactionRepository transactions, IBillRepository bills)
 {
     /// <summary>
     /// Validates the id, checks the category is unused and removes it if it exists.
@@ -20,6 +21,11 @@ public sealed class DeleteFinanceCategory(IFinanceCategoryRepository categories,
         {
             throw new ConflictException(
                 $"Expected finance category \"{id}\" to have no transactions before deleting it, found some");
+        }
+        if (await bills.AnyInCategoryAsync(id, cancellationToken))
+        {
+            throw new ConflictException(
+                $"Expected finance category \"{id}\" to have no bills before deleting it, found some");
         }
         await categories.DeleteAsync(id, cancellationToken);
     }

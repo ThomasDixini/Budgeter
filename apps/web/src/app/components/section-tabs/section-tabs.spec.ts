@@ -30,6 +30,7 @@ describe('SectionTabs', () => {
       ['Income split', '/finances/income-split'],
       ['Transactions', '/finances/transactions'],
       ['Banks & Cards', '/finances/accounts'],
+      ['To pay & receive', '/finances/bills'],
     ]);
   });
 
