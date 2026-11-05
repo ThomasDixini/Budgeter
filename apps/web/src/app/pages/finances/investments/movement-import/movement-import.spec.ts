@@ -154,16 +154,16 @@ describe('MovementImport', () => {
 
     expect([
       texts(fixture, '.created-name'),
-      [...element(fixture).querySelectorAll<HTMLSelectElement>('.created select')].map(
+      [...element(fixture).querySelectorAll<HTMLSelectElement>('.created select[name="kind"]')].map(
         (select) => select.value,
       ),
-    ]).toEqual([['VINO11'], ['realEstateFund']]);
+    ]).toEqual([['VINO11', 'PETR4'], ['realEstateFund']]);
   });
 
   it('writes the new investment with the kind picked, then its purchase and provento, and reports it', async () => {
     const { fixture, gateway, results } = await render();
     await choose(fixture, await workbook());
-    const kind = element(fixture).querySelector<HTMLSelectElement>('.created select')!;
+    const kind = element(fixture).querySelector<HTMLSelectElement>('.created select[name="kind"]')!;
     kind.value = 'fund';
     kind.dispatchEvent(new Event('change'));
 
@@ -235,5 +235,91 @@ describe('MovementImport', () => {
       ['Line 2: expected a date like 31/10/2026, received "31/02/2026".'],
       ['VINO11'],
     ]);
+  });
+
+  describe('a fund that changed its ticker', () => {
+    const FUND = 'FDO INV. IMOB. VBI CRI';
+    const RENAMED: readonly (readonly (string | number)[])[] = [
+      HEADER,
+      [
+        'Credito',
+        '10/09/2025',
+        'Transferência - Liquidação',
+        `CVBI11 - ${FUND}`,
+        BROKER,
+        3,
+        85.11,
+        255.33,
+      ],
+      ['Credito', '15/09/2025', 'Rendimento', `CVBI11 - ${FUND}`, BROKER, 3, 1.05, 3.15],
+      [
+        'Credito',
+        '09/10/2025',
+        'Transferência - Liquidação',
+        `PCIP11 - ${FUND}`,
+        BROKER,
+        3,
+        83.3,
+        249.9,
+      ],
+      [
+        'Credito',
+        '16/10/2026',
+        'Rendimento',
+        'PCIP11 - PATRIA CREDITO IMOBILIARIO',
+        BROKER,
+        6,
+        0.65,
+        3.9,
+      ],
+    ];
+
+    it('suggests merging the older ticker into the newer and creates one investment', async () => {
+      const { fixture, gateway } = await render();
+      await choose(fixture, await workbook(RENAMED));
+      const merge = [
+        ...element(fixture).querySelectorAll<HTMLSelectElement>('select[name="merge"]'),
+      ].map((select) => select.value);
+
+      await confirm(fixture);
+
+      expect([
+        merge,
+        gateway.savedInvestments.map((request) => request.draft.name),
+        gateway.savedTrades.map((request) => request.draft.investmentId),
+        gateway.savedIncomes.length,
+      ]).toEqual([['PCIP11', 'PCIP11'], ['PCIP11'], ['import-inv-pcip11', 'import-inv-pcip11'], 2]);
+    });
+
+    it('can be kept apart again', async () => {
+      const { fixture, gateway } = await render();
+      await choose(fixture, await workbook(RENAMED));
+      const select = element(fixture).querySelector<HTMLSelectElement>('select[name="merge"]')!;
+
+      select.value = 'CVBI11';
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+      await confirm(fixture);
+
+      expect(gateway.savedInvestments.map((request) => request.draft.name)).toEqual([
+        'CVBI11',
+        'PCIP11',
+      ]);
+    });
+
+    it('keeps what was unticked when the merge changes', async () => {
+      const { fixture, gateway } = await render();
+      await choose(fixture, await workbook(RENAMED));
+      element(fixture).querySelectorAll<HTMLInputElement>('tbody .ui-checkbox')[0].click();
+      fixture.detectChanges();
+      const select = element(fixture).querySelector<HTMLSelectElement>('select[name="merge"]')!;
+
+      select.value = 'CVBI11';
+      select.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+      await confirm(fixture);
+
+      expect(gateway.savedTrades.map((request) => request.draft.date)).toEqual(['2025-10-09']);
+    });
   });
 });

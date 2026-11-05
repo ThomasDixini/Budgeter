@@ -112,6 +112,14 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
     'Escolha um dia de início que não seja depois do fim, dentro de 10 anos.',
   'Proventos · {from} – {to}': 'Proventos · {from} – {to}',
 
+  // Merging investments of the movements import
+  'Investments in the file': 'Investimentos no arquivo',
+  'Investments in the file. A fund that changed its ticker can be merged into the new one.':
+    'Investimentos no arquivo. Um fundo que mudou de ticker pode ser unido ao novo.',
+  'Merge {name} into': 'Unir {name} a',
+  'Keep as it is': 'Manter como está',
+  'Merge into {name}': 'Unir a {name}',
+
   // Movements import
   'Import movements': 'Importar movimentações',
   'Pick the Excel (.xlsx) the broker exported with your movements. Nothing is saved until you confirm.':
