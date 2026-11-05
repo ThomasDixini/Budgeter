@@ -9,15 +9,15 @@ test.beforeEach(async ({ page }) => {
   finances = new FinancesPage(page);
 });
 
-test('Open module on the home wheel lands on Transactions', async ({ page }) => {
+test('Open module on the home wheel lands on the Overview', async ({ page }) => {
   const home = new HomePage(page);
   await home.goto();
   await home.spinRight();
 
   await home.openModuleLink.click();
 
-  await expect(page).toHaveURL(/\/finances\/transactions$/);
-  await expect(finances.title).toHaveText('Transactions');
+  await expect(page).toHaveURL(/\/finances\/overview$/);
+  await expect(finances.title).toHaveText('Overview');
 });
 
 test('recording an expense lists it, counts it and keeps it after a reload', async ({ page }) => {

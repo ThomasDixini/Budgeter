@@ -1,0 +1,117 @@
+<div class="page">
+  <app-page-heading
+    eyebrow="Finances"
+    eyebrowIcon="finances"
+    heading="Overview"
+    description="Where your money stands today."
+  />
+
+  @if (hasLoadFailed()) {
+    <app-load-failed message="Couldn't load your overview." (retry)="reload()" />
+  }
+
+  <section class="stats" aria-label="Where you stand">
+    <div class="stat">
+      <p class="label">In accounts</p>
+      <p class="value ui-tabular">{{ inAccounts() }}</p>
+    </div>
+    <div class="stat">
+      <p class="label">Open invoices</p>
+      <p class="value ui-tabular">{{ openInvoices() }}</p>
+    </div>
+    <div class="stat">
+      <p class="label">
+        <span class="mark income" aria-hidden="true"></span>Received in {{ monthName }}
+      </p>
+      <p class="value ui-tabular">{{ received() }}</p>
+    </div>
+    <div class="stat">
+      <p class="label">
+        <span class="mark expense" aria-hidden="true"></span>Spent in {{ monthName }}
+      </p>
+      <p class="value ui-tabular">{{ spent() }}</p>
+    </div>
+  </section>
+
+  <section class="ui-card card" aria-label="Received and spent">
+    <h2 class="card-title">Received and spent · last 6 months</h2>
+    <ul class="chart">
+      @for (column of columns(); track column.label + $index) {
+        <li class="column" [attr.aria-label]="column.description">
+          <span class="bars" aria-hidden="true">
+            <span class="bar income" [style.height.%]="column.incomeHeight"></span>
+            <span class="bar expense" [style.height.%]="column.expenseHeight"></span>
+          </span>
+          <span class="month" aria-hidden="true">{{ column.label }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <div class="columns">
+    <section class="ui-card card" aria-label="Spending by category">
+      <h2 class="card-title">Spending by category · {{ monthName }}</h2>
+      @if (spending().length > 0) {
+        <ul class="list">
+          @for (line of spending(); track line.name) {
+            <li class="spend">
+              <span class="spend-text">
+                <span>{{ line.name }}</span>
+                <span class="ui-tabular">{{ money(line.cents) }} · {{ line.percent }}%</span>
+              </span>
+              <span class="track" aria-hidden="true">
+                <span class="fill" [style.width.%]="line.percent"></span>
+              </span>
+            </li>
+          }
+        </ul>
+      } @else if (isLoaded()) {
+        <p class="ui-muted empty">Nothing spent this month yet.</p>
+      }
+    </section>
+
+    <section class="ui-card card" aria-label="Upcoming">
+      <h2 class="card-title">
+        <span>Upcoming</span>
+        <a class="see-all" routerLink="/finances/bills">To pay &amp; receive</a>
+      </h2>
+      @if (dues().length > 0) {
+        <ul class="list">
+          @for (item of dues(); track item.key) {
+            <li class="row">
+              <span class="text">
+                <span class="description">{{ item.description }}</span>
+                <span class="detail">{{ dueText(item) }}</span>
+              </span>
+              <span class="amount ui-tabular">{{ dueAmount(item) }}</span>
+            </li>
+          }
+        </ul>
+      } @else if (isLoaded()) {
+        <p class="ui-muted empty">Nothing to pay or receive.</p>
+      }
+    </section>
+  </div>
+
+  <section class="ui-card card" aria-label="Latest transactions">
+    <h2 class="card-title">
+      <span>Latest transactions</span>
+      <a class="see-all" routerLink="/finances/transactions">See all</a>
+    </h2>
+    @if (latest().length > 0) {
+      <ul class="list">
+        @for (transaction of latest(); track transaction.id) {
+          <li class="row">
+            <span class="text">
+              <span class="description">{{ transaction.description }}</span>
+              <span class="detail">{{ transactionDetail(transaction) }}</span>
+            </span>
+            <span class="amount ui-tabular">{{ signed(transaction.amountCents) }}</span>
+          </li>
+        }
+      </ul>
+    } @else if (isLoaded()) {
+      <p class="ui-muted empty">No transactions yet.</p>
+    }
+  </section>
+</div>

@@ -1,0 +1,151 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-border-card);
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.value {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: var(--font-weight-light);
+}
+
+.note {
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.cdi-note {
+  margin: -12px 0 0;
+  font-size: var(--font-size-xs);
+}
+
+.card {
+  padding: 20px 24px;
+}
+
+.card-title {
+  margin: 0 0 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-faint);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.holding,
+.movement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.holding:hover,
+.movement:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.text {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.figures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 150px;
+}
+
+.gain {
+  color: var(--color-income);
+}
+
+.loss {
+  color: var(--color-expense);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.amount {
+  min-width: 120px;
+  text-align: right;
+}
+
+.empty {
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (max-width: 479px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .value {
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .figures {
+    align-items: flex-start;
+  }
+}
