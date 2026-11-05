@@ -1,0 +1,252 @@
+:host {
+  display: block;
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kind {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.name {
+  font-size: 28px;
+  font-weight: var(--font-weight-light);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actions .ui-button-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.due {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid rgba(var(--color-amber-rgb), 0.35);
+  background: rgba(var(--color-amber-rgb), 0.06);
+  color: var(--color-warning-text);
+  font-size: var(--font-size-sm);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: var(--font-weight-light);
+  overflow-wrap: anywhere;
+}
+
+.mark {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mark.income {
+  background: var(--color-income);
+}
+
+.mark.expense {
+  background: var(--color-expense);
+}
+
+.mark.accent {
+  background: var(--color-violet);
+}
+
+.limit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.limit-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.limit .ui-track {
+  height: 8px;
+}
+
+.limit-fill {
+  background: var(--color-violet);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 24px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.column-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+.empty {
+  margin: 0;
+}
+
+.rows,
+.spending {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: var(--border-hairline) solid rgba(255, 255, 255, 0.06);
+}
+
+.arrow {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-expense);
+}
+
+.arrow.income {
+  color: var(--color-income);
+}
+
+.text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.description {
+  font-size: var(--font-size-md);
+  overflow-wrap: anywhere;
+}
+
+.sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.amount {
+  flex: none;
+  text-align: right;
+  font-size: var(--font-size-md);
+}
+
+.remove {
+  color: var(--color-text-muted);
+}
+
+.spending-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.spending-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--font-size-sm);
+}
+
+.spending-fill {
+  display: block;
+  background: var(--color-expense);
+}
+
+/* Narrow screens: the breakdown goes under the list. */
+@media (max-width: 767px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Phones: two figures per row instead of one tall column, as in the month summary. */
+@media (max-width: 479px) {
+  .detail {
+    padding: 18px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+}

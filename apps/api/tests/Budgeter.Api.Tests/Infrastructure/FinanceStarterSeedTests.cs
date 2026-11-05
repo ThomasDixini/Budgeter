@@ -51,6 +51,16 @@ public sealed class FinanceStarterSeedTests : IAsyncLifetime, IDisposable
     }
 
     [Fact]
+    public async Task AFreshDatabase_GetsAStarterCardWithTermsToBillBy()
+    {
+        await StartAsync();
+
+        var card = await new SqliteAccountRepository(_connections).FindAsync("credit-card", CancellationToken.None);
+
+        card!.Card.ShouldBe(CardTerms.Create(500000, closingDay: 3, dueDay: 10));
+    }
+
+    [Fact]
     public async Task AFreshDatabase_GetsTheStarterCategoriesSortedByName()
     {
         await StartAsync();

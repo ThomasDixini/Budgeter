@@ -1,0 +1,77 @@
+<div class="page">
+  <app-page-heading
+    eyebrow="Finances"
+    eyebrowIcon="finances"
+    heading="Banks & Cards"
+    [description]="totalsLine()"
+  >
+    <button class="ui-button-ghost" type="button" (click)="openAccountForm('new')">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      Add account or card
+    </button>
+  </app-page-heading>
+
+  @switch (accountForm()) {
+    @case ('new') {
+      <app-account-form (save)="saveAccount($event)" (dismiss)="closeAccountForm()" />
+    }
+    @case ('edit') {
+      <app-account-form
+        [account]="selected()"
+        (save)="saveAccount($event)"
+        (dismiss)="closeAccountForm()"
+        (remove)="deleteAccount()"
+      />
+    }
+  }
+
+  @if (hasLoadFailed()) {
+    <app-load-failed message="Couldn't load your accounts." (retry)="reload()" />
+  }
+
+  @if (accounts().length > 0) {
+    <app-account-tiles
+      [accounts]="accounts()"
+      [statements]="statements()"
+      [selectedId]="selected()?.id"
+      (choose)="choose($event)"
+    />
+  } @else if (isLoaded()) {
+    <p class="ui-card empty">No accounts yet. Add your bank account or card to see its balance.</p>
+  }
+
+  @if (selected(); as account) {
+    @if (isPaying() && account.kind === 'creditCard') {
+      <app-payment-form
+        [card]="account"
+        [bankAccounts]="bankAccounts()"
+        [suggestedCents]="suggestedPayment()"
+        [today]="today"
+        (save)="pay($event)"
+        (dismiss)="closePayment()"
+      />
+    }
+    <app-account-detail
+      [account]="account"
+      [statement]="selectedStatement()"
+      [movements]="movements()"
+      [categoryNames]="categoryNames()"
+      [monthName]="monthName()"
+      [canPay]="bankAccounts().length > 0"
+      (edit)="openAccountForm('edit')"
+      (pay)="openPayment()"
+      (removePayment)="removePayment($event)"
+    />
+  }
+</div>

@@ -1,0 +1,39 @@
+<ul class="tiles" aria-label="Accounts and cards">
+  @for (tile of tiles(); track tile.id) {
+    <li>
+      <button
+        class="tile"
+        type="button"
+        [class.card]="tile.isCard"
+        [attr.aria-pressed]="tile.id === selectedId()"
+        (click)="choose.emit(tile.id)"
+      >
+        <span class="top">
+          <span class="kind">{{ tile.kindLabel }}</span>
+          @if (tile.isCard) {
+            <span class="chip" aria-hidden="true"></span>
+          } @else {
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 10l9-6 9 6M5 10v8M19 10v8M9 10v8M15 10v8M3 20h18"></path>
+            </svg>
+          }
+        </span>
+        <span class="figure">
+          <span class="value-label">{{ tile.valueLabel }}</span>
+          <span class="value ui-tabular">{{ tile.value }}</span>
+        </span>
+        <span class="name">{{ tile.name }}</span>
+      </button>
+    </li>
+  }
+</ul>

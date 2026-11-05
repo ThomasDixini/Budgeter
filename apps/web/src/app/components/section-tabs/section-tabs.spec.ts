@@ -26,7 +26,10 @@ describe('SectionTabs', () => {
       link.textContent?.trim(),
       link.getAttribute('href'),
     ]);
-    expect(links).toEqual([['Transactions', '/finances/transactions']]);
+    expect(links).toEqual([
+      ['Transactions', '/finances/transactions'],
+      ['Banks & Cards', '/finances/accounts'],
+    ]);
   });
 
   it('keeps the routines tabs in header order', () => {

@@ -1,51 +1,44 @@
-import { ErrorHandler, Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
-import { Observer } from 'rxjs';
+import { ErrorHandler, Injectable, computed, inject, signal } from '@angular/core';
 import { Clock } from '../calendar/clock';
 import { IdGenerator } from '../ids/id-generator';
 import { Positioned, positionOf, restoredAt, sameId } from '../lists/list-positions';
-import { Account, FinanceCategory } from './finance-references';
+import { FinanceReferencesStore } from './finance-references-store';
 import { Transaction, TransactionDraft } from './transaction';
 import { monthOf, monthOfDay } from './transaction-month';
-import { FinanceReferencesGateway, TransactionsGateway } from './transactions-gateway';
+import { TransactionsGateway } from './transactions-gateway';
 
 /**
- * The transactions of the month on screen, with the categories and accounts they refer to.
- * Mutations apply locally first and roll back if the gateway rejects them, without undoing what
- * changed in the meantime; the server's answer is never applied over the list, so a slow answer
- * cannot overwrite a newer edit.
+ * The transactions of the month on screen, with the categories and accounts they refer to (shared
+ * with the other Finances pages). Mutations apply locally first and roll back if the gateway rejects
+ * them, without undoing what changed in the meantime; the server's answer is never applied over the
+ * list, so a slow answer cannot overwrite a newer edit.
  */
 @Injectable({ providedIn: 'root' })
 export class TransactionsStore {
   private readonly gateway = inject(TransactionsGateway);
-  private readonly references = inject(FinanceReferencesGateway);
+  private readonly references = inject(FinanceReferencesStore);
   private readonly ids = inject(IdGenerator);
   private readonly errorHandler = inject(ErrorHandler);
   private readonly shownMonth = signal(monthOf(inject(Clock).now()));
   private readonly transactionList = signal<readonly Transaction[]>([]);
-  private readonly categoryList = signal<readonly FinanceCategory[]>([]);
-  private readonly accountList = signal<readonly Account[]>([]);
   private readonly monthLoaded = signal(false);
-  private readonly categoriesLoaded = signal(false);
-  private readonly accountsLoaded = signal(false);
-  private readonly loadFailed = signal(false);
+  private readonly monthFailed = signal(false);
   private readonly lastAccount = signal<string | undefined>(undefined);
 
   /** The `YYYY-MM` month the list holds. */
   readonly month = this.shownMonth.asReadonly();
   readonly transactions = this.transactionList.asReadonly();
-  readonly categories = this.categoryList.asReadonly();
-  readonly accounts = this.accountList.asReadonly();
+  readonly categories = this.references.categories;
+  readonly accounts = this.references.accounts;
   /** The account of the last transaction added or edited, offered first on the next one. */
   readonly lastAccountId = this.lastAccount.asReadonly();
   /** Whether everything arrived, so "empty" can be told apart from "still loading". */
-  readonly isLoaded = computed(
-    () => this.monthLoaded() && this.categoriesLoaded() && this.accountsLoaded(),
-  );
+  readonly isLoaded = computed(() => this.monthLoaded() && this.references.isLoaded());
   /** Whether loading failed with nothing on its way, so the page can offer to try again. */
-  readonly hasLoadFailed = this.loadFailed.asReadonly();
+  readonly hasLoadFailed = computed(() => this.monthFailed() || this.references.hasLoadFailed());
 
   constructor() {
-    this.loadMissing();
+    this.loadMonth(this.shownMonth());
   }
 
   /**
@@ -57,7 +50,7 @@ export class TransactionsStore {
     this.shownMonth.set(month);
     this.transactionList.set([]);
     this.monthLoaded.set(false);
-    this.loadFailed.set(false);
+    this.monthFailed.set(false);
     this.loadMonth(month);
   }
 
@@ -66,8 +59,9 @@ export class TransactionsStore {
    * @example store.reload()
    */
   reload(): void {
-    this.loadFailed.set(false);
-    this.loadMissing();
+    this.references.reload();
+    this.monthFailed.set(false);
+    if (!this.monthLoaded()) this.loadMonth(this.shownMonth());
   }
 
   /**
@@ -121,53 +115,20 @@ export class TransactionsStore {
     });
   }
 
-  private loadMissing(): void {
-    if (!this.categoriesLoaded()) {
-      this.references
-        .categories()
-        .subscribe(this.loadInto(this.categoryList, this.categoriesLoaded));
-    }
-    if (!this.accountsLoaded()) {
-      this.references.accounts().subscribe(this.loadInto(this.accountList, this.accountsLoaded));
-    }
-    if (!this.monthLoaded()) this.loadMonth(this.shownMonth());
-  }
-
   private loadMonth(month: string): void {
     // An answer for a month no longer on screen must neither fill the list nor report a failure.
     this.gateway.listMonth(month).subscribe({
       next: (transactions) => {
-        if (this.shownMonth() === month)
-          this.loaded(this.transactionList, this.monthLoaded, transactions);
+        if (this.shownMonth() !== month) return;
+        this.transactionList.set(transactions);
+        this.monthLoaded.set(true);
       },
       error: (error: unknown) => {
-        if (this.shownMonth() === month) this.failedToLoad(error);
+        if (this.shownMonth() !== month) return;
+        this.monthFailed.set(true);
+        this.errorHandler.handleError(error);
       },
     });
-  }
-
-  private loadInto<TRecord>(
-    list: WritableSignal<readonly TRecord[]>,
-    flag: WritableSignal<boolean>,
-  ): Partial<Observer<readonly TRecord[]>> {
-    return {
-      next: (records) => this.loaded(list, flag, records),
-      error: (error: unknown) => this.failedToLoad(error),
-    };
-  }
-
-  private loaded<TRecord>(
-    list: WritableSignal<readonly TRecord[]>,
-    flag: WritableSignal<boolean>,
-    records: readonly TRecord[],
-  ): void {
-    list.set(records);
-    flag.set(true);
-  }
-
-  private failedToLoad(error: unknown): void {
-    this.loadFailed.set(true);
-    this.errorHandler.handleError(error);
   }
 
   private undoEdit(saved: Transaction, previous: Positioned<Transaction>): void {

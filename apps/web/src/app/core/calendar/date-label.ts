@@ -9,6 +9,14 @@ export function longDateLabel(date: Date, locale: string): string {
 }
 
 /**
+ * Month and day of an ISO day, short enough for a list row or a stat.
+ * @example shortDateLabel('2026-11-03', 'en-US') // 'Nov 3'
+ */
+export function shortDateLabel(isoDay: string, locale: string): string {
+  return formatDate(parseIsoDate(isoDay), 'MMM d', locale);
+}
+
+/**
  * The local calendar day of a moment as an ISO date, the shape the API exchanges days in.
  * @example isoDate(new Date(2026, 9, 26, 23, 30)) // '2026-10-26'
  */

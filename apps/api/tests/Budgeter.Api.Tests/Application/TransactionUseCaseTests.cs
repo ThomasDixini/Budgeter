@@ -11,7 +11,7 @@ public class TransactionUseCaseTests
 {
     private readonly InMemoryFinanceCategoryRepository _categories = new(FinanceCategory.Create("food", "Food"));
     private readonly InMemoryAccountRepository _accounts =
-        new(Account.Create("credit-card", "Credit card", AccountKind.CreditCard));
+        new(Account.CreateCreditCard("credit-card", "Credit card", CardTerms.Create(500000, 3, 10)));
     private readonly InMemoryMoneyTransactionRepository _transactions = new();
 
     private SaveTransaction SaveTransaction => new(_transactions, _categories, _accounts);

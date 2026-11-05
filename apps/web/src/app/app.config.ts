@@ -21,6 +21,8 @@ import {
   FinanceReferencesGateway,
   TransactionsGateway,
 } from './core/finances/transactions-gateway';
+import { AccountStatementsGateway } from './core/finances/account-statements-gateway';
+import { HttpAccountStatementsGateway } from './core/finances/http-account-statements-gateway';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -35,5 +37,6 @@ export const appConfig: ApplicationConfig = {
     { provide: BlockOutcomesGateway, useClass: HttpBlockOutcomesGateway },
     { provide: TransactionsGateway, useClass: HttpTransactionsGateway },
     { provide: FinanceReferencesGateway, useClass: HttpFinanceReferencesGateway },
+    { provide: AccountStatementsGateway, useClass: HttpAccountStatementsGateway },
   ],
 };

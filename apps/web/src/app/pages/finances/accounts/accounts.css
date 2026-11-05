@@ -1,0 +1,17 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.empty {
+  margin: 0;
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}

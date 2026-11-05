@@ -1,0 +1,123 @@
+<form
+  class="account-form ui-enter"
+  [attr.aria-label]="isEditing() ? 'Edit account' : 'New account'"
+  (submit)="submit($event)"
+  (keydown.escape)="dismiss.emit()"
+>
+  @if (!isEditing()) {
+    <div class="chips" role="group" aria-label="Kind">
+      @for (option of kindOptions; track option.value) {
+        <button
+          class="ui-chip"
+          type="button"
+          [attr.aria-pressed]="option.value === kind()"
+          (click)="kind.set(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="fields">
+    <label class="ui-field">
+      Name
+      <input
+        class="ui-input"
+        name="name"
+        type="text"
+        maxlength="40"
+        autocomplete="off"
+        [placeholder]="isCard() ? 'E.g. Nubank card' : 'E.g. Nubank'"
+        [value]="name()"
+        (input)="name.set(valueOf($event))"
+      />
+    </label>
+
+    @if (isCard()) {
+      <label class="ui-field">
+        Limit (R$)
+        <input
+          class="ui-input"
+          name="limit"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="5000.00"
+          [value]="limit()"
+          [attr.aria-invalid]="limitError() !== undefined"
+          [attr.aria-describedby]="limitError() === undefined ? null : 'account-limit-error'"
+          (input)="limit.set(valueOf($event))"
+        />
+        @if (limitError(); as error) {
+          <span id="account-limit-error" class="error">{{ error }}</span>
+        }
+      </label>
+      <label class="ui-field">
+        Closing day
+        <input
+          class="ui-input"
+          name="closingDay"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          [max]="lastDay"
+          placeholder="3"
+          [value]="closingDay()"
+          [attr.aria-invalid]="daysError() !== undefined"
+          (input)="closingDay.set(valueOf($event))"
+        />
+      </label>
+      <label class="ui-field">
+        Due day
+        <input
+          class="ui-input"
+          name="dueDay"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          [max]="lastDay"
+          placeholder="10"
+          [value]="dueDay()"
+          [attr.aria-invalid]="daysError() !== undefined"
+          (input)="dueDay.set(valueOf($event))"
+        />
+      </label>
+    } @else {
+      <label class="ui-field">
+        Opening balance (R$)
+        <input
+          class="ui-input"
+          name="openingBalance"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="0.00"
+          [value]="openingBalance()"
+          [attr.aria-invalid]="balanceError() !== undefined"
+          aria-describedby="account-balance-hint"
+          (input)="openingBalance.set(valueOf($event))"
+        />
+        <span id="account-balance-hint" class="hint" [class.error]="balanceError() !== undefined">
+          {{ balanceError() ?? 'What the account held before the transactions recorded on it.' }}
+        </span>
+      </label>
+    }
+  </div>
+
+  @if (isCard()) {
+    <p class="hint" [class.error]="daysError() !== undefined">
+      {{ daysError() ?? 'Purchases made on the closing day go to the next invoice.' }}
+    </p>
+  }
+
+  <div class="actions">
+    @if (isEditing()) {
+      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">Delete</button>
+    }
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ isEditing() ? 'Save account' : 'Add account' }}
+    </button>
+  </div>
+</form>

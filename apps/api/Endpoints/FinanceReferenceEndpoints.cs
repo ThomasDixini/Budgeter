@@ -8,22 +8,16 @@ public sealed record FinanceCategoryResponse(string Id, string Name)
     public static FinanceCategoryResponse From(FinanceCategory category) => new(category.Id, category.Name);
 }
 
-public sealed record AccountResponse(string Id, string Name, AccountKind Kind)
-{
-    public static AccountResponse From(Account account) => new(account.Id, account.Name, account.Kind);
-}
-
-/// <summary>HTTP routes for what transactions refer to: finance categories and accounts.</summary>
+/// <summary>HTTP routes for the finance categories transactions are filed under.</summary>
 public static class FinanceReferenceEndpoints
 {
     /// <summary>
-    /// Maps <c>GET /finance-categories</c> and <c>GET /accounts</c>.
+    /// Maps <c>GET /finance-categories</c>.
     /// </summary>
     /// <example><code>app.MapFinanceReferenceEndpoints();</code></example>
     public static IEndpointRouteBuilder MapFinanceReferenceEndpoints(this IEndpointRouteBuilder routes)
     {
         routes.MapGet("/finance-categories", ListCategoriesAsync);
-        routes.MapGet("/accounts", ListAccountsAsync);
         return routes;
     }
 
@@ -32,11 +26,5 @@ public static class FinanceReferenceEndpoints
     {
         var categories = await listCategories.ExecuteAsync(cancellationToken);
         return Results.Ok(categories.Select(FinanceCategoryResponse.From));
-    }
-
-    private static async Task<IResult> ListAccountsAsync(ListAccounts listAccounts, CancellationToken cancellationToken)
-    {
-        var accounts = await listAccounts.ExecuteAsync(cancellationToken);
-        return Results.Ok(accounts.Select(AccountResponse.From));
     }
 }

@@ -1,0 +1,52 @@
+<form
+  class="payment-form ui-enter"
+  [attr.aria-label]="'Pay ' + card().name"
+  (submit)="submit($event)"
+  (keydown.escape)="dismiss.emit()"
+>
+  @if (bankAccounts().length === 0) {
+    <p class="ui-muted empty">Add a bank account to pay the invoice from.</p>
+  }
+
+  <div class="fields">
+    <label class="ui-field">
+      Amount (R$)
+      <input
+        class="ui-input"
+        name="amount"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="0.00"
+        [value]="amount()"
+        [attr.aria-invalid]="amountError() !== undefined"
+        [attr.aria-describedby]="amountError() === undefined ? null : 'payment-amount-error'"
+        (input)="amount.set(valueOf($event))"
+      />
+      @if (amountError(); as error) {
+        <span id="payment-amount-error" class="error">{{ error }}</span>
+      }
+    </label>
+
+    <label class="ui-field">
+      Paid from
+      <select class="ui-input" (change)="fromAccountId.set(valueOf($event))">
+        @for (account of bankAccounts(); track account.id) {
+          <option [value]="account.id" [selected]="account.id === fromAccountId()">
+            {{ account.name }}
+          </option>
+        }
+      </select>
+    </label>
+
+    <label class="ui-field">
+      Date
+      <input class="ui-input" type="date" [value]="date()" (change)="date.set(valueOf($event))" />
+    </label>
+  </div>
+
+  <div class="actions">
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">Record payment</button>
+  </div>
+</form>

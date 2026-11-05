@@ -94,7 +94,7 @@ public sealed class SqliteMigrationTests : IDisposable
         await MigrateAsync();
 
         (await CountAsync("SELECT COUNT(*) FROM goal_progress")).ShouldBe(0);
-        (await CountAsync("PRAGMA user_version")).ShouldBe(2);
+        (await CountAsync("PRAGMA user_version")).ShouldBe(3);
         (await goals.ListAsync(TestDays.Today, CancellationToken.None))
             .Select(goal => goal.Done).ShouldBe([0, 0]);
     }
@@ -104,8 +104,31 @@ public sealed class SqliteMigrationTests : IDisposable
     {
         await MigrateAsync();
 
-        (await CountAsync("PRAGMA user_version")).ShouldBe(2);
+        (await CountAsync("PRAGMA user_version")).ShouldBe(3);
         (await CountAsync("SELECT COUNT(*) FROM pragma_table_info('goals') WHERE name = 'tracking'")).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task OldAccounts_GainAnOpeningBalanceAndCardsGetTheStarterTerms()
+    {
+        await using (var connection = await _connections.OpenAsync(CancellationToken.None))
+        {
+            await SqliteCommands.ExecuteAsync(
+                connection,
+                """
+                CREATE TABLE accounts (id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL);
+                INSERT INTO accounts VALUES ('checking-account', 'Checking account', 'BankAccount'),
+                                            ('credit-card', 'Credit card', 'CreditCard');
+                PRAGMA user_version = 2;
+                """,
+                CancellationToken.None);
+        }
+
+        await MigrateAsync();
+
+        var accounts = await new SqliteAccountRepository(_connections).ListAsync(CancellationToken.None);
+        accounts.Select(account => (account.OpeningBalanceCents, account.Card))
+            .ShouldBe([(0L, null), (0L, FinanceStarterSeed.CardTerms)]);
     }
 
     [Fact]

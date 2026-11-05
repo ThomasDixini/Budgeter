@@ -1,4 +1,10 @@
-import { isoDate, longDateLabel, parseIsoDate } from './date-label';
+import { isoDate, longDateLabel, parseIsoDate, shortDateLabel } from './date-label';
+
+describe('shortDateLabel', () => {
+  it('gives the short month and the day of an ISO day', () => {
+    expect(shortDateLabel('2026-11-03', 'en-US')).toBe('Nov 3');
+  });
+});
 
 describe('longDateLabel', () => {
   it('spells out the weekday, month and day', () => {
