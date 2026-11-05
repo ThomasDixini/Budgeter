@@ -149,3 +149,165 @@
     align-items: flex-start;
   }
 }
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  border: var(--border-hairline) solid var(--color-border-card);
+  background: var(--color-surface);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.periods {
+  margin-left: auto;
+}
+
+.asset-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-xs);
+}
+
+.asset-picker .ui-input {
+  height: 40px;
+  min-width: 120px;
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+
+.card-head .card-title {
+  margin: 0;
+}
+
+.hint {
+  font-size: var(--font-size-xs);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.assets {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.assets th,
+.assets td {
+  padding: 12px 10px;
+  text-align: left;
+  font-weight: var(--font-weight-regular);
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+  white-space: nowrap;
+}
+
+.assets thead th {
+  border-top: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+.assets .number {
+  text-align: right;
+}
+
+.assets .sorted {
+  color: var(--color-text);
+}
+
+.assets .strong {
+  font-weight: var(--font-weight-medium);
+}
+
+.assets .holding {
+  display: table-row;
+  padding: 0;
+}
+
+.assets .holding[data-kind='fixedIncome'] .asset {
+  box-shadow: inset 3px 0 var(--color-violet);
+}
+
+.assets .holding[data-kind='stock'] .asset {
+  box-shadow: inset 3px 0 var(--color-income);
+}
+
+.assets .holding[data-kind='realEstateFund'] .asset {
+  box-shadow: inset 3px 0 var(--color-amber);
+}
+
+.assets .holding[data-kind='fund'] .asset {
+  box-shadow: inset 3px 0 var(--color-sky);
+}
+
+.assets .holding[data-kind='other'] .asset {
+  box-shadow: inset 3px 0 var(--color-orchid);
+}
+
+.assets .holding.picked {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.asset {
+  padding-left: 14px;
+}
+
+.asset-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assets .detail {
+  display: block;
+}
+
+.actions-cell {
+  text-align: right;
+}
+
+.actions-cell .actions {
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 767px) {
+  .charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .periods {
+    margin-left: 0;
+  }
+}

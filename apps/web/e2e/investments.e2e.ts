@@ -32,7 +32,8 @@ test('a purchase is valued at the typed price and kept after a reload', async ({
   await investments.trade(name, 'Buy', '10', '10,00');
 
   const holding = investments.holding(name);
-  await expect(holding).toContainText('10 units · average R$10.00');
+  await expect(holding.getByRole('cell').nth(0)).toHaveText('10');
+  await expect(holding.getByRole('cell').nth(1)).toHaveText('R$10.00');
   await expect(holding).toContainText('R$120.00');
   await expect(holding).toContainText('+R$20.00 (+20.00%)');
   await page.reload();
@@ -46,12 +47,12 @@ test('selling more than was held is refused and the form stays open', async ({ p
   await investments.goto();
   await investments.addInvestment(name, '10,00');
   await investments.trade(name, 'Buy', '5', '10,00');
-  await expect(investments.holding(name)).toContainText('5 units');
+  await expect(investments.holding(name).getByRole('cell').first()).toHaveText('5');
 
   await investments.trade(name, 'Sell', '50', '10,00');
 
   await expect(page.getByRole('form', { name: `Trade ${name}` })).toBeVisible();
-  await expect(investments.holding(name)).toContainText('5 units');
+  await expect(investments.holding(name).getByRole('cell').first()).toHaveText('5');
 });
 
 test('proventos are listed with the movements and a purchase can be deleted', async ({ page }) => {
@@ -60,7 +61,7 @@ test('proventos are listed with the movements and a purchase can be deleted', as
   await investments.goto();
   await investments.addInvestment(name, '10,00');
   await investments.trade(name, 'Buy', '3', '10,00');
-  await expect(investments.holding(name)).toContainText('3 units');
+  await expect(investments.holding(name).getByRole('cell').first()).toHaveText('3');
 
   await investments.addIncome(name, '4,50');
 
@@ -74,5 +75,5 @@ test('proventos are listed with the movements and a purchase can be deleted', as
   await page.getByRole('button', { name: `Delete Buy 3 of ${name}` }).click();
   await deleted;
   await expect(investments.movements(name)).toHaveCount(1);
-  await expect(investments.holding(name)).toContainText('No units held');
+  await expect(investments.holding(name).getByRole('cell').first()).toHaveText('0');
 });

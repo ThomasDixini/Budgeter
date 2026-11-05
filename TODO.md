@@ -12,9 +12,9 @@
 - [x] Filter
 
 ## Investments
-- [ ] Filter
+- [x] Filter
 - [ ] Cards (validate)
-- [ ] Charts
+- [x] Charts (history-based ones stay empty until price history exists)
 
 ## Net worth
 - [ ] Charts

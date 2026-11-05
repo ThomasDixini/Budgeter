@@ -24,7 +24,9 @@ export class InvestmentsPage {
 
   /** The holding of the investment with this name. */
   holding(name: string): Locator {
-    return this.page.getByRole('listitem', { name, exact: true });
+    return this.page.locator('tr.holding').filter({
+      has: this.page.locator('.name', { hasText: name }),
+    });
   }
 
   /** The rows of the movements list that mention this investment. */

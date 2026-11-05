@@ -76,11 +76,25 @@ export interface Income {
 
 export type IncomeDraft = Omit<Income, 'id'>;
 
+/** The whole portfolio at the end of one month; what the evolution and return charts plot. */
+export interface MonthlyPoint {
+  /** `YYYY-MM`. */
+  readonly month: string;
+  readonly valueCents: number;
+  readonly appliedCents: number;
+  /** Accumulated return of the portfolio up to the month, in percent. */
+  readonly returnPercent: number;
+  /** Accumulated CDI on the same money up to the month, in percent. */
+  readonly cdiPercent: number;
+}
+
 /** What the page reads. */
 export interface Portfolio {
   readonly lines: readonly PortfolioLine[];
   readonly totals: PortfolioTotals;
   readonly performance?: Performance;
+  /** Month-end history; absent until the API keeps price history, and the charts then stay empty. */
+  readonly history?: readonly MonthlyPoint[];
   readonly trades: readonly Trade[];
   readonly incomes: readonly Income[];
 }
