@@ -1,10 +1,5 @@
 <div class="page">
-  <app-page-heading
-    eyebrow="Finances"
-    eyebrowIcon="finances"
-    heading="To pay & receive"
-    [description]="summary()"
-  >
+  <app-page-heading eyebrow="Finances" eyebrowIcon="finances" heading="To pay & receive">
     <button class="ui-button-ghost" type="button" (click)="open({ kind: 'new' })">
       <svg
         width="16"
@@ -21,6 +16,44 @@
       Add bill
     </button>
   </app-page-heading>
+
+  <section class="stats" aria-label="Month at a glance">
+    <div class="stat">
+      <p class="label"><span class="mark expense" aria-hidden="true"></span>Left to pay</p>
+      <p class="value ui-tabular">{{ leftToPay() }}</p>
+    </div>
+    <div class="stat">
+      <p class="label"><span class="mark income" aria-hidden="true"></span>Left to receive</p>
+      <p class="value ui-tabular">{{ leftToReceive() }}</p>
+    </div>
+    <div class="stat">
+      <p class="label">Projected balance</p>
+      <p class="value ui-tabular">{{ projectedBalance() }}</p>
+    </div>
+    <div class="stat late">
+      <p class="label">Overdue</p>
+      <p class="value ui-tabular">{{ overdueCount() }}</p>
+    </div>
+  </section>
+
+  <div class="chips" role="group" aria-label="Show">
+    @for (option of kindOptions; track option.value) {
+      <button
+        class="ui-chip"
+        type="button"
+        [attr.aria-pressed]="option.value === kindFilter()"
+        (click)="toggleKind(option.value)"
+      >
+        <span
+          class="mark"
+          [class.expense]="option.value === 'payable'"
+          [class.income]="option.value === 'receivable'"
+          aria-hidden="true"
+        ></span>
+        {{ option.label }}
+      </button>
+    }
+  </div>
 
   @switch (panel().kind) {
     @case ('new') {
@@ -71,10 +104,10 @@
     <app-load-failed message="Couldn't load your bills." (retry)="reload()" />
   }
 
-  @if (groups().overdue.length > 0) {
+  @if (visible().overdue.length > 0) {
     <app-bill-group
       title="Overdue"
-      [items]="groups().overdue"
+      [items]="visible().overdue"
       [categoryNames]="categoryNames()"
       [accountNames]="accountNames()"
       [today]="today"
@@ -84,10 +117,10 @@
     />
   }
 
-  @if (groups().soon.length > 0) {
+  @if (visible().soon.length > 0) {
     <app-bill-group
       title="Next 7 days"
-      [items]="groups().soon"
+      [items]="visible().soon"
       [categoryNames]="categoryNames()"
       [accountNames]="accountNames()"
       [today]="today"
@@ -97,10 +130,10 @@
     />
   }
 
-  @if (groups().later.length > 0) {
+  @if (visible().later.length > 0) {
     <app-bill-group
       title="Later"
-      [items]="groups().later"
+      [items]="visible().later"
       [categoryNames]="categoryNames()"
       [accountNames]="accountNames()"
       [today]="today"
@@ -110,11 +143,11 @@
     />
   }
 
-  @if (groups().settled.length > 0) {
+  @if (visible().settled.length > 0) {
     <app-bill-group
       title="Paid & received (last 30 days)"
       [settled]="true"
-      [items]="groups().settled"
+      [items]="visible().settled"
       [categoryNames]="categoryNames()"
       [accountNames]="accountNames()"
       [today]="today"

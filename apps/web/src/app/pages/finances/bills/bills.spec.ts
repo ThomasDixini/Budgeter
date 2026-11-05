@@ -84,11 +84,30 @@ function submit(fixture: ComponentFixture<Bills>, formLabel: string): void {
 }
 
 describe('To pay & receive page', () => {
-  it('sums up what is overdue and what comes in the next 7 days in the heading', () => {
+  it('sums up what is left to pay and receive, the projected balance and what is overdue', () => {
     const { fixture } = render();
 
-    expect(texts(fixture, 'app-page-heading .description')).toEqual([
-      'Overdue: R$1,500.00 to pay, R$0.00 to receive · Next 7 days: R$0.00 to pay, R$800.00 to receive',
+    expect(texts(fixture, '.stat .value')).toEqual([
+      'R$1,876.40',
+      'R$800.00',
+      '−R$1,076.40',
+      '1 bill',
+    ]);
+  });
+
+  it('shows only what is to pay, or only what is to receive, and goes back to both', () => {
+    const { fixture } = render();
+
+    clickButton(fixture, 'To pay');
+    const toPay = texts(fixture, 'app-bill-group .description');
+    clickButton(fixture, 'To receive');
+    const toReceive = texts(fixture, 'app-bill-group .description');
+    clickButton(fixture, 'To receive');
+
+    expect([toPay, toReceive, texts(fixture, 'app-bill-group .description').length]).toEqual([
+      ['Rent', 'Credit card invoice', 'Course', 'Gym'],
+      ['Freelance job'],
+      5,
     ]);
   });
 
