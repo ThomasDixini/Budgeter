@@ -24,6 +24,26 @@ public sealed class SqliteFinanceCategoryRepository(SqliteConnectionFactory conn
         return rows.FirstOrDefault();
     }
 
+    public async Task SaveAsync(FinanceCategory category, CancellationToken cancellationToken)
+    {
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        await SqliteCommands.ExecuteAsync(
+            lease.Connection,
+            """
+            INSERT INTO finance_categories (id, name) VALUES ($id, $name)
+            ON CONFLICT (id) DO UPDATE SET name = excluded.name
+            """,
+            cancellationToken,
+            ("$id", category.Id), ("$name", category.Name));
+    }
+
+    public async Task DeleteAsync(string categoryId, CancellationToken cancellationToken)
+    {
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        await SqliteCommands.ExecuteAsync(
+            lease.Connection, "DELETE FROM finance_categories WHERE id = $id", cancellationToken, ("$id", categoryId));
+    }
+
     private static FinanceCategory ToCategory(SqliteDataReader reader) =>
         FinanceCategory.Restore(reader.GetString(0), reader.GetString(1));
 }

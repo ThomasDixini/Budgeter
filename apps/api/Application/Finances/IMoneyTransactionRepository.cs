@@ -25,4 +25,7 @@ public interface IMoneyTransactionRepository
 
     /// <summary>Whether any transaction was recorded on the account.</summary>
     Task<bool> AnyOnAccountAsync(string accountId, CancellationToken cancellationToken);
+
+    /// <summary>Whether any transaction was filed under the finance category.</summary>
+    Task<bool> AnyInCategoryAsync(string categoryId, CancellationToken cancellationToken);
 }

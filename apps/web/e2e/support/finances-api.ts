@@ -67,6 +67,20 @@ export async function createAccount(
 }
 
 /**
+ * Creates a finance category straight through the API and gives back its id.
+ * @example const categoryId = await createFinanceCategory(request, uniqueName(test.info(), 'Courses'))
+ */
+export async function createFinanceCategory(
+  request: APIRequestContext,
+  name: string,
+): Promise<string> {
+  const id = randomUUID();
+  const response = await request.put(`/api/finance-categories/${id}`, { data: { name } });
+  expect(response.ok()).toBe(true);
+  return id;
+}
+
+/**
  * A name no other test or browser project uses, so tests sharing the database tell their accounts apart.
  * @example uniqueName(test.info(), 'Wallet') // 'Wallet desktop 3f2b7c'
  */

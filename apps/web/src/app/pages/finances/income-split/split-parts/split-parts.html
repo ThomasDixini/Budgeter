@@ -1,0 +1,131 @@
+<section class="ui-card parts" aria-labelledby="parts-title">
+  <div class="header">
+    <h2 id="parts-title" class="ui-card-title">Your parts</h2>
+    <span class="ui-muted">Drag the slider or type the percentage</span>
+  </div>
+
+  @for (row of rows(); track row.part.id) {
+    <div class="row" role="group" [attr.aria-label]="row.part.name">
+      <div class="identity">
+        <div class="name-line">
+          <button
+            class="swatch"
+            type="button"
+            title="Change color"
+            [style.background]="row.color"
+            [attr.aria-label]="row.colorLabel"
+            (click)="nextColor.emit(row.part.id)"
+          ></button>
+          <input
+            class="ui-input name"
+            type="text"
+            aria-label="Part name"
+            [attr.maxlength]="maxNameLength"
+            [value]="row.part.name"
+            (input)="rename.emit({ partId: row.part.id, name: valueOf($event) })"
+          />
+        </div>
+        <div class="categories">
+          @for (category of row.categories; track category.id) {
+            <span class="ui-tag">{{ category.name }}</span>
+          }
+          <button
+            class="ui-button-ghost pick"
+            type="button"
+            [attr.aria-expanded]="pickingFor() === row.part.id"
+            (click)="togglePicker(row.part.id)"
+          >
+            + categories
+          </button>
+        </div>
+      </div>
+
+      <div class="percent">
+        <input
+          class="slider"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          [attr.aria-label]="'Percentage of ' + row.part.name"
+          [value]="row.part.percent"
+          (input)="setPercent.emit({ partId: row.part.id, percent: percentOf($event) })"
+        />
+        <label class="number">
+          <span class="ui-visually-hidden">Percentage number of {{ row.part.name }}</span>
+          <input
+            class="ui-input"
+            type="number"
+            min="0"
+            max="100"
+            [value]="row.part.percent"
+            (input)="setPercent.emit({ partId: row.part.id, percent: percentOf($event) })"
+          />
+          <span aria-hidden="true">%</span>
+        </label>
+      </div>
+
+      <div class="value">
+        <span class="amount ui-tabular">{{ row.value }}</span>
+        <span class="ui-muted">per month</span>
+      </div>
+
+      <button
+        class="ui-icon-button remove"
+        type="button"
+        [attr.aria-label]="'Remove ' + row.part.name"
+        (click)="removePart.emit(row.part.id)"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path>
+        </svg>
+      </button>
+
+      @if (pickingFor() === row.part.id) {
+        <div class="picker" role="group" [attr.aria-label]="'Categories of ' + row.part.name">
+          @for (choice of row.choices; track choice.id) {
+            <button
+              class="ui-chip"
+              type="button"
+              [attr.aria-pressed]="choice.isInPart"
+              (click)="toggleCategory(row, choice)"
+            >
+              {{ choiceLabel(choice) }}
+            </button>
+          }
+          @if (row.choices.length === 0) {
+            <span class="ui-muted">No categories yet. Add one below.</span>
+          }
+        </div>
+      }
+    </div>
+  } @empty {
+    <p class="ui-muted empty">No parts yet. Pick a template or add the first part.</p>
+  }
+
+  <button class="ui-button-ghost add" type="button" [disabled]="!canAdd()" (click)="addPart.emit()">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14M5 12h14"></path>
+    </svg>
+    New part
+  </button>
+</section>

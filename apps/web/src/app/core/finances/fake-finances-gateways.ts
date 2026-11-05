@@ -94,9 +94,21 @@ export class FakeFinanceReferencesGateway extends FinanceReferencesGateway {
   failure: Error | undefined;
   readonly savedAccounts: Account[] = [];
   readonly deletedAccounts: string[] = [];
+  readonly savedCategories: FinanceCategory[] = [];
+  readonly deletedCategories: string[] = [];
 
   override categories(): Observable<readonly FinanceCategory[]> {
     return this.answer(SAMPLE_FINANCE_CATEGORIES);
+  }
+
+  override saveCategory(category: FinanceCategory): Observable<FinanceCategory> {
+    this.savedCategories.push(category);
+    return this.answer(category);
+  }
+
+  override deleteCategory(categoryId: string): Observable<void> {
+    this.deletedCategories.push(categoryId);
+    return this.answer(undefined);
   }
 
   override accounts(): Observable<readonly Account[]> {

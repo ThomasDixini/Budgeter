@@ -17,4 +17,18 @@ internal sealed class InMemoryFinanceCategoryRepository(params FinanceCategory[]
     {
         return Task.FromResult(_categories.Find(category => category.Id == id));
     }
+
+    public Task SaveAsync(FinanceCategory category, CancellationToken cancellationToken)
+    {
+        var index = _categories.FindIndex(stored => stored.Id == category.Id);
+        if (index < 0) _categories.Add(category);
+        else _categories[index] = category;
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(string categoryId, CancellationToken cancellationToken)
+    {
+        _categories.RemoveAll(category => category.Id == categoryId);
+        return Task.CompletedTask;
+    }
 }

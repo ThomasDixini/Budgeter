@@ -27,6 +27,7 @@ describe('SectionTabs', () => {
       link.getAttribute('href'),
     ]);
     expect(links).toEqual([
+      ['Income split', '/finances/income-split'],
       ['Transactions', '/finances/transactions'],
       ['Banks & Cards', '/finances/accounts'],
     ]);

@@ -1,0 +1,30 @@
+:host {
+  display: block;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 24px;
+}
+
+.unsaved {
+  margin: 0;
+}
+
+.ui-button-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 899px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

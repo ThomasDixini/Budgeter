@@ -22,6 +22,12 @@ export abstract class FinanceReferencesGateway {
   /** Every finance category, ordered by name. */
   abstract categories(): Observable<readonly FinanceCategory[]>;
 
+  /** Creates or renames a finance category; answers with the stored version. */
+  abstract saveCategory(category: FinanceCategory): Observable<FinanceCategory>;
+
+  /** Deletes a finance category nothing was recorded under; deleting one already gone succeeds. */
+  abstract deleteCategory(categoryId: string): Observable<void>;
+
   /** Every bank account and credit card, in creation order. */
   abstract accounts(): Observable<readonly Account[]>;
 

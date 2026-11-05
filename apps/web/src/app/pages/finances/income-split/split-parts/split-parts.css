@@ -1,0 +1,145 @@
+:host {
+  display: block;
+}
+
+.parts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto auto;
+  align-items: center;
+  gap: 16px 24px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.name-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+}
+
+.name {
+  flex: 1;
+  min-width: 0;
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pick {
+  height: 28px;
+  padding: 0 12px;
+  font-size: var(--font-size-xs);
+}
+
+.percent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.slider {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--color-violet);
+}
+
+.number {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+}
+
+.number .ui-input {
+  width: 72px;
+  text-align: right;
+}
+
+.value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 120px;
+}
+
+.amount {
+  font-size: var(--font-size-lg);
+}
+
+.remove {
+  color: var(--color-text-muted);
+}
+
+.picker {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: var(--border-hairline) solid var(--color-border-subtle);
+}
+
+.empty {
+  margin: 0;
+}
+
+.add {
+  align-self: flex-start;
+}
+
+.add:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Tablets and phones: the percentage and the amount go under the name. */
+@media (max-width: 899px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .identity,
+  .percent {
+    grid-column: 1 / -1;
+  }
+
+  .value {
+    align-items: flex-start;
+  }
+}

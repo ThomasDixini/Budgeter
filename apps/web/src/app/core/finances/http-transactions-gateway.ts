@@ -7,6 +7,7 @@ import { FinanceReferencesGateway, TransactionsGateway } from './transactions-ga
 
 const TRANSACTIONS_URL = '/api/transactions';
 const ACCOUNTS_URL = '/api/accounts';
+const CATEGORIES_URL = '/api/finance-categories';
 
 /** Transactions stored by the Budgeter API. */
 @Injectable()
@@ -34,7 +35,17 @@ export class HttpFinanceReferencesGateway extends FinanceReferencesGateway {
   private readonly httpClient = inject(HttpClient);
 
   override categories(): Observable<readonly FinanceCategory[]> {
-    return this.httpClient.get<readonly FinanceCategory[]>('/api/finance-categories');
+    return this.httpClient.get<readonly FinanceCategory[]>(CATEGORIES_URL);
+  }
+
+  override saveCategory(category: FinanceCategory): Observable<FinanceCategory> {
+    // The id travels in the URL only, as the API reads it from there.
+    const { id, ...body } = category;
+    return this.httpClient.put<FinanceCategory>(categoryUrl(id), body);
+  }
+
+  override deleteCategory(categoryId: string): Observable<void> {
+    return this.httpClient.delete<void>(categoryUrl(categoryId));
   }
 
   override accounts(): Observable<readonly Account[]> {
@@ -54,6 +65,10 @@ export class HttpFinanceReferencesGateway extends FinanceReferencesGateway {
 
 function transactionUrl(transactionId: string): string {
   return `${TRANSACTIONS_URL}/${encodeURIComponent(transactionId)}`;
+}
+
+function categoryUrl(categoryId: string): string {
+  return `${CATEGORIES_URL}/${encodeURIComponent(categoryId)}`;
 }
 
 function accountUrl(accountId: string): string {

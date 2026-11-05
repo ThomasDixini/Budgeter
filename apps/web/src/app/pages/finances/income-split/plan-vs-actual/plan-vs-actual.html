@@ -1,0 +1,57 @@
+<section class="ui-card" aria-labelledby="actual-title">
+  <div class="header">
+    <h2 id="actual-title" class="ui-card-title">Planned vs actual · {{ monthTitle() }}</h2>
+    <span class="ui-muted"
+      >What was spent comes from the transactions in each part's categories</span
+    >
+  </div>
+
+  @if (rows().length === 0) {
+    <p class="ui-muted empty">Add parts to compare them with what you spent.</p>
+  } @else {
+    <ul class="list">
+      @for (row of rows(); track row.id) {
+        <li class="item">
+          <div class="line">
+            <span class="name"
+              ><span class="dot ui-dot" [style.background]="row.color" aria-hidden="true"></span
+              >{{ row.name }}</span
+            >
+            <span class="status" [class.over]="row.isOver">
+              @if (row.isOver) {
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 9v4M12 17h.01"></path>
+                  <path
+                    d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"
+                  ></path>
+                </svg>
+              }
+              {{ row.status }}
+            </span>
+          </div>
+          <div class="ui-track" aria-hidden="true">
+            <div
+              class="ui-fill"
+              [style.width.%]="row.fill"
+              [style.background]="row.isOver ? 'var(--color-amber)' : row.color"
+            ></div>
+          </div>
+          <div class="line figures ui-tabular">
+            <span>{{ row.spent }}</span>
+            <span class="ui-muted">of {{ row.planned }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

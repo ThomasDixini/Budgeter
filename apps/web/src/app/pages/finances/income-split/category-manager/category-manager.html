@@ -1,0 +1,90 @@
+<section class="ui-card manager" aria-labelledby="categories-title">
+  <div class="header">
+    <h2 id="categories-title" class="ui-card-title">Categories</h2>
+    <span class="ui-muted">Used by transactions and by the parts above</span>
+  </div>
+
+  <form class="new" aria-label="New category" (submit)="submitNew($event)">
+    <label class="ui-field grow">
+      New category
+      <input
+        class="ui-input"
+        name="newCategory"
+        type="text"
+        autocomplete="off"
+        placeholder="E.g. Courses"
+        [attr.maxlength]="maxNameLength"
+        [value]="newName()"
+        [attr.aria-invalid]="newNameError() !== undefined"
+        [attr.aria-describedby]="newNameError() === undefined ? null : 'new-category-error'"
+        (input)="newName.set(valueOf($event))"
+      />
+      @if (newNameError(); as error) {
+        <span id="new-category-error" class="error">{{ error }}</span>
+      }
+    </label>
+    <button class="ui-button-primary" type="submit" [disabled]="!canAdd()">Add category</button>
+  </form>
+
+  <ul class="list">
+    @for (category of categories(); track category.id) {
+      <li class="item">
+        @if (renaming(); as draft) {
+          @if (draft.id === category.id) {
+            <form
+              class="rename"
+              aria-label="Rename category"
+              (submit)="submitRename($event)"
+              (keydown.escape)="cancelRename()"
+            >
+              <label class="ui-visually-hidden" [for]="'rename-' + category.id"
+                >Category name</label
+              >
+              <input
+                class="ui-input"
+                type="text"
+                autocomplete="off"
+                [id]="'rename-' + category.id"
+                [attr.maxlength]="maxNameLength"
+                [value]="draft.name"
+                [attr.aria-invalid]="renameError() !== undefined"
+                (input)="typeRename($event)"
+              />
+              <button class="ui-button-primary" type="submit" [disabled]="!canRename()">
+                Save
+              </button>
+              <button class="ui-button-ghost" type="button" (click)="cancelRename()">Cancel</button>
+              @if (renameError(); as error) {
+                <span class="error">{{ error }}</span>
+              }
+            </form>
+          } @else {
+            <span class="name">{{ category.name }}</span>
+          }
+        } @else {
+          <span class="name">{{ category.name }}</span>
+        }
+        <span class="actions">
+          <button
+            class="ui-button-ghost small"
+            type="button"
+            [attr.aria-label]="'Rename ' + category.name"
+            (click)="startRename(category)"
+          >
+            Rename
+          </button>
+          <button
+            class="ui-button-ghost small delete"
+            type="button"
+            [attr.aria-label]="'Delete ' + category.name"
+            (click)="remove.emit(category.id)"
+          >
+            Delete
+          </button>
+        </span>
+      </li>
+    } @empty {
+      <li class="ui-muted">No categories yet.</li>
+    }
+  </ul>
+</section>

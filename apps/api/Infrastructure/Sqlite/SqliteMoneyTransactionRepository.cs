@@ -82,6 +82,18 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
         return found[0];
     }
 
+    public async Task<bool> AnyInCategoryAsync(string categoryId, CancellationToken cancellationToken)
+    {
+        await using var lease = await connections.LeaseAsync(cancellationToken);
+        var found = await SqliteCommands.QueryAsync(
+            lease.Connection,
+            "SELECT EXISTS (SELECT 1 FROM transactions WHERE category_id = $categoryId)",
+            reader => reader.GetBoolean(0),
+            cancellationToken,
+            ("$categoryId", categoryId));
+        return found[0];
+    }
+
     private static MoneyTransaction ToTransaction(SqliteDataReader reader)
     {
         return MoneyTransaction.Restore(
