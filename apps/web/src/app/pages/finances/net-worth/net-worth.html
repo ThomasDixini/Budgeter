@@ -1,0 +1,115 @@
+<div class="page">
+  <app-page-heading
+    eyebrow="Finances"
+    eyebrowIcon="finances"
+    heading="Net worth"
+    description="What you own, minus what you owe on your cards."
+  />
+
+  @if (hasLoadFailed()) {
+    <app-load-failed message="Couldn't load your net worth." (retry)="reload()" />
+  }
+
+  <section class="stats" aria-label="Net worth">
+    @for (stat of stats(); track stat.label) {
+      <div class="stat" [class.main]="$first">
+        <p class="label">{{ stat.label }}</p>
+        <p class="value ui-tabular">{{ stat.value }}</p>
+      </div>
+    }
+  </section>
+
+  @if (isLoaded() && hasAssets()) {
+    <section class="ui-card card" aria-label="Where your assets are">
+      <h2 class="card-title">Where your assets are</h2>
+      <div
+        class="split"
+        role="img"
+        [attr.aria-label]="
+          'Bank accounts ' +
+          worth().bankPercent +
+          '%, investments ' +
+          worth().investmentsPercent +
+          '%'
+        "
+      >
+        <span class="part bank" [style.width.%]="worth().bankPercent"></span>
+        <span class="part invested" [style.width.%]="worth().investmentsPercent"></span>
+      </div>
+      <p class="legend">
+        <span
+          ><span class="mark bank" aria-hidden="true"></span>Bank accounts
+          {{ worth().bankPercent }}%</span
+        >
+        <span
+          ><span class="mark invested" aria-hidden="true"></span>Investments
+          {{ worth().investmentsPercent }}%</span
+        >
+      </p>
+    </section>
+  }
+
+  <div class="columns">
+    <section class="ui-card card" aria-label="Bank accounts">
+      <h2 class="card-title">
+        <span>Bank accounts</span><span class="ui-tabular">{{ balance(worth().bankCents) }}</span>
+      </h2>
+      @if (worth().bankAccounts.length > 0) {
+        <ul class="list">
+          @for (item of worth().bankAccounts; track item.id) {
+            <li class="row">
+              <span>{{ item.name }}</span>
+              <span class="ui-tabular">{{ balance(item.cents) }}</span>
+            </li>
+          }
+        </ul>
+      } @else if (isLoaded()) {
+        <p class="ui-muted empty">No bank accounts yet.</p>
+      }
+    </section>
+
+    <section class="ui-card card" aria-label="Investments">
+      <h2 class="card-title">
+        <span>Investments</span
+        ><span class="ui-tabular">{{ balance(worth().investmentsCents) }}</span>
+      </h2>
+      @if (worth().investments.length > 0) {
+        <ul class="list">
+          @for (item of worth().investments; track item.id) {
+            <li class="row">
+              <span>{{ item.name }}</span>
+              <span class="ui-tabular">{{ balance(item.cents) }}</span>
+            </li>
+          }
+        </ul>
+      } @else if (isLoaded()) {
+        <p class="ui-muted empty">Nothing invested yet.</p>
+      }
+      @if (unpricedCount() > 0) {
+        <p class="ui-muted note">
+          {{ unpricedCount() }} without a price {{ unpricedCount() === 1 ? 'is' : 'are' }} valued at
+          cost.
+        </p>
+      }
+    </section>
+
+    <section class="ui-card card" aria-label="Credit cards">
+      <h2 class="card-title">
+        <span>Owed on credit cards</span
+        ><span class="ui-tabular">{{ money(worth().cardsOwedCents) }}</span>
+      </h2>
+      @if (worth().cards.length > 0) {
+        <ul class="list">
+          @for (item of worth().cards; track item.id) {
+            <li class="row">
+              <span>{{ item.name }}</span>
+              <span class="ui-tabular">{{ money(item.cents) }}</span>
+            </li>
+          }
+        </ul>
+      } @else if (isLoaded()) {
+        <p class="ui-muted empty">No credit cards yet.</p>
+      }
+    </section>
+  </div>
+</div>
