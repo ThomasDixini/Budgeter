@@ -16,6 +16,7 @@ import {
   netWorthRows,
 } from '../../../core/finances/net-worth';
 import { NetWorthStore } from '../../../core/finances/net-worth-store';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface Stat {
   readonly label: string;
@@ -44,7 +45,7 @@ interface TableRow {
  */
 @Component({
   selector: 'app-finances-net-worth',
-  imports: [PageHeading, LoadFailed, LineChart],
+  imports: [TranslatePipe, PageHeading, LoadFailed, LineChart],
   providers: [NetWorthStore],
   templateUrl: './net-worth.html',
   styleUrl: './net-worth.css',

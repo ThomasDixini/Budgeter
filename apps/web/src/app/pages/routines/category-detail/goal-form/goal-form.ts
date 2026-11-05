@@ -14,6 +14,7 @@ import {
   usesDots,
 } from '../../../../core/routines/goal';
 import { GoalDraft } from '../../../../core/routines/routines-store';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 const ISO_DATE_FORMAT = 'yyyy-MM-dd';
 const DEFAULT_CUSTOM_PERIOD_DAYS = 50;
@@ -39,6 +40,7 @@ const GOAL_TYPE_OPTIONS: readonly {
 /** Inline form to define a goal for a category, with a live preview of the resulting card. */
 @Component({
   selector: 'app-goal-form',
+  imports: [TranslatePipe],
   templateUrl: './goal-form.html',
   styleUrl: './goal-form.css',
 })

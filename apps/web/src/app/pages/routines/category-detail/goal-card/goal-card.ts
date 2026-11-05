@@ -9,6 +9,7 @@ import {
   isGoalMet,
   usesDots,
 } from '../../../../core/routines/goal';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * One goal: its type badge, dots or bar for progress, and buttons to edit and delete it. A frequency
@@ -16,6 +17,7 @@ import {
  */
 @Component({
   selector: 'app-goal-card',
+  imports: [TranslatePipe],
   templateUrl: './goal-card.html',
   styleUrl: './goal-card.css',
 })

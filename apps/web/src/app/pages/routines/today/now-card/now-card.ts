@@ -8,6 +8,7 @@ import {
   minutesLeft,
 } from '../../../../core/routines/day-timeline';
 import { Routine, RoutineBlock } from '../../../../core/routines/routine';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** A block completed or skipped today, as the Now card names it for undo. */
 export interface EndedBlock {
@@ -26,6 +27,7 @@ interface CurrentBlockView {
 /** Highlights the routine block happening now, or what comes next when the day is between blocks. */
 @Component({
   selector: 'app-now-card',
+  imports: [TranslatePipe],
   templateUrl: './now-card.html',
   styleUrl: './now-card.css',
 })

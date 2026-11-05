@@ -29,6 +29,7 @@ import {
   parseAmountCents,
   signedAmountText,
 } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * Inline form for a bank account (name and opening balance) or a credit card (name, limit, closing
@@ -37,6 +38,7 @@ import {
  */
 @Component({
   selector: 'app-account-form',
+  imports: [TranslatePipe],
   templateUrl: './account-form.html',
   styleUrl: './account-form.css',
 })

@@ -34,6 +34,7 @@ import { IncomeFields, IncomeForm } from './income-form/income-form';
 import { InvestmentForm } from './investment-form/investment-form';
 import { PortfolioDistribution } from './portfolio-distribution/portfolio-distribution';
 import { TradeFields, TradeForm } from './trade-form/trade-form';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** The inline form open above the lists, if any. */
 type Panel =
@@ -61,6 +62,7 @@ const DEFAULT_FILTERS: InvestmentFilters = { months: 12 };
 @Component({
   selector: 'app-finances-investments',
   imports: [
+    TranslatePipe,
     PageHeading,
     LoadFailed,
     InvestmentForm,

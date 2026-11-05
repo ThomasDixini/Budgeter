@@ -32,14 +32,14 @@
           <path d="M5 21V4M5 4h11l-2 4 2 4H5"></path>
         </svg>
       }
-      {{ tag() }}
+      {{ tag() | t }}
     </span>
     <div class="actions">
       <button
         class="icon-action"
         type="button"
-        [attr.aria-label]="'Edit ' + goal().title"
-        title="Edit"
+        [attr.aria-label]="'Edit {title}' | t: { title: goal().title }"
+        [title]="'Edit' | t"
         (click)="edit.emit(goal().id)"
       >
         <svg
@@ -59,8 +59,8 @@
       <button
         class="icon-action danger"
         type="button"
-        [attr.aria-label]="'Delete ' + goal().title"
-        title="Delete"
+        [attr.aria-label]="'Delete {title}' | t: { title: goal().title }"
+        [title]="'Delete' | t"
         (click)="isConfirmingDelete.set(true)"
       >
         <svg
@@ -80,13 +80,13 @@
     </div>
   </div>
   @if (isConfirmingDelete()) {
-    <div class="confirm" role="group" aria-label="Confirm deletion">
-      <span>Delete this goal and its progress?</span>
+    <div class="confirm" role="group" [attr.aria-label]="'Confirm deletion' | t">
+      <span>{{ 'Delete this goal and its progress?' | t }}</span>
       <button class="ui-button-ghost step danger-text" type="button" (click)="confirmDelete()">
-        Delete
+        {{ 'Delete' | t }}
       </button>
       <button class="ui-button-ghost step" type="button" (click)="isConfirmingDelete.set(false)">
-        Cancel
+        {{ 'Cancel' | t }}
       </button>
     </div>
   }
@@ -114,7 +114,7 @@
       >
         <path d="M5 12.5l4.5 4.5L19 7.5"></path>
       </svg>
-      {{ isMet() ? 'Achieved' : 'Mark achieved' }}
+      {{ isMet() ? ('Achieved' | t) : ('Mark achieved' | t) }}
     </button>
   } @else if (showsDots()) {
     <div class="dots" aria-hidden="true">
@@ -126,7 +126,7 @@
         ></span>
       }
       @if (extra() > 0) {
-        <span class="extra ui-tabular" [style.color]="color()">+{{ extra() }}</span>
+        <span class="extra ui-tabular" [style.color]="color()">+{{ extra() | t }}</span>
       }
     </div>
   } @else {
@@ -135,7 +135,7 @@
     </div>
   }
   <div class="bottom">
-    <span class="value ui-tabular">{{ value() }}</span>
-    <span class="footer">{{ footer() }}</span>
+    <span class="value ui-tabular">{{ value() | t }}</span>
+    <span class="footer">{{ footer() | t }}</span>
   </div>
 </article>

@@ -17,6 +17,7 @@ import { AccountDetail } from './account-detail/account-detail';
 import { AccountForm } from './account-form/account-form';
 import { AccountTiles } from './account-tiles/account-tiles';
 import { PaymentForm } from './payment-form/payment-form';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** Which account form is open, if any. */
 type AccountFormMode = 'closed' | 'new' | 'edit';
@@ -27,7 +28,15 @@ type AccountFormMode = 'closed' | 'new' | 'edit';
  */
 @Component({
   selector: 'app-finances-accounts',
-  imports: [PageHeading, LoadFailed, AccountTiles, AccountDetail, AccountForm, PaymentForm],
+  imports: [
+    TranslatePipe,
+    PageHeading,
+    LoadFailed,
+    AccountTiles,
+    AccountDetail,
+    AccountForm,
+    PaymentForm,
+  ],
   providers: [BanksAndCardsStore],
   templateUrl: './accounts.html',
   styleUrl: './accounts.css',

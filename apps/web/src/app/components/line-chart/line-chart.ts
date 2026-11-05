@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 /** One line of the chart; a missing value leaves a gap. */
 export interface ChartSeries {
@@ -34,6 +35,7 @@ const TICK_COUNT = 4;
  */
 @Component({
   selector: 'app-line-chart',
+  imports: [TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './line-chart.html',
   styleUrl: './line-chart.css',

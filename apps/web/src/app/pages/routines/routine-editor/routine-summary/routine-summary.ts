@@ -8,6 +8,7 @@ import {
   routineSpan,
   weeklyMinutesByCategory,
 } from '../../../../core/routines/routine';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 interface CategoryHoursView {
   readonly category: Category;
@@ -18,7 +19,7 @@ interface CategoryHoursView {
 /** Side card with planned vs free time and the weekly hours each category gets. */
 @Component({
   selector: 'app-routine-summary',
-  imports: [RouterLink],
+  imports: [TranslatePipe, RouterLink],
   templateUrl: './routine-summary.html',
   styleUrl: './routine-summary.css',
 })

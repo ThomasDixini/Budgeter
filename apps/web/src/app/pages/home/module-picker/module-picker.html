@@ -1,5 +1,11 @@
-<dialog class="overlay" open aria-modal="true" aria-label="Choose a module">
-  <button #closeButton class="close" type="button" aria-label="Close" (click)="dismiss.emit()">
+<dialog class="overlay" open aria-modal="true" [attr.aria-label]="'Choose a module' | t">
+  <button
+    #closeButton
+    class="close"
+    type="button"
+    [attr.aria-label]="'Close' | t"
+    (click)="dismiss.emit()"
+  >
     <svg
       width="18"
       height="18"
@@ -16,8 +22,8 @@
 
   <div class="ring">
     <div class="ring-label">
-      <span class="ring-eyebrow">Modules</span>
-      <span class="ring-title">Choose one</span>
+      <span class="ring-eyebrow">{{ 'Modules' | t }}</span>
+      <span class="ring-title">{{ 'Choose one' | t }}</span>
     </div>
     @for (option of options(); track option.index) {
       <div
@@ -35,7 +41,7 @@
           (click)="pick.emit(option.index)"
         >
           <app-module-icon [kind]="option.module.kind" [size]="26" />
-          <span class="option-name">{{ option.module.name }}</span>
+          <span class="option-name">{{ option.module.name | t }}</span>
         </button>
       </div>
     }

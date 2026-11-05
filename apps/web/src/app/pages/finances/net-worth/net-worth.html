@@ -10,7 +10,7 @@
     <app-load-failed message="Couldn't load your net worth." (retry)="reload()" />
   }
 
-  <div class="chips" role="group" aria-label="Period">
+  <div class="chips" role="group" [attr.aria-label]="'Period' | t">
     @for (option of periodOptions; track option) {
       <button
         class="ui-chip"
@@ -18,25 +18,25 @@
         [attr.aria-pressed]="months() === option"
         (click)="pickPeriod(option)"
       >
-        {{ option }} months
+        {{ '{option} months' | t: { option: option } }}
       </button>
     }
   </div>
 
-  <section class="stats" aria-label="Net worth">
+  <section class="stats" [attr.aria-label]="'Net worth' | t">
     @for (stat of stats(); track stat.label) {
       <div class="stat" [class.main]="$first">
-        <p class="label">{{ stat.label }}</p>
+        <p class="label">{{ stat.label | t }}</p>
         <p class="value ui-tabular">{{ stat.value }}</p>
         @if (stat.note) {
-          <p class="sub">{{ stat.note }}</p>
+          <p class="sub">{{ stat.note | t }}</p>
         }
       </div>
     }
   </section>
 
   <app-line-chart
-    title="Net worth per month"
+    [title]="'Net worth per month' | t"
     [labels]="labels()"
     [series]="series()"
     [format]="formatAxis"
@@ -44,27 +44,27 @@
   />
 
   <div class="pair">
-    <section class="ui-card card" aria-label="What it is made of">
-      <h2 class="card-title">What it is made of today</h2>
+    <section class="ui-card card" [attr.aria-label]="'What it is made of' | t">
+      <h2 class="card-title">{{ 'What it is made of today' | t }}</h2>
       <ul class="list">
         @for (item of composition(); track item.label) {
           <li class="row" [class.total]="item.isTotal">
-            <span>{{ item.label }}</span>
+            <span>{{ item.label | t }}</span>
             <span class="ui-tabular">{{ item.value }}</span>
           </li>
         }
       </ul>
     </section>
 
-    <section class="ui-card card" aria-label="Month by month">
-      <h2 class="card-title">Month by month</h2>
+    <section class="ui-card card" [attr.aria-label]="'Month by month' | t">
+      <h2 class="card-title">{{ 'Month by month' | t }}</h2>
       @if (rows().length > 0) {
         <table class="months">
           <thead>
             <tr>
-              <th scope="col">Month</th>
-              <th scope="col" class="number">Net worth</th>
-              <th scope="col" class="number">Change</th>
+              <th scope="col">{{ 'Month' | t }}</th>
+              <th scope="col" class="number">{{ 'Net worth' | t }}</th>
+              <th scope="col" class="number">{{ 'Change' | t }}</th>
               <th scope="col" class="number">%</th>
             </tr>
           </thead>
@@ -84,15 +84,16 @@
           </tbody>
         </table>
       } @else {
-        <p class="ui-muted history-empty">No history yet.</p>
+        <p class="ui-muted history-empty">{{ 'No history yet.' | t }}</p>
       }
     </section>
   </div>
 
   <div class="columns">
-    <section class="ui-card card" aria-label="Bank accounts">
+    <section class="ui-card card" [attr.aria-label]="'Bank accounts' | t">
       <h2 class="card-title">
-        <span>Bank accounts</span><span class="ui-tabular">{{ balance(worth().bankCents) }}</span>
+        <span>{{ 'Bank accounts' | t }}</span
+        ><span class="ui-tabular">{{ balance(worth().bankCents) }}</span>
       </h2>
       @if (worth().bankAccounts.length > 0) {
         <ul class="list">
@@ -104,13 +105,13 @@
           }
         </ul>
       } @else if (isLoaded()) {
-        <p class="ui-muted empty">No bank accounts yet.</p>
+        <p class="ui-muted empty">{{ 'No bank accounts yet.' | t }}</p>
       }
     </section>
 
-    <section class="ui-card card" aria-label="Investments">
+    <section class="ui-card card" [attr.aria-label]="'Investments' | t">
       <h2 class="card-title">
-        <span>Investments</span
+        <span>{{ 'Investments' | t }}</span
         ><span class="ui-tabular">{{ balance(worth().investmentsCents) }}</span>
       </h2>
       @if (worth().investments.length > 0) {
@@ -123,19 +124,22 @@
           }
         </ul>
       } @else if (isLoaded()) {
-        <p class="ui-muted empty">Nothing invested yet.</p>
+        <p class="ui-muted empty">{{ 'Nothing invested yet.' | t }}</p>
       }
       @if (unpricedCount() > 0) {
         <p class="ui-muted note">
-          {{ unpricedCount() }} without a price {{ unpricedCount() === 1 ? 'is' : 'are' }} valued at
-          cost.
+          {{
+            unpricedCount() === 1
+              ? ('{count} without a price is valued at cost.' | t: { count: unpricedCount() })
+              : ('{count} without a price are valued at cost.' | t: { count: unpricedCount() })
+          }}
         </p>
       }
     </section>
 
-    <section class="ui-card card" aria-label="Credit cards">
+    <section class="ui-card card" [attr.aria-label]="'Credit cards' | t">
       <h2 class="card-title">
-        <span>Owed on credit cards</span
+        <span>{{ 'Owed on credit cards' | t }}</span
         ><span class="ui-tabular">{{ money(worth().cardsOwedCents) }}</span>
       </h2>
       @if (worth().cards.length > 0) {
@@ -148,7 +152,7 @@
           }
         </ul>
       } @else if (isLoaded()) {
-        <p class="ui-muted empty">No credit cards yet.</p>
+        <p class="ui-muted empty">{{ 'No credit cards yet.' | t }}</p>
       }
     </section>
   </div>

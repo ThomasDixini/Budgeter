@@ -1,7 +1,7 @@
 <div class="page">
   <app-page-heading eyebrow="Routines & Goals" eyebrowIcon="routines" [heading]="dateLabel()">
     <div class="day-progress">
-      <span class="ui-muted">Day</span>
+      <span class="ui-muted">{{ 'Day' | t }}</span>
       <div class="ui-track day-track" aria-hidden="true">
         <div class="ui-fill day-fill" [style.width.%]="dayPercent()"></div>
       </div>
@@ -21,18 +21,19 @@
       >
         <path d="M4 20h4L19 9l-4-4L4 16v4z"></path>
       </svg>
-      Edit routine
+      {{ 'Edit routine' | t }}
     </a>
   </app-page-heading>
 
   <div class="columns">
     <section class="ui-card timeline-card" aria-labelledby="timeline-title">
       <div class="card-header">
-        <h2 id="timeline-title" class="ui-card-title">Day timeline</h2>
+        <h2 id="timeline-title" class="ui-card-title">{{ 'Day timeline' | t }}</h2>
         @if (routine(); as routine) {
-          <span class="ui-muted"
-            >Routine: {{ routine.name }} · {{ routine.start }} – {{ routine.end }}</span
-          >
+          <span class="ui-muted">{{
+            'Routine: {name} · {start} – {end}'
+              | t: { name: routine.name, start: routine.start, end: routine.end }
+          }}</span>
         }
       </div>
       @if (routine(); as routine) {
@@ -50,7 +51,8 @@
         />
       } @else {
         <p class="ui-muted no-routine">
-          No routine runs today. <a class="ui-link" routerLink="/routines/routine">Set one up</a>
+          {{ 'No routine runs today.' | t }}
+          <a class="ui-link" routerLink="/routines/routine">{{ 'Set one up' | t }}</a>
         </p>
       }
     </section>

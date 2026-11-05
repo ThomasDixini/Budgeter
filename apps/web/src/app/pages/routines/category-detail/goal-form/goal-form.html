@@ -1,24 +1,24 @@
 <form
   class="goal-form ui-enter"
-  [attr.aria-label]="isEditing() ? 'Edit goal' : 'Set a new goal'"
+  [attr.aria-label]="(isEditing() ? 'Edit goal' : 'Set a new goal') | t"
   [style.border-color]="ring()"
   (submit)="submit($event)"
 >
   <div class="fields">
-    <h3 class="form-title">{{ isEditing() ? 'Edit goal' : 'Set goal' }}</h3>
+    <h3 class="form-title">{{ isEditing() ? ('Edit goal' | t) : ('Set goal' | t) }}</h3>
     <label class="ui-field">
-      Goal name
+      {{ 'Goal name' | t }}
       <input
         class="ui-input name-input"
         type="text"
-        placeholder="E.g. Study C# 5x a week"
+        [placeholder]="'E.g. Study C# 5x a week' | t"
         [value]="name()"
         (input)="name.set(textOf($event))"
       />
     </label>
 
     <fieldset class="ui-fieldset">
-      <legend class="ui-legend">Type</legend>
+      <legend class="ui-legend">{{ 'Type' | t }}</legend>
       <div class="types">
         @for (option of typeOptions; track option.value) {
           @let selected = option.value === type();
@@ -37,16 +37,16 @@
                 aria-hidden="true"
                 [style.border]="selected ? '5px solid ' + color() : null"
               ></span>
-              {{ option.label }}
+              {{ option.label | t }}
             </span>
-            <span class="type-description">{{ option.description }}</span>
+            <span class="type-description">{{ option.description | t }}</span>
           </button>
         }
       </div>
     </fieldset>
 
     <fieldset class="ui-fieldset">
-      <legend class="ui-legend">Period</legend>
+      <legend class="ui-legend">{{ 'Period' | t }}</legend>
       <div class="periods">
         @for (option of periods; track option.value) {
           <button
@@ -55,14 +55,14 @@
             [attr.aria-pressed]="option.value === period()"
             (click)="period.set(option.value)"
           >
-            {{ option.label }}
+            {{ option.label | t }}
           </button>
         }
       </div>
       @if (period() === 'custom') {
         <div class="inline-fields custom-dates">
           <label class="ui-field">
-            Ends on
+            {{ 'Ends on' | t }}
             <input
               class="ui-input"
               type="date"
@@ -77,7 +77,7 @@
     @if (type() === 'frequency') {
       <div class="inline-fields aligned">
         <label class="ui-field">
-          How many times
+          {{ 'How many times' | t }}
           <input
             class="ui-input number-input"
             type="number"
@@ -86,28 +86,31 @@
             (change)="times.set(countOf($event))"
           />
         </label>
-        <span class="cadence">{{ cadence() }}</span>
+        <span class="cadence">{{ cadence() | t }}</span>
       </div>
       <p class="ui-muted counting-hint">
-        Each block of this category you complete counts once. Going past the target is counted too.
+        {{
+          'Each block of this category you complete counts once. Going past the target is counted too.'
+            | t
+        }}
       </p>
     }
 
     <div class="form-actions">
       <button class="ui-button-primary tall" type="submit">
-        {{ isEditing() ? 'Save goal' : 'Create goal' }}
+        {{ isEditing() ? ('Save goal' | t) : ('Create goal' | t) }}
       </button>
       <button class="ui-button-ghost tall transparent" type="button" (click)="dismiss.emit()">
-        Cancel
+        {{ 'Cancel' | t }}
       </button>
     </div>
   </div>
 
   <div class="preview">
-    <span class="ui-muted">Preview</span>
+    <span class="ui-muted">{{ 'Preview' | t }}</span>
     <article class="preview-card">
-      <span class="ui-tag">{{ previewTag() }}</span>
-      <span class="preview-title">{{ name() || 'Your goal name' }}</span>
+      <span class="ui-tag">{{ previewTag() | t }}</span>
+      <span class="preview-title">{{ name() || ('Your goal name' | t) }}</span>
       @if (previewUsesDots()) {
         <div class="preview-dots" aria-hidden="true">
           @for (dot of previewDots(); track dot) {
@@ -118,8 +121,8 @@
         <div class="ui-track preview-bar" aria-hidden="true"></div>
       }
       <div class="preview-bottom">
-        <span class="ui-tabular">{{ previewValue() }}</span>
-        <span class="preview-footer">{{ previewFooter() }}</span>
+        <span class="ui-tabular">{{ previewValue() | t }}</span>
+        <span class="preview-footer">{{ previewFooter() | t }}</span>
       </div>
     </article>
   </div>

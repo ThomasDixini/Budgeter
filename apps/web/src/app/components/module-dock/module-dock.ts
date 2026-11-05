@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { AppModule, accentRgbVariable } from '../../core/modules/app-module';
 import { APP_MODULES } from '../../core/modules/module-catalog';
 import { wrapIndex } from '../../core/modules/module-wheel';
@@ -8,7 +9,7 @@ import { ModuleIcon } from '../module-icon/module-icon';
 /** Small dome pinned to the bottom of module pages: the current module flanked by its wheel neighbours. */
 @Component({
   selector: 'app-module-dock',
-  imports: [RouterLink, ModuleIcon],
+  imports: [RouterLink, ModuleIcon, TranslatePipe],
   templateUrl: './module-dock.html',
   styleUrl: './module-dock.css',
 })

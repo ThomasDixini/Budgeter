@@ -10,53 +10,57 @@
     <app-load-failed message="Couldn't load your overview." (retry)="reload()" />
   }
 
-  <section class="stats" aria-label="Where you stand">
+  <section class="stats" [attr.aria-label]="'Where you stand' | t">
     <div class="stat">
-      <p class="label">In accounts</p>
+      <p class="label">{{ 'In accounts' | t }}</p>
       <p class="value ui-tabular">{{ inAccounts() }}</p>
     </div>
     <div class="stat">
-      <p class="label">Open invoices</p>
+      <p class="label">{{ 'Open invoices' | t }}</p>
       <p class="value ui-tabular">{{ openInvoices() }}</p>
     </div>
     <div class="stat">
       <p class="label">
-        <span class="mark income" aria-hidden="true"></span>Received in {{ monthName }}
+        <span class="mark income" aria-hidden="true"></span
+        >{{ 'Received in {monthName}' | t: { monthName: monthName } }}
       </p>
       <p class="value ui-tabular">{{ received() }}</p>
     </div>
     <div class="stat">
       <p class="label">
-        <span class="mark expense" aria-hidden="true"></span>Spent in {{ monthName }}
+        <span class="mark expense" aria-hidden="true"></span
+        >{{ 'Spent in {monthName}' | t: { monthName: monthName } }}
       </p>
       <p class="value ui-tabular">{{ spent() }}</p>
     </div>
   </section>
 
-  <section class="ui-card card" aria-label="Received and spent">
-    <h2 class="card-title">Received and spent · last 6 months</h2>
+  <section class="ui-card card" [attr.aria-label]="'Received and spent' | t">
+    <h2 class="card-title">{{ 'Received and spent · last 6 months' | t }}</h2>
     <ul class="chart">
       @for (column of columns(); track column.label + $index) {
-        <li class="column" [attr.aria-label]="column.description">
+        <li class="column" [attr.aria-label]="column.description | t">
           <span class="bars" aria-hidden="true">
             <span class="bar income" [style.height.%]="column.incomeHeight"></span>
             <span class="bar expense" [style.height.%]="column.expenseHeight"></span>
           </span>
-          <span class="month" aria-hidden="true">{{ column.label }}</span>
+          <span class="month" aria-hidden="true">{{ column.label | t }}</span>
         </li>
       }
     </ul>
   </section>
 
   <div class="columns">
-    <section class="ui-card card" aria-label="Spending by category">
-      <h2 class="card-title">Spending by category · {{ monthName }}</h2>
+    <section class="ui-card card" [attr.aria-label]="'Spending by category' | t">
+      <h2 class="card-title">
+        {{ 'Spending by category · {monthName}' | t: { monthName: monthName } }}
+      </h2>
       @if (spending().length > 0) {
         <ul class="list">
           @for (line of spending(); track line.name) {
             <li class="spend">
               <span class="spend-text">
-                <span>{{ line.name }}</span>
+                <span>{{ line.name | t }}</span>
                 <span class="ui-tabular">{{ money(line.cents) }} · {{ line.percent }}%</span>
               </span>
               <span class="track" aria-hidden="true">
@@ -66,14 +70,14 @@
           }
         </ul>
       } @else if (isLoaded()) {
-        <p class="ui-muted empty">Nothing spent this month yet.</p>
+        <p class="ui-muted empty">{{ 'Nothing spent this month yet.' | t }}</p>
       }
     </section>
 
-    <section class="ui-card card" aria-label="Upcoming">
+    <section class="ui-card card" [attr.aria-label]="'Upcoming' | t">
       <h2 class="card-title">
-        <span>Upcoming</span>
-        <a class="see-all" routerLink="/finances/bills">To pay &amp; receive</a>
+        <span>{{ 'Upcoming' | t }}</span>
+        <a class="see-all" routerLink="/finances/bills">{{ 'To pay & receive' | t }}</a>
       </h2>
       @if (dues().length > 0) {
         <ul class="list">
@@ -81,22 +85,22 @@
             <li class="row">
               <span class="text">
                 <span class="description">{{ item.description }}</span>
-                <span class="detail">{{ dueText(item) }}</span>
+                <span class="detail">{{ dueText(item) | t }}</span>
               </span>
-              <span class="amount ui-tabular">{{ dueAmount(item) }}</span>
+              <span class="amount ui-tabular">{{ dueAmount(item) | t }}</span>
             </li>
           }
         </ul>
       } @else if (isLoaded()) {
-        <p class="ui-muted empty">Nothing to pay or receive.</p>
+        <p class="ui-muted empty">{{ 'Nothing to pay or receive.' | t }}</p>
       }
     </section>
   </div>
 
-  <section class="ui-card card" aria-label="Latest transactions">
+  <section class="ui-card card" [attr.aria-label]="'Latest transactions' | t">
     <h2 class="card-title">
-      <span>Latest transactions</span>
-      <a class="see-all" routerLink="/finances/transactions">See all</a>
+      <span>{{ 'Latest transactions' | t }}</span>
+      <a class="see-all" routerLink="/finances/transactions">{{ 'See all' | t }}</a>
     </h2>
     @if (latest().length > 0) {
       <ul class="list">
@@ -104,14 +108,14 @@
           <li class="row">
             <span class="text">
               <span class="description">{{ transaction.description }}</span>
-              <span class="detail">{{ transactionDetail(transaction) }}</span>
+              <span class="detail">{{ transactionDetail(transaction) | t }}</span>
             </span>
             <span class="amount ui-tabular">{{ signed(transaction.amountCents) }}</span>
           </li>
         }
       </ul>
     } @else if (isLoaded()) {
-      <p class="ui-muted empty">No transactions yet.</p>
+      <p class="ui-muted empty">{{ 'No transactions yet.' | t }}</p>
     }
   </section>
 </div>

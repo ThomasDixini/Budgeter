@@ -1,25 +1,25 @@
 <section class="ui-card parts" aria-labelledby="parts-title">
   <div class="header">
-    <h2 id="parts-title" class="ui-card-title">Your parts</h2>
-    <span class="ui-muted">Drag the slider or type the percentage</span>
+    <h2 id="parts-title" class="ui-card-title">{{ 'Your parts' | t }}</h2>
+    <span class="ui-muted">{{ 'Drag the slider or type the percentage' | t }}</span>
   </div>
 
   @for (row of rows(); track row.part.id) {
-    <div class="row" role="group" [attr.aria-label]="row.part.name">
+    <div class="row" role="group" [attr.aria-label]="row.part.name | t">
       <div class="identity">
         <div class="name-line">
           <button
             class="swatch"
             type="button"
-            title="Change color"
+            [title]="'Change color' | t"
             [style.background]="row.color"
-            [attr.aria-label]="row.colorLabel"
+            [attr.aria-label]="row.colorLabel | t"
             (click)="nextColor.emit(row.part.id)"
           ></button>
           <input
             class="ui-input name"
             type="text"
-            aria-label="Part name"
+            [attr.aria-label]="'Part name' | t"
             [attr.maxlength]="maxNameLength"
             [value]="row.part.name"
             (input)="rename.emit({ partId: row.part.id, name: valueOf($event) })"
@@ -27,7 +27,7 @@
         </div>
         <div class="categories">
           @for (category of row.categories; track category.id) {
-            <span class="ui-tag">{{ category.name }}</span>
+            <span class="ui-tag">{{ category.name | t }}</span>
           }
           <button
             class="ui-button-ghost pick"
@@ -35,7 +35,7 @@
             [attr.aria-expanded]="pickingFor() === row.part.id"
             (click)="togglePicker(row.part.id)"
           >
-            + categories
+            {{ '+ categories' | t }}
           </button>
         </div>
       </div>
@@ -47,12 +47,14 @@
           min="0"
           max="100"
           step="1"
-          [attr.aria-label]="'Percentage of ' + row.part.name"
+          [attr.aria-label]="'Percentage of {name}' | t: { name: row.part.name }"
           [value]="row.part.percent"
           (input)="setPercent.emit({ partId: row.part.id, percent: percentOf($event) })"
         />
         <label class="number">
-          <span class="ui-visually-hidden">Percentage number of {{ row.part.name }}</span>
+          <span class="ui-visually-hidden">{{
+            'Percentage number of {name}' | t: { name: row.part.name }
+          }}</span>
           <input
             class="ui-input"
             type="number"
@@ -67,13 +69,13 @@
 
       <div class="value">
         <span class="amount ui-tabular">{{ row.value }}</span>
-        <span class="ui-muted">per month</span>
+        <span class="ui-muted">{{ 'per month' | t }}</span>
       </div>
 
       <button
         class="ui-icon-button remove"
         type="button"
-        [attr.aria-label]="'Remove ' + row.part.name"
+        [attr.aria-label]="'Remove {name}' | t: { name: row.part.name }"
         (click)="removePart.emit(row.part.id)"
       >
         <svg
@@ -92,7 +94,11 @@
       </button>
 
       @if (pickingFor() === row.part.id) {
-        <div class="picker" role="group" [attr.aria-label]="'Categories of ' + row.part.name">
+        <div
+          class="picker"
+          role="group"
+          [attr.aria-label]="'Categories of {name}' | t: { name: row.part.name }"
+        >
           @for (choice of row.choices; track choice.id) {
             <button
               class="ui-chip"
@@ -100,17 +106,17 @@
               [attr.aria-pressed]="choice.isInPart"
               (click)="toggleCategory(row, choice)"
             >
-              {{ choiceLabel(choice) }}
+              {{ choiceLabel(choice) | t }}
             </button>
           }
           @if (row.choices.length === 0) {
-            <span class="ui-muted">No categories yet. Add one below.</span>
+            <span class="ui-muted">{{ 'No categories yet. Add one below.' | t }}</span>
           }
         </div>
       }
     </div>
   } @empty {
-    <p class="ui-muted empty">No parts yet. Pick a template or add the first part.</p>
+    <p class="ui-muted empty">{{ 'No parts yet. Pick a template or add the first part.' | t }}</p>
   }
 
   <button class="ui-button-ghost add" type="button" [disabled]="!canAdd()" (click)="addPart.emit()">
@@ -126,6 +132,6 @@
     >
       <path d="M12 5v14M5 12h14"></path>
     </svg>
-    New part
+    {{ 'New part' | t }}
   </button>
 </section>

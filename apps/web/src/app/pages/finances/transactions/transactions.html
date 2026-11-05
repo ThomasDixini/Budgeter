@@ -4,11 +4,11 @@
     eyebrowIcon="finances"
     heading="Transactions"
   >
-    <div class="month-nav" role="group" aria-label="Month">
+    <div class="month-nav" role="group" [attr.aria-label]="'Month' | t">
       <button
         class="ui-icon-button"
         type="button"
-        aria-label="Previous month"
+        [attr.aria-label]="'Previous month' | t"
         (click)="showMonth(-1)"
       >
         <svg
@@ -25,7 +25,12 @@
           <path d="M15 6l-6 6 6 6"></path>
         </svg>
       </button>
-      <button class="ui-icon-button" type="button" aria-label="Next month" (click)="showMonth(1)">
+      <button
+        class="ui-icon-button"
+        type="button"
+        [attr.aria-label]="'Next month' | t"
+        (click)="showMonth(1)"
+      >
         <svg
           width="18"
           height="18"
@@ -54,12 +59,12 @@
       >
         <path d="M12 5v14M5 12h14"></path>
       </svg>
-      New transaction
+      {{ 'New transaction' | t }}
     </button>
   </app-page-heading>
 
   @if (savedElsewhere(); as message) {
-    <p class="saved-elsewhere ui-muted" role="status">{{ message }}</p>
+    <p class="saved-elsewhere ui-muted" role="status">{{ message | t }}</p>
   }
 
   @if (isFormOpen()) {
@@ -97,9 +102,9 @@
   } @else if (isLoaded()) {
     <p class="ui-card empty">
       @if (isFiltered()) {
-        No transactions match these filters.
+        {{ 'No transactions match these filters.' | t }}
       } @else {
-        No transactions in {{ monthTitle() }} yet.
+        {{ 'No transactions in {monthTitle} yet.' | t: { monthTitle: monthTitle() } }}
       }
     </p>
   }

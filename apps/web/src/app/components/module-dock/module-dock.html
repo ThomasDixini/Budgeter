@@ -1,22 +1,22 @@
-<nav class="dock" aria-label="Switch module" [style.--dock-accent-rgb]="accentRgb()">
+<nav class="dock" [attr.aria-label]="'Switch module' | t" [style.--dock-accent-rgb]="accentRgb()">
   <div class="glow" aria-hidden="true"></div>
   <div class="dome" aria-hidden="true"></div>
   <a
     class="neighbour neighbour-previous"
     routerLink="/"
-    [attr.aria-label]="'Previous module: ' + previous().name"
-    [title]="previous().name"
+    [attr.aria-label]="'Previous module: {name}' | t: { name: previous().name | t }"
+    [title]="previous().name | t"
   >
     <app-module-icon [kind]="previous().kind" [size]="16" />
   </a>
-  <span class="current" aria-current="page" [title]="current().name">
+  <span class="current" aria-current="page" [title]="current().name | t">
     <app-module-icon [kind]="current().kind" [size]="18" />
   </span>
   <a
     class="neighbour neighbour-next"
     routerLink="/"
-    [attr.aria-label]="'Next module: ' + next().name"
-    [title]="next().name"
+    [attr.aria-label]="'Next module: {name}' | t: { name: next().name | t }"
+    [title]="next().name | t"
   >
     <app-module-icon [kind]="next().kind" [size]="16" />
   </a>

@@ -24,11 +24,12 @@ import {
   matchesFilters,
   periodFilterOptions,
 } from './goal-filters';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** One category: its headline numbers, routine blocks and goals, with filters and a new-goal form. */
 @Component({
   selector: 'app-category-detail',
-  imports: [RouterLink, GoalCard, GoalForm, LoadFailed],
+  imports: [TranslatePipe, RouterLink, GoalCard, GoalForm, LoadFailed],
   templateUrl: './category-detail.html',
   styleUrl: './category-detail.css',
 })

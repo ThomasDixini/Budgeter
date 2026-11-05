@@ -1,4 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 import { AppModule, accentRgbVariable } from '../../../core/modules/app-module';
 import { buildWheelSlots, wheelSpinDegrees } from '../../../core/modules/module-wheel';
 import { ModuleIcon } from '../../../components/module-icon/module-icon';
@@ -6,7 +7,7 @@ import { ModuleIcon } from '../../../components/module-icon/module-icon';
 /** Glass dome at the bottom of the home screen; each half spins the module wheel one step. */
 @Component({
   selector: 'app-module-wheel-nav',
-  imports: [ModuleIcon],
+  imports: [ModuleIcon, TranslatePipe],
   templateUrl: './module-wheel-nav.html',
   styleUrl: './module-wheel-nav.css',
 })

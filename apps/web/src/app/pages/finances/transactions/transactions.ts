@@ -23,11 +23,20 @@ import { FiltersBar } from './filters-bar/filters-bar';
 import { MonthSummary } from './month-summary/month-summary';
 import { TransactionForm } from './transaction-form/transaction-form';
 import { TransactionHistory } from './transaction-history/transaction-history';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** Finances landing page: the month's totals and transactions, with filters and a quick-entry form. */
 @Component({
   selector: 'app-finances-transactions',
-  imports: [PageHeading, LoadFailed, MonthSummary, FiltersBar, TransactionHistory, TransactionForm],
+  imports: [
+    TranslatePipe,
+    PageHeading,
+    LoadFailed,
+    MonthSummary,
+    FiltersBar,
+    TransactionHistory,
+    TransactionForm,
+  ],
   templateUrl: './transactions.html',
   styleUrl: './transactions.css',
 })

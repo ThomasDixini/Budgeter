@@ -16,6 +16,7 @@ import {
 } from '../../../../core/finances/investments';
 import { isValidAmount, parseAmountCents } from '../../../../core/finances/money';
 import { fieldValue } from '../../../../core/forms/field-value';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** What the income form fills in; the page adds the investment. */
 export type IncomeFields = Omit<IncomeDraft, 'investmentId'>;
@@ -23,6 +24,7 @@ export type IncomeFields = Omit<IncomeDraft, 'investmentId'>;
 /** Inline form to record a provento an investment paid: which kind, how much and on which day. */
 @Component({
   selector: 'app-income-form',
+  imports: [TranslatePipe],
   templateUrl: './income-form.html',
   styleUrl: './income-form.css',
 })

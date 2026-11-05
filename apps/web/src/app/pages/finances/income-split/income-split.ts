@@ -10,6 +10,7 @@ import { IncomeBase } from './income-base/income-base';
 import { PlanVsActual } from './plan-vs-actual/plan-vs-actual';
 import { SplitOverview } from './split-overview/split-overview';
 import { SplitParts } from './split-parts/split-parts';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 const PREVIOUS_MONTH_NAME_FORMAT = 'MMMM';
 
@@ -21,6 +22,7 @@ const PREVIOUS_MONTH_NAME_FORMAT = 'MMMM';
 @Component({
   selector: 'app-finances-income-split',
   imports: [
+    TranslatePipe,
     PageHeading,
     LoadFailed,
     IncomeBase,

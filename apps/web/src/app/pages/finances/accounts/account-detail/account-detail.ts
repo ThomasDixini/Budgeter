@@ -9,6 +9,7 @@ import {
 import { AccountStatement, CardStatement } from '../../../../core/finances/account-statement';
 import { Account, accountKindLabel } from '../../../../core/finances/finance-references';
 import { formatBalance, formatMoney, formatSignedMoney } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Shown instead of a figure whose statement has not arrived yet. */
 const PENDING_VALUE = '—';
@@ -34,7 +35,7 @@ interface SpendingRow {
  */
 @Component({
   selector: 'app-account-detail',
-  imports: [RouterLink],
+  imports: [TranslatePipe, RouterLink],
   templateUrl: './account-detail.html',
   styleUrl: './account-detail.css',
 })

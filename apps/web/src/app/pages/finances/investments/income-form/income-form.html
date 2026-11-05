@@ -1,23 +1,23 @@
 <form
   class="income-form ui-enter"
-  [attr.aria-label]="'Income from ' + investmentName()"
+  [attr.aria-label]="'Income from {investmentName}' | t: { investmentName: investmentName() }"
   (submit)="submit($event)"
   (keydown.escape)="dismiss.emit()"
 >
   <div class="fields">
     <label class="ui-field">
-      Kind
+      {{ 'Kind' | t }}
       <select class="ui-input" name="kind" (change)="kind.set($any(valueOf($event)))">
         @for (option of kindOptions; track option.value) {
           <option [value]="option.value" [selected]="option.value === kind()">
-            {{ option.label }}
+            {{ option.label | t }}
           </option>
         }
       </select>
     </label>
 
     <label class="ui-field">
-      Amount (R$)
+      {{ 'Amount (R$)' | t }}
       <input
         class="ui-input"
         name="amount"
@@ -31,12 +31,12 @@
         (input)="amount.set(valueOf($event))"
       />
       @if (amountError(); as error) {
-        <span id="income-amount-error" class="error">{{ error }}</span>
+        <span id="income-amount-error" class="error">{{ error | t }}</span>
       }
     </label>
 
     <label class="ui-field">
-      Date
+      {{ 'Date' | t }}
       <input
         class="ui-input"
         name="date"
@@ -48,7 +48,11 @@
   </div>
 
   <div class="actions">
-    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
-    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">Record income</button>
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ 'Record income' | t }}
+    </button>
   </div>
 </form>

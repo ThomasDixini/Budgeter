@@ -24,6 +24,7 @@ import {
   parseAmountCents,
 } from '../../../../core/finances/money';
 import { fieldValue } from '../../../../core/forms/field-value';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** What the trade form fills in; the page adds the investment. */
 export type TradeFields = Omit<TradeDraft, 'investmentId'>;
@@ -39,6 +40,7 @@ const KIND_OPTIONS: readonly { value: TradeKind; label: string }[] = [
  */
 @Component({
   selector: 'app-trade-form',
+  imports: [TranslatePipe],
   templateUrl: './trade-form.html',
   styleUrl: './trade-form.css',
 })

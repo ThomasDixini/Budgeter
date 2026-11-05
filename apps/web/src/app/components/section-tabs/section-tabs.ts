@@ -1,12 +1,13 @@
 import { Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ModuleSection } from '../../core/modules/module-section';
 
 /** Pill-shaped section switcher shown in the header of every module page. */
 @Component({
   selector: 'app-section-tabs',
-  imports: [RouterLink, RouterLinkActive],
-  template: `<nav class="tabs" aria-label="Module sections">
+  imports: [RouterLink, RouterLinkActive, TranslatePipe],
+  template: `<nav class="tabs" [attr.aria-label]="'Module sections' | t">
     @for (section of sections(); track section.path) {
       <a
         class="tab"
@@ -14,7 +15,7 @@ import { ModuleSection } from '../../core/modules/module-section';
         routerLinkActive="is-active"
         [routerLinkActiveOptions]="{ exact: !section.matchesChildren }"
         ariaCurrentWhenActive="page"
-        >{{ section.label }}</a
+        >{{ section.label | t }}</a
       >
     }
   </nav>`,

@@ -9,6 +9,7 @@ import { MonthFlow } from '../../../core/finances/overview';
 import { OverviewStore } from '../../../core/finances/overview-store';
 import { formatBalance, formatMoney, formatSignedMoney } from '../../../core/finances/money';
 import { Transaction } from '../../../core/finances/transaction';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** One month of the chart with the bar heights worked out. */
 interface FlowColumn {
@@ -24,7 +25,7 @@ interface FlowColumn {
  */
 @Component({
   selector: 'app-finances-overview',
-  imports: [PageHeading, LoadFailed, RouterLink],
+  imports: [TranslatePipe, PageHeading, LoadFailed, RouterLink],
   providers: [OverviewStore],
   templateUrl: './overview.html',
   styleUrl: './overview.css',

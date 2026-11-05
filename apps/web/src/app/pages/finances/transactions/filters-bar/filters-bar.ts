@@ -6,10 +6,12 @@ import {
   TransactionFilters,
   TypeFilter,
 } from '../../../../core/finances/transaction-filters';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Search box, income/expense switch and account chips above the transactions list. */
 @Component({
   selector: 'app-filters-bar',
+  imports: [TranslatePipe],
   templateUrl: './filters-bar.html',
   styleUrl: './filters-bar.css',
 })

@@ -10,6 +10,7 @@ import {
   partCents,
 } from '../../../../core/finances/income-split';
 import { formatMoney } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** A category toggle in a part's picker. */
 interface CategoryChoice {
@@ -36,6 +37,7 @@ interface PartRow {
  */
 @Component({
   selector: 'app-split-parts',
+  imports: [TranslatePipe],
   templateUrl: './split-parts.html',
   styleUrl: './split-parts.css',
 })

@@ -2,6 +2,7 @@ import { Component, computed, input, linkedSignal, output } from '@angular/core'
 import { BillKind, BillSettlement } from '../../../../core/finances/bills';
 import { Account } from '../../../../core/finances/finance-references';
 import { fieldValue } from '../../../../core/forms/field-value';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * Inline form to mark a bill paid or received: through which account and on which day (today to start
@@ -9,6 +10,7 @@ import { fieldValue } from '../../../../core/forms/field-value';
  */
 @Component({
   selector: 'app-settle-form',
+  imports: [TranslatePipe],
   templateUrl: './settle-form.html',
   styleUrl: './settle-form.css',
 })

@@ -1,6 +1,6 @@
 <div class="filters">
   <label class="search">
-    <span class="ui-visually-hidden">Search transactions</span>
+    <span class="ui-visually-hidden">{{ 'Search transactions' | t }}</span>
     <svg
       class="search-icon"
       width="16"
@@ -18,12 +18,12 @@
     <input
       class="ui-input search-input"
       type="search"
-      placeholder="Search by description or category"
+      [placeholder]="'Search by description or category' | t"
       [value]="filters().query"
       (input)="changeQuery($event)"
     />
   </label>
-  <div class="chips" role="group" aria-label="Type">
+  <div class="chips" role="group" [attr.aria-label]="'Type' | t">
     @for (option of typeOptions; track option.value) {
       <button
         class="ui-chip"
@@ -31,19 +31,19 @@
         [attr.aria-pressed]="option.value === filters().type"
         (click)="changeType(option.value)"
       >
-        {{ option.label }}
+        {{ option.label | t }}
       </button>
     }
   </div>
 </div>
-<div class="chips" role="group" aria-label="Account">
+<div class="chips" role="group" [attr.aria-label]="'Account' | t">
   <button
     class="ui-chip"
     type="button"
     [attr.aria-pressed]="filters().accountId === undefined"
     (click)="changeAccount(undefined)"
   >
-    All accounts
+    {{ 'All accounts' | t }}
   </button>
   @for (account of accounts(); track account.id) {
     <button

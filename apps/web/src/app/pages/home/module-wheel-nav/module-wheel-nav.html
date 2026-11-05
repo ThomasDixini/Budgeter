@@ -1,4 +1,4 @@
-<nav class="wheel-nav" aria-label="Modules">
+<nav class="wheel-nav" [attr.aria-label]="'Modules' | t">
   <div class="halo" aria-hidden="true"></div>
   <div class="dome" aria-hidden="true"></div>
 
@@ -6,13 +6,13 @@
     <button
       class="half half-left"
       type="button"
-      aria-label="Spin left (previous module)"
+      [attr.aria-label]="'Spin left (previous module)' | t"
       (click)="rotate.emit(-1)"
     ></button>
     <button
       class="half half-right"
       type="button"
-      aria-label="Spin right (next module)"
+      [attr.aria-label]="'Spin right (next module)' | t"
       (click)="rotate.emit(1)"
     ></button>
   </div>
@@ -36,7 +36,7 @@
     </div>
   </div>
 
-  <p class="active-name">{{ activeName() }}</p>
+  <p class="active-name">{{ activeName() | t }}</p>
 
   <button
     class="all-modules"
@@ -57,6 +57,6 @@
     >
       <path d="M6 15l6-6 6 6"></path>
     </svg>
-    All modules
+    {{ 'All modules' | t }}
   </button>
 </nav>

@@ -1,17 +1,17 @@
-<section class="ui-card chart-card" [attr.aria-label]="title()">
+<section class="ui-card chart-card" [attr.aria-label]="title() | t">
   <header class="head">
-    <h2 class="title">{{ title() }}</h2>
+    <h2 class="title">{{ title() | t }}</h2>
     <ul class="legend">
       @for (line of lines(); track line.name) {
         <li>
           <span class="swatch" [class.dashed]="line.dashed" [class.second]="line.index > 0"></span>
-          {{ line.name }}
+          {{ line.name | t }}
         </li>
       }
     </ul>
   </header>
   @if (hasData()) {
-    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" role="img" [attr.aria-label]="title()">
+    <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" role="img" [attr.aria-label]="title() | t">
       @for (tick of ticks(); track $index) {
         <line
           class="grid"
@@ -21,12 +21,12 @@
           [attr.y2]="tick.y"
         />
         <text class="axis" [attr.x]="left - 6" [attr.y]="tick.y + 3" text-anchor="end">
-          {{ tick.label }}
+          {{ tick.label | t }}
         </text>
       }
       @for (column of columns(); track $index) {
         <text class="axis" [attr.x]="column.x" [attr.y]="height - 6" text-anchor="middle">
-          {{ column.label }}
+          {{ column.label | t }}
         </text>
       }
       @for (line of lines(); track line.name) {
@@ -42,6 +42,6 @@
       }
     </svg>
   } @else {
-    <p class="empty ui-muted">{{ emptyText() }}</p>
+    <p class="empty ui-muted">{{ emptyText() | t }}</p>
   }
 </section>

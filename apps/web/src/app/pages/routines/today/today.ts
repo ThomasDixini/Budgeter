@@ -15,6 +15,7 @@ import { DayTimeline } from './day-timeline/day-timeline';
 import { EndedBlock, NowCard } from './now-card/now-card';
 import { TodayGoals } from './today-goals/today-goals';
 import { TodayTasks } from './today-tasks/today-tasks';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** How often the "now" line and the Now card catch up with the clock. */
 const CLOCK_TICK_MS = 30_000;
@@ -22,7 +23,7 @@ const CLOCK_TICK_MS = 30_000;
 /** Module landing page: today's timeline, the block happening now, tasks and goals in focus. */
 @Component({
   selector: 'app-routines-today',
-  imports: [RouterLink, PageHeading, DayTimeline, NowCard, TodayGoals, TodayTasks],
+  imports: [TranslatePipe, RouterLink, PageHeading, DayTimeline, NowCard, TodayGoals, TodayTasks],
   templateUrl: './today.html',
   styleUrl: './today.css',
 })

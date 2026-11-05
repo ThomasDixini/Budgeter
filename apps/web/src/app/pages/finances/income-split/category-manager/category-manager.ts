@@ -5,6 +5,7 @@ import {
   MAX_CATEGORY_NAME_LENGTH,
   isCategoryNameTaken,
 } from '../../../../core/finances/finance-references';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * Where finance categories are created, renamed and deleted. A category with transactions cannot be
@@ -12,6 +13,7 @@ import {
  */
 @Component({
   selector: 'app-category-manager',
+  imports: [TranslatePipe],
   templateUrl: './category-manager.html',
   styleUrl: './category-manager.css',
 })

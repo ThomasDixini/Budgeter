@@ -1,11 +1,15 @@
 import { Component, input, output } from '@angular/core';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 /** Says the page's data could not be loaded and offers to try again, instead of loading forever. */
 @Component({
   selector: 'app-load-failed',
+  imports: [TranslatePipe],
   template: `<div class="load-failed" role="status">
-    <p class="ui-muted">{{ message() }}</p>
-    <button class="ui-button-ghost" type="button" (click)="retry.emit()">Try again</button>
+    <p class="ui-muted">{{ message() | t }}</p>
+    <button class="ui-button-ghost" type="button" (click)="retry.emit()">
+      {{ 'Try again' | t }}
+    </button>
   </div>`,
   styles: `
     .load-failed {

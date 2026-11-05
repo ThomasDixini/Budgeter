@@ -19,6 +19,7 @@ import {
   signedCents,
   typeOf,
 } from '../../../../core/finances/transaction';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /**
  * Inline form above the transactions list: expense or income, amount, description, category,
@@ -26,6 +27,7 @@ import {
  */
 @Component({
   selector: 'app-transaction-form',
+  imports: [TranslatePipe],
   templateUrl: './transaction-form.html',
   styleUrl: './transaction-form.css',
 })

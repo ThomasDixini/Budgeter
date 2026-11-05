@@ -8,6 +8,7 @@ import {
   totalPercent,
 } from '../../../../core/finances/income-split';
 import { formatMoney } from '../../../../core/finances/money';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Parts narrower than this show no percentage inside their segment. */
 const MIN_LABELLED_PERCENT = 8;
@@ -28,6 +29,7 @@ interface BarSegment {
  */
 @Component({
   selector: 'app-split-overview',
+  imports: [TranslatePipe],
   templateUrl: './split-overview.html',
   styleUrl: './split-overview.css',
 })

@@ -1,6 +1,7 @@
 import { Component, LOCALE_ID, computed, inject, input } from '@angular/core';
 import { formatMoney, formatSignedMoney } from '../../../../core/finances/money';
 import { TransactionSummary } from '../../../../core/finances/transaction-summary';
+import { TranslatePipe } from '../../../../core/i18n/translate.pipe';
 
 /** Shown in every card while the month is still loading, instead of totals that are not real yet. */
 const PENDING_VALUE = '—';
@@ -8,6 +9,7 @@ const PENDING_VALUE = '—';
 /** The four totals above the transactions list: income, expenses, net result and count. */
 @Component({
   selector: 'app-month-summary',
+  imports: [TranslatePipe],
   templateUrl: './month-summary.html',
   styleUrl: './month-summary.css',
 })

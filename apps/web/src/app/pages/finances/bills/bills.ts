@@ -20,6 +20,7 @@ import { BillForm } from './bill-form/bill-form';
 import { BillGroup } from './bill-group/bill-group';
 import { SettleForm } from './settle-form/settle-form';
 import { PaymentForm } from '../accounts/payment-form/payment-form';
+import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 /** The inline form open above the lists, if any. */
 type Panel =
@@ -38,7 +39,7 @@ const CLOSED: Panel = { kind: 'closed' };
  */
 @Component({
   selector: 'app-finances-bills',
-  imports: [PageHeading, LoadFailed, BillForm, SettleForm, PaymentForm, BillGroup],
+  imports: [TranslatePipe, PageHeading, LoadFailed, BillForm, SettleForm, PaymentForm, BillGroup],
   providers: [BillsStore],
   templateUrl: './bills.html',
   styleUrl: './bills.css',

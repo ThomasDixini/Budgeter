@@ -1,0 +1,31 @@
+.switcher {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--color-border-card);
+  background: var(--color-surface-glass);
+}
+
+.lang-option {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.lang-option:hover {
+  color: var(--color-text);
+}
+
+.lang-option[aria-pressed='true'] {
+  background: var(--color-text);
+  color: var(--color-text-inverse);
+}

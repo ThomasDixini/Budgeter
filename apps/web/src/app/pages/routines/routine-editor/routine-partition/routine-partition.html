@@ -7,9 +7,9 @@
           class="tooltip-swatch"
           [style.background]="segment.category?.color ?? 'rgba(255, 255, 255, 0.3)'"
         ></span>
-        {{ segment.category?.name ?? 'No category' }}
+        {{ segment.category?.name ?? ('No category' | t) }}
       </span>
-      <span class="tooltip-block">{{ segment.name }} · {{ segment.range }}</span>
+      <span class="tooltip-block">{{ segment.name }} · {{ segment.range | t }}</span>
     </div>
   }
   <div
@@ -34,7 +34,7 @@
           <button
             class="segment"
             type="button"
-            [attr.aria-label]="segment.summary"
+            [attr.aria-label]="segment.summary | t"
             [attr.aria-pressed]="pinnedKey() === segment.key"
             [style.background]="segment.background"
             [style.border-color]="segment.border"
@@ -54,7 +54,7 @@
   </div>
   <div class="ticks" aria-hidden="true">
     @for (tick of ticks(); track tick.label) {
-      <span class="tick ui-tabular" [style.left.%]="tick.offset">{{ tick.label }}</span>
+      <span class="tick ui-tabular" [style.left.%]="tick.offset">{{ tick.label | t }}</span>
     }
   </div>
 </div>
@@ -62,7 +62,7 @@
 @if (legend().length > 0) {
   <ul
     class="legend"
-    aria-label="Time per category"
+    [attr.aria-label]="'Time per category' | t"
     [class.is-pointing]="shownCategoryId() !== undefined"
   >
     @for (entry of legend(); track entry.category.id) {
@@ -97,6 +97,6 @@
         d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"
       ></path>
     </svg>
-    {{ issues }}
+    {{ issues | t }}
   </div>
 }

@@ -1,18 +1,18 @@
 <form
   class="investment-form ui-enter"
-  [attr.aria-label]="isEditing() ? 'Edit investment' : 'New investment'"
+  [attr.aria-label]="(isEditing() ? 'Edit investment' : 'New investment') | t"
   (submit)="submit($event)"
   (keydown.escape)="dismiss.emit()"
 >
   <div class="fields">
     <label class="ui-field">
-      Name
+      {{ 'Name' | t }}
       <input
         class="ui-input"
         name="name"
         type="text"
         autocomplete="off"
-        placeholder="E.g. PETR4 or Tesouro Selic"
+        [placeholder]="'E.g. PETR4 or Tesouro Selic' | t"
         [maxLength]="maxNameLength"
         [value]="name()"
         (input)="name.set(valueOf($event))"
@@ -20,43 +20,47 @@
     </label>
 
     <label class="ui-field">
-      Kind
+      {{ 'Kind' | t }}
       <select class="ui-input" name="kind" (change)="kind.set($any(valueOf($event)))">
         @for (option of kindOptions; track option.value) {
           <option [value]="option.value" [selected]="option.value === kind()">
-            {{ option.label }}
+            {{ option.label | t }}
           </option>
         }
       </select>
     </label>
 
     <label class="ui-field">
-      Current price of one unit (R$)
+      {{ 'Current price of one unit (R$)' | t }}
       <input
         class="ui-input"
         name="price"
         type="text"
         inputmode="decimal"
         autocomplete="off"
-        placeholder="Optional"
+        [placeholder]="'Optional' | t"
         [value]="price()"
         [attr.aria-invalid]="priceError() !== undefined"
         [attr.aria-describedby]="priceError() === undefined ? null : 'investment-price-error'"
         (input)="price.set(valueOf($event))"
       />
       @if (priceError(); as error) {
-        <span id="investment-price-error" class="error">{{ error }}</span>
+        <span id="investment-price-error" class="error">{{ error | t }}</span>
       }
     </label>
   </div>
 
   <div class="actions">
     @if (isEditing()) {
-      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">Delete</button>
+      <button class="ui-button-ghost delete" type="button" (click)="remove.emit()">
+        {{ 'Delete' | t }}
+      </button>
     }
-    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">
+      {{ 'Cancel' | t }}
+    </button>
     <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
-      {{ isEditing() ? 'Save investment' : 'Add investment' }}
+      {{ isEditing() ? ('Save investment' | t) : ('Add investment' | t) }}
     </button>
   </div>
 </form>

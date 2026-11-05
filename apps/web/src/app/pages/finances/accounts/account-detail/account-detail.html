@@ -1,30 +1,33 @@
 <section class="ui-card detail" aria-labelledby="account-detail-title">
   <div class="header">
     <div class="title">
-      <span class="kind">{{ kindLabel() }}</span>
+      <span class="kind">{{ kindLabel() | t }}</span>
       <h2 id="account-detail-title" class="name">{{ account().name }}</h2>
     </div>
     <div class="actions">
-      <button class="ui-button-ghost" type="button" (click)="edit.emit()">Edit</button>
+      <button class="ui-button-ghost" type="button" (click)="edit.emit()">{{ 'Edit' | t }}</button>
       @if (isCard()) {
         <button class="ui-button-primary" type="button" [disabled]="!canPay()" (click)="pay.emit()">
-          Pay invoice
+          {{ 'Pay invoice' | t }}
         </button>
       } @else {
-        <a class="ui-button-ghost" routerLink="/finances/transactions">See all transactions</a>
+        <a class="ui-button-ghost" routerLink="/finances/transactions">{{
+          'See all transactions' | t
+        }}</a>
       }
     </div>
   </div>
 
   @if (amountDue(); as message) {
-    <p class="due" role="status">{{ message }}</p>
+    <p class="due" role="status">{{ message | t }}</p>
   }
 
   <div class="stats">
     @for (stat of stats(); track stat.label) {
       <div class="stat">
         <span class="stat-label"
-          ><span class="mark" [class]="stat.mark" aria-hidden="true"></span>{{ stat.label }}</span
+          ><span class="mark" [class]="stat.mark" aria-hidden="true"></span
+          >{{ stat.label | t }}</span
         >
         <span class="stat-value ui-tabular">{{ stat.value }}</span>
       </div>
@@ -34,10 +37,14 @@
   @if (limitUse(); as use) {
     <div class="limit">
       <div class="limit-text">
-        <span>Limit used</span>
-        <span class="ui-tabular">{{ use.label }}</span>
+        <span>{{ 'Limit used' | t }}</span>
+        <span class="ui-tabular">{{ use.label | t }}</span>
       </div>
-      <div class="ui-track" role="img" [attr.aria-label]="'Limit used: ' + use.percent + '%'">
+      <div
+        class="ui-track"
+        role="img"
+        [attr.aria-label]="'Limit used: {percent}%' | t: { percent: use.percent }"
+      >
         <div class="ui-fill limit-fill" [style.width.%]="use.percent"></div>
       </div>
     </div>
@@ -45,11 +52,11 @@
 
   <div class="columns">
     <div class="column">
-      <h3 class="column-title">{{ listTitle() }}</h3>
+      <h3 class="column-title">{{ listTitle() | t }}</h3>
       @if (movements().length === 0) {
-        <p class="ui-muted empty">Nothing recorded yet.</p>
+        <p class="ui-muted empty">{{ 'Nothing recorded yet.' | t }}</p>
       } @else {
-        <ul class="rows" [attr.aria-label]="listTitle()">
+        <ul class="rows" [attr.aria-label]="listTitle() | t">
           @for (movement of movements(); track movement.id) {
             <li class="row">
               <span class="arrow" [class.income]="movement.amountCents > 0" aria-hidden="true">
@@ -72,7 +79,7 @@
               </span>
               <span class="text">
                 <span class="description">{{ movement.description }}</span>
-                <span class="sub">{{ rowDetail(movement) }}</span>
+                <span class="sub">{{ rowDetail(movement) | t }}</span>
               </span>
               <span class="amount ui-tabular">{{ signed(movement.amountCents) }}</span>
               @if (movement.isCardPayment) {
@@ -80,7 +87,12 @@
                   class="ui-icon-button remove"
                   type="button"
                   [attr.aria-label]="
-                    'Delete ' + movement.description + ', ' + signed(movement.amountCents)
+                    'Delete {description}, {amountCents}'
+                      | t
+                        : {
+                            description: movement.description,
+                            amountCents: signed(movement.amountCents),
+                          }
                   "
                   (click)="removePayment.emit(movement.id)"
                 >
@@ -105,15 +117,15 @@
     </div>
 
     <div class="column">
-      <h3 class="column-title">{{ spendingTitle() }}</h3>
+      <h3 class="column-title">{{ spendingTitle() | t }}</h3>
       @if (spending().length === 0) {
-        <p class="ui-muted empty">No spending yet.</p>
+        <p class="ui-muted empty">{{ 'No spending yet.' | t }}</p>
       } @else {
-        <ul class="spending" [attr.aria-label]="spendingTitle()">
+        <ul class="spending" [attr.aria-label]="spendingTitle() | t">
           @for (row of spending(); track row.name) {
             <li class="spending-row">
               <span class="spending-text">
-                <span>{{ row.name }}</span>
+                <span>{{ row.name | t }}</span>
                 <span class="ui-tabular">{{ row.amount }}</span>
               </span>
               <span class="ui-track" aria-hidden="true">

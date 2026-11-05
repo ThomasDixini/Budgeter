@@ -17,11 +17,11 @@
             "
             [style.border-color]="card.ring"
           ></span>
-          <span class="goals-count">{{ card.goalsLabel }}</span>
+          <span class="goals-count">{{ card.goalsLabel | t }}</span>
         </div>
         <div class="card-text">
           <span class="card-name">{{ card.category.name }}</span>
-          <span class="ui-muted">{{ card.caption }}</span>
+          <span class="ui-muted">{{ card.caption | t }}</span>
         </div>
         <div class="ui-track card-track" aria-hidden="true">
           <div
@@ -34,25 +34,25 @@
     }
 
     @if (isCreating()) {
-      <form class="create-form" aria-label="New category" (submit)="create($event)">
+      <form class="create-form" [attr.aria-label]="'New category' | t" (submit)="create($event)">
         <label class="ui-field">
-          Category name
+          {{ 'Category name' | t }}
           <input
             class="ui-input"
             type="text"
-            placeholder="E.g. Languages"
+            [placeholder]="'E.g. Languages' | t"
             [value]="newName()"
             (input)="newName.set(valueOf($event))"
           />
         </label>
         <fieldset class="ui-fieldset">
-          <legend class="ui-legend">Color</legend>
+          <legend class="ui-legend">{{ 'Color' | t }}</legend>
           <div class="swatches">
             @for (swatch of swatches; track swatch.color) {
               <button
                 class="swatch"
                 type="button"
-                [attr.aria-label]="swatch.label"
+                [attr.aria-label]="swatch.label | t"
                 [attr.aria-pressed]="swatch.color === newColor()"
                 (click)="newColor.set(swatch.color)"
               >
@@ -62,9 +62,9 @@
           </div>
         </fieldset>
         <div class="form-actions">
-          <button class="ui-button-primary" type="submit">Create</button>
+          <button class="ui-button-primary" type="submit">{{ 'Create' | t }}</button>
           <button class="ui-button-ghost transparent" type="button" (click)="cancelCreating()">
-            Cancel
+            {{ 'Cancel' | t }}
           </button>
         </div>
       </form>
@@ -82,7 +82,7 @@
         >
           <path d="M12 5v14M5 12h14"></path>
         </svg>
-        New category
+        {{ 'New category' | t }}
       </button>
     }
   </div>

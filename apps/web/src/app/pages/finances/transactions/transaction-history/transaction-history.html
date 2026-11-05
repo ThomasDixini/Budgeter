@@ -1,4 +1,4 @@
-<section class="ui-card history" aria-label="History">
+<section class="ui-card history" [attr.aria-label]="'History' | t">
   @for (day of days(); track day.date) {
     <div class="day">
       <h2 class="day-header">
@@ -11,7 +11,7 @@
             <button
               class="row"
               type="button"
-              [attr.aria-label]="rowLabel(transaction)"
+              [attr.aria-label]="rowLabel(transaction) | t"
               (click)="edit.emit(transaction)"
             >
               <span class="mark" [class.income]="transaction.amountCents > 0" aria-hidden="true">
@@ -36,7 +36,9 @@
                 <span class="description">{{ transaction.description }}</span>
                 <span class="account">{{ accountNames().get(transaction.accountId) }}</span>
               </span>
-              <span class="ui-tag category">{{ categoryNames().get(transaction.categoryId) }}</span>
+              <span class="ui-tag category">{{
+                categoryNames().get(transaction.categoryId) | t
+              }}</span>
               <span class="amount ui-tabular">{{ signed(transaction.amountCents) }}</span>
             </button>
           </li>

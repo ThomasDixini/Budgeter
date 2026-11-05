@@ -1,18 +1,18 @@
-<section class="summary" aria-label="Month summary">
+<section class="summary" [attr.aria-label]="'Month summary' | t">
   <div class="stat">
-    <p class="label"><span class="mark income" aria-hidden="true"></span>Income</p>
+    <p class="label"><span class="mark income" aria-hidden="true"></span>{{ 'Income' | t }}</p>
     <p class="value ui-tabular">{{ income() }}</p>
   </div>
   <div class="stat">
-    <p class="label"><span class="mark expense" aria-hidden="true"></span>Expenses</p>
+    <p class="label"><span class="mark expense" aria-hidden="true"></span>{{ 'Expenses' | t }}</p>
     <p class="value ui-tabular">{{ expenses() }}</p>
   </div>
   <div class="stat">
-    <p class="label">Net</p>
+    <p class="label">{{ 'Net' | t }}</p>
     <p class="value ui-tabular">{{ net() }}</p>
   </div>
   <div class="stat">
-    <p class="label">Transactions</p>
+    <p class="label">{{ 'Transactions' | t }}</p>
     <p class="value ui-tabular">{{ count() }}</p>
   </div>
 </section>
