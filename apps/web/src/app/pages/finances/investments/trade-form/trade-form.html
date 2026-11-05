@@ -1,0 +1,80 @@
+<form
+  class="trade-form ui-enter"
+  [attr.aria-label]="'Trade ' + investmentName()"
+  (submit)="submit($event)"
+  (keydown.escape)="dismiss.emit()"
+>
+  <div class="chips" role="group" aria-label="Type">
+    @for (option of kindOptions; track option.value) {
+      <button
+        class="ui-chip"
+        type="button"
+        [attr.aria-pressed]="option.value === kind()"
+        (click)="kind.set(option.value)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  <div class="fields">
+    <label class="ui-field">
+      Quantity
+      <input
+        class="ui-input"
+        name="quantity"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="100"
+        [value]="quantity()"
+        [attr.aria-invalid]="quantityError() !== undefined"
+        [attr.aria-describedby]="quantityError() === undefined ? null : 'trade-quantity-error'"
+        (input)="quantity.set(valueOf($event))"
+      />
+      @if (quantityError(); as error) {
+        <span id="trade-quantity-error" class="error">{{ error }}</span>
+      }
+    </label>
+
+    <label class="ui-field">
+      Price per unit (R$)
+      <input
+        class="ui-input"
+        name="price"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="0.00"
+        [value]="price()"
+        [attr.aria-invalid]="priceError() !== undefined"
+        [attr.aria-describedby]="priceError() === undefined ? null : 'trade-price-error'"
+        (input)="price.set(valueOf($event))"
+      />
+      @if (priceError(); as error) {
+        <span id="trade-price-error" class="error">{{ error }}</span>
+      }
+    </label>
+
+    <label class="ui-field">
+      Date
+      <input
+        class="ui-input"
+        name="date"
+        type="date"
+        [value]="date()"
+        (change)="date.set(valueOf($event))"
+      />
+    </label>
+  </div>
+
+  <div class="actions">
+    @if (total(); as amount) {
+      <p class="total ui-tabular" aria-live="polite">Total {{ amount }}</p>
+    }
+    <button class="ui-button-ghost" type="button" (click)="dismiss.emit()">Cancel</button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ kind() === 'buy' ? 'Record purchase' : 'Record sale' }}
+    </button>
+  </div>
+</form>

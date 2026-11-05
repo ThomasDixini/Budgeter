@@ -26,6 +26,8 @@ import { HttpAccountStatementsGateway } from './core/finances/http-account-state
 import { HttpIncomeSplitGateway } from './core/finances/http-income-split-gateway';
 import { IncomeSplitGateway } from './core/finances/income-split-gateway';
 import { BillsGateway } from './core/finances/bills-gateway';
+import { HttpInvestmentsGateway } from './core/finances/http-investments-gateway';
+import { InvestmentsGateway } from './core/finances/investments-gateway';
 import { HttpBillsGateway } from './core/finances/http-bills-gateway';
 
 export const appConfig: ApplicationConfig = {
@@ -44,5 +46,6 @@ export const appConfig: ApplicationConfig = {
     { provide: AccountStatementsGateway, useClass: HttpAccountStatementsGateway },
     { provide: IncomeSplitGateway, useClass: HttpIncomeSplitGateway },
     { provide: BillsGateway, useClass: HttpBillsGateway },
+    { provide: InvestmentsGateway, useClass: HttpInvestmentsGateway },
   ],
 };

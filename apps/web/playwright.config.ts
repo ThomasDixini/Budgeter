@@ -40,6 +40,8 @@ export default defineConfig({
         ASPNETCORE_ENVIRONMENT: 'Development',
         ConnectionStrings__Budgeter: `Data Source=${e2eDatabase}`,
         Persistence__SeedSampleData: 'true',
+        // The CDI comes from the Central Bank; the suite never reaches the internet.
+        Cdi__Enabled: 'false',
       },
     },
     {

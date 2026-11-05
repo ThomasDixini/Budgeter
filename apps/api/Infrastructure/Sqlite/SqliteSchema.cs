@@ -127,6 +127,34 @@ internal static class SqliteSchema
         );
         CREATE INDEX IF NOT EXISTS ix_bills_due_date ON bills (due_date);
         CREATE INDEX IF NOT EXISTS ix_bills_settled_on ON bills (settled_on);
+        CREATE TABLE IF NOT EXISTS investments (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            price_cents INTEGER NULL,
+            priced_on TEXT NULL
+        );
+        CREATE TABLE IF NOT EXISTS investment_trades (
+            id TEXT PRIMARY KEY,
+            investment_id TEXT NOT NULL REFERENCES investments (id),
+            date TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            quantity_thousandths INTEGER NOT NULL,
+            unit_price_cents INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_investment_trades_investment ON investment_trades (investment_id, date);
+        CREATE TABLE IF NOT EXISTS investment_incomes (
+            id TEXT PRIMARY KEY,
+            investment_id TEXT NOT NULL REFERENCES investments (id),
+            date TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            amount_cents INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_investment_incomes_investment ON investment_incomes (investment_id, date);
+        CREATE TABLE IF NOT EXISTS cdi_rates (
+            date TEXT PRIMARY KEY,
+            daily_percent TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS income_split (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             base_income_cents INTEGER NOT NULL
