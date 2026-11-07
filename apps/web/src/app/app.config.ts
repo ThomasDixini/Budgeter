@@ -1,8 +1,24 @@
-import { ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  ApplicationConfig,
+  ErrorHandler,
+  inject,
+  provideBrowserGlobalErrorListeners,
+} from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { TitleStrategy, provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import { provideLanguage } from './core/i18n/locale-provider';
+import { NET_WORTH_HISTORY } from './core/finances/net-worth-store';
+import { DemoFinances } from './core/finances/demo/demo-finances';
+import {
+  DemoAccountStatementsGateway,
+  DemoBillsGateway,
+  DemoFinanceReferencesGateway,
+  DemoIncomeSplitGateway,
+  DemoInvestmentsGateway,
+  DemoTransactionsGateway,
+} from './core/finances/demo/demo-gateways';
+import { applyDemoFromAddress, isDemoMode } from './core/finances/demo/demo-mode';
 import { TranslatedTitleStrategy } from './core/i18n/translated-title-strategy';
 import { NoticeErrorHandler } from './core/notices/notice-error-handler';
 import { CategoriesGateway } from './core/routines/categories-gateway';
@@ -32,6 +48,10 @@ import { HttpInvestmentsGateway } from './core/finances/http-investments-gateway
 import { InvestmentsGateway } from './core/finances/investments-gateway';
 import { HttpBillsGateway } from './core/finances/http-bills-gateway';
 
+// A link with ?demo=on (or off) switches the made-up Finances data before the gateways are chosen.
+applyDemoFromAddress(globalThis.location?.search ?? '');
+const isDemo = isDemoMode();
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
@@ -45,11 +65,37 @@ export const appConfig: ApplicationConfig = {
     { provide: RoutinesGateway, useClass: HttpRoutinesGateway },
     { provide: TasksGateway, useClass: HttpTasksGateway },
     { provide: BlockOutcomesGateway, useClass: HttpBlockOutcomesGateway },
-    { provide: TransactionsGateway, useClass: HttpTransactionsGateway },
-    { provide: FinanceReferencesGateway, useClass: HttpFinanceReferencesGateway },
-    { provide: AccountStatementsGateway, useClass: HttpAccountStatementsGateway },
-    { provide: IncomeSplitGateway, useClass: HttpIncomeSplitGateway },
-    { provide: BillsGateway, useClass: HttpBillsGateway },
-    { provide: InvestmentsGateway, useClass: HttpInvestmentsGateway },
+    {
+      provide: TransactionsGateway,
+      useClass: isDemo ? DemoTransactionsGateway : HttpTransactionsGateway,
+    },
+    {
+      provide: FinanceReferencesGateway,
+      useClass: isDemo ? DemoFinanceReferencesGateway : HttpFinanceReferencesGateway,
+    },
+    {
+      provide: AccountStatementsGateway,
+      useClass: isDemo ? DemoAccountStatementsGateway : HttpAccountStatementsGateway,
+    },
+    {
+      provide: IncomeSplitGateway,
+      useClass: isDemo ? DemoIncomeSplitGateway : HttpIncomeSplitGateway,
+    },
+    { provide: BillsGateway, useClass: isDemo ? DemoBillsGateway : HttpBillsGateway },
+    {
+      provide: InvestmentsGateway,
+      useClass: isDemo ? DemoInvestmentsGateway : HttpInvestmentsGateway,
+    },
+    ...(isDemo
+      ? [
+          {
+            provide: NET_WORTH_HISTORY,
+            useFactory: () => {
+              const demo = inject(DemoFinances);
+              return () => demo.netWorthHistory();
+            },
+          },
+        ]
+      : []),
   ],
 };

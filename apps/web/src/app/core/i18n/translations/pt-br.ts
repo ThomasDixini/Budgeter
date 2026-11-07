@@ -21,6 +21,10 @@ export const PT_BR: Readonly<Record<string, string>> = {
   'Choose a module': 'Escolher um módulo',
   Close: 'Fechar',
   Dismiss: 'Dispensar',
+  Demo: 'Demo',
+  'Show made-up Finances data': 'Mostrar dados fictícios de Finanças',
+  'Showing made-up Finances data. Click to use yours.':
+    'Mostrando dados fictícios de Finanças. Clique para usar os seus.',
   Modules: 'Módulos',
   'Choose one': 'Escolha um',
   'All modules': 'Todos os módulos',
