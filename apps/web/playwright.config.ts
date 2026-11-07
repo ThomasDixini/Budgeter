@@ -17,6 +17,9 @@ export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e.ts',
   fullyParallel: true,
+  // The default (half the cores) starts so many browsers against one dev server and one SQLite file that
+  // checks time out on a laptop; three keeps the suite steady and still fast.
+  workers: isContinuousIntegration ? undefined : 3,
   forbidOnly: isContinuousIntegration,
   // No retries: a test that only passes on a second try is a bug to see, not to hide; the trace of
   // the failed attempt is kept.

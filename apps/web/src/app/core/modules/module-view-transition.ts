@@ -19,6 +19,9 @@ function prefersReducedMotion(): boolean {
  * @example provideRouter(routes, withViewTransitions({ onViewTransitionCreated: animateModuleSwitch }))
  */
 export function animateModuleSwitch(info: ViewTransitionInfo): void {
+  // Skipping a transition (here, or by the next navigation) rejects `ready` with an AbortError that nobody
+  // else listens to; it only means the move did not run, so it is not reported as an error.
+  info.transition.ready.catch(() => undefined);
   const move = moduleMove(moduleSegmentOf(info.from), moduleSegmentOf(info.to));
   if (move === undefined || prefersReducedMotion()) {
     info.transition.skipTransition();
