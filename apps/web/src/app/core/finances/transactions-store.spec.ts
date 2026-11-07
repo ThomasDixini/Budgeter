@@ -220,6 +220,18 @@ describe('TransactionsStore import', () => {
     );
   });
 
+  it('lists the transactions stored in the given months', async () => {
+    const { store } = createStore();
+
+    const stored = await store.inMonths(['2026-10', '2026-09']);
+
+    expect(stored.map((transaction) => transaction.id)).toEqual([
+      'groceries',
+      'pharmacy',
+      'salary',
+    ]);
+  });
+
   it('saves every transaction of an import and reads the month again', async () => {
     const { store, gateway } = createStore();
     const second = { ...IMPORTED, id: 'bank-2' };

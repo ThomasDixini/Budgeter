@@ -14,6 +14,7 @@ import {
   FinanceReferencesGateway,
   TransactionsGateway,
 } from '../../../../core/finances/transactions-gateway';
+import { Transaction } from '../../../../core/finances/transaction';
 import { IdGenerator } from '../../../../core/ids/id-generator';
 import { SequentialIdGenerator } from '../../../../core/ids/sequential-id-generator';
 import { ImportResult, StatementImport } from './statement-import';
@@ -141,6 +142,26 @@ describe('StatementImport', () => {
         (select) => select.value,
       ),
     ).toEqual(['invest', 'other', 'other', 'extra']);
+  });
+
+  it('starts a line on the category used before for the same description', async () => {
+    const past: Transaction = {
+      id: 'past-pix',
+      date: '2026-09-20',
+      description: 'Pix enviado - ANA SOUZA',
+      categoryId: 'food',
+      accountId: 'checking-account',
+      amountCents: -3000,
+    };
+    const { fixture } = render(new FakeTransactionsGateway(new Map([['2026-09', [past]]])));
+
+    await choose(fixture, STATEMENT);
+
+    expect(
+      [...element(fixture).querySelectorAll<HTMLSelectElement>('select.category')].map(
+        (select) => select.value,
+      ),
+    ).toEqual(['invest', 'food', 'food', 'extra']);
   });
 
   it('applies a category to every line with the same description', async () => {

@@ -125,10 +125,19 @@ export class TransactionsStore {
    * @example await store.storedIds(['2026-10']) // Set { 'groceries', 'salary' }
    */
   async storedIds(months: readonly string[]): Promise<Set<string>> {
+    const transactions = await this.inMonths(months);
+    return new Set(transactions.map((transaction) => transaction.id));
+  }
+
+  /**
+   * The transactions stored in the given `YYYY-MM` months.
+   * @example await store.inMonths(['2026-09', '2026-10']) // [{ id: 'groceries', … }, …]
+   */
+  async inMonths(months: readonly string[]): Promise<Transaction[]> {
     const lists = await Promise.all(
       months.map((month) => firstValueFrom(this.gateway.listMonth(month), { defaultValue: [] })),
     );
-    return new Set(lists.flat().map((transaction) => transaction.id));
+    return lists.flat();
   }
 
   /**

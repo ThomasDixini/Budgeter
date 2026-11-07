@@ -3,6 +3,7 @@ import {
   MAX_STATEMENT_DESCRIPTION_LENGTH,
   describeStatementLine,
   parseStatement,
+  rememberCategories,
   splitCsvLine,
   statementMonths,
   suggestCategoryId,
@@ -12,6 +13,9 @@ import {
 const HEADER = 'Data,Valor,Identificador,Descrição';
 
 const CATEGORIES: readonly FinanceCategory[] = [
+  { id: 'food', name: 'Food' },
+  { id: 'transport', name: 'Transport' },
+  { id: 'salary', name: 'Salary' },
   { id: 'extra', name: 'Extra income' },
   { id: 'invest', name: 'Investments' },
   { id: 'other', name: 'Other' },
@@ -163,6 +167,79 @@ describe('suggestCategoryId', () => {
         { id: 'food', name: 'Food' },
       ]),
     ).toBe('food');
+  });
+});
+
+describe('suggestCategoryId by words and history', () => {
+  const spent = (
+    description: string,
+  ): { description: string; kind: 'regular'; amountCents: number } => ({
+    description,
+    kind: 'regular',
+    amountCents: -100,
+  });
+
+  it('points a description to the category its words name, ignoring case and accents', () => {
+    expect([
+      suggestCategoryId(spent('Pix enviado - UBER TRIP'), CATEGORIES),
+      suggestCategoryId(spent('Padaria Pão de Açúcar'), CATEGORIES),
+      suggestCategoryId({ ...spent('Salário outubro'), amountCents: 100 }, CATEGORIES),
+    ]).toEqual(['transport', 'food', 'salary']);
+  });
+
+  it('does not take an income word for an expense, nor the other way round', () => {
+    expect(suggestCategoryId(spent('Salário'), CATEGORIES)).toBe('other');
+  });
+
+  it('keeps to other when the category the words name does not exist', () => {
+    expect(suggestCategoryId(spent('Uber'), [{ id: 'other', name: 'Other' }])).toBe('other');
+  });
+
+  it('prefers what was used before for the same description over the words', () => {
+    const memory = rememberCategories([
+      { date: '2026-09-01', description: 'Uber', categoryId: 'food', amountCents: -500 },
+    ]);
+
+    expect(suggestCategoryId(spent('UBER'), CATEGORIES, memory)).toBe('food');
+  });
+
+  it('ignores a remembered category that was deleted', () => {
+    const memory = rememberCategories([
+      { date: '2026-09-01', description: 'Uber', categoryId: 'gone', amountCents: -500 },
+    ]);
+
+    expect(suggestCategoryId(spent('Uber'), CATEGORIES, memory)).toBe('transport');
+  });
+});
+
+describe('rememberCategories', () => {
+  const past = (date: string, categoryId: string, amountCents = -100) => ({
+    date,
+    description: 'Padaria',
+    categoryId,
+    amountCents,
+  });
+
+  it('remembers the category used most for a description', () => {
+    const memory = rememberCategories([
+      past('2026-09-01', 'a'),
+      past('2026-09-02', 'b'),
+      past('2026-09-03', 'b'),
+    ]);
+
+    expect(memory.get('out|padaria')).toBe('b');
+  });
+
+  it('takes the latest one when two were used the same number of times', () => {
+    const memory = rememberCategories([past('2026-09-05', 'a'), past('2026-09-01', 'b')]);
+
+    expect(memory.get('out|padaria')).toBe('a');
+  });
+
+  it('keeps money coming in apart from money going out', () => {
+    const memory = rememberCategories([past('2026-09-01', 'a'), past('2026-09-02', 'b', 100)]);
+
+    expect([memory.get('out|padaria'), memory.get('in|padaria')]).toEqual(['a', 'b']);
   });
 });
 

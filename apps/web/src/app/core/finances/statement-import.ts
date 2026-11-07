@@ -1,6 +1,7 @@
 import { CardPayment } from './account-statement';
 import { MAX_AMOUNT_CENTS } from './money';
 import { FinanceCategory } from './finance-references';
+import { Transaction } from './transaction';
 
 /**
  * What a statement line is: something earned or spent ('regular'), money moving in the person's own
@@ -109,19 +110,151 @@ export function describeStatementLine(description: string): string {
   return `${short.slice(0, MAX_STATEMENT_DESCRIPTION_LENGTH - 1).trimEnd()}…`;
 }
 
+/** What was learned from past transactions: the category used for a description, by direction and text. */
+export type CategoryMemory = ReadonlyMap<string, string>;
+
+interface KeywordRule {
+  /** Name (lower case, no accents) of the category the words point to. */
+  readonly category: string;
+  /** Whether the rule is for money coming in; an income word never moves an expense, and the other way round. */
+  readonly isIncome: boolean;
+  /** Matched against the description without accents, in lower case. */
+  readonly words: RegExp;
+}
+
+/** Words of a description that point to one of the starter categories. */
+const KEYWORD_RULES: readonly KeywordRule[] = [
+  {
+    category: 'salary',
+    isIncome: true,
+    words: /salario|folha de pagamento|\bsalary\b|\bpayroll\b/,
+  },
+  {
+    category: 'housing',
+    isIncome: false,
+    words:
+      /aluguel|condominio|\biptu\b|\benel\b|cemig|sabesp|copel|energia|\bagua\b|internet|\bgas\b|\brent\b/,
+  },
+  {
+    category: 'food',
+    isIncome: false,
+    words:
+      /ifood|rappi|restaurante|padaria|mercado|atacadao|carrefour|pao de acucar|lanchonete|acai|hamburguer|pizza|acougue|hortifruti|restaurant|grocer/,
+  },
+  {
+    category: 'transport',
+    isIncome: false,
+    words:
+      /\buber\b|\b99\b|\bposto\b|combustivel|estacionamento|ipiranga|\bshell\b|\bmetro\b|bilhete unico|pedagio|sem parar|gasolina|\bfuel\b|parking/,
+  },
+  {
+    category: 'health',
+    isIncome: false,
+    words:
+      /farmacia|drogaria|drogasil|droga raia|pague menos|clinica|hospital|unimed|laboratorio|dentista|medico|pharmacy/,
+  },
+  {
+    category: 'subscriptions',
+    isIncome: false,
+    words:
+      /netflix|spotify|amazon prime|disney|\bhbo\b|youtube|apple\.com|google one|assinatura|subscription/,
+  },
+  {
+    category: 'education',
+    isIncome: false,
+    words: /\bcurso\b|udemy|alura|escola|faculdade|livraria|\blivro|coursera|tuition/,
+  },
+  {
+    category: 'leisure',
+    isIncome: false,
+    words: /cinema|ingresso|steam|playstation|xbox|airbnb|hotel|viagem|\bbar\b|teatro|\bticket/,
+  },
+];
+
+function normalizeText(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+}
+
+function memoryKey(description: string, amountCents: number): string {
+  return `${amountCents > 0 ? 'in' : 'out'}|${normalizeText(description)}`;
+}
+
+interface CategoryUse {
+  readonly count: number;
+  readonly lastDate: string;
+}
+
 /**
- * The category to start a line on: investments for money moved into or out of them, extra income for
- * what came in and "Other" for what went out; the first category when none of those exists.
- * @example suggestCategoryId(row, categories) // 'extra-income'
+ * Learns the category of each description from past transactions: the one used most, the latest one when
+ * tied. Money coming in and going out are kept apart.
+ * @example rememberCategories(transactions).get('out|padaria do ze') // 'food'
+ */
+export function rememberCategories(
+  transactions: readonly Pick<Transaction, 'date' | 'description' | 'categoryId' | 'amountCents'>[],
+): CategoryMemory {
+  const uses = new Map<string, Map<string, CategoryUse>>();
+  for (const transaction of transactions) {
+    const key = memoryKey(transaction.description, transaction.amountCents);
+    const byCategory = uses.get(key) ?? new Map<string, CategoryUse>();
+    byCategory.set(
+      transaction.categoryId,
+      countUse(byCategory.get(transaction.categoryId), transaction.date),
+    );
+    uses.set(key, byCategory);
+  }
+  return new Map([...uses].map(([key, byCategory]) => [key, mostUsed(byCategory)]));
+}
+
+function countUse(seen: CategoryUse | undefined, date: string): CategoryUse {
+  const lastDate = seen !== undefined && seen.lastDate > date ? seen.lastDate : date;
+  return { count: (seen?.count ?? 0) + 1, lastDate };
+}
+
+function mostUsed(byCategory: ReadonlyMap<string, CategoryUse>): string {
+  const ranked = [...byCategory].sort(
+    ([, first], [, second]) =>
+      second.count - first.count || second.lastDate.localeCompare(first.lastDate),
+  );
+  return ranked[0][0];
+}
+
+function findByName(categories: readonly FinanceCategory[], name: string): string | undefined {
+  return categories.find((category) => normalizeText(category.name) === name)?.id;
+}
+
+function categoryFromWords(
+  row: Pick<StatementRow, 'amountCents' | 'description'>,
+  categories: readonly FinanceCategory[],
+): string | undefined {
+  const text = normalizeText(row.description);
+  const isIncome = row.amountCents > 0;
+  const rule = KEYWORD_RULES.find(
+    (candidate) => candidate.isIncome === isIncome && candidate.words.test(text),
+  );
+  return rule === undefined ? undefined : findByName(categories, rule.category);
+}
+
+/**
+ * The category to start a line on. Money moved into or out of investments goes to investments; otherwise
+ * what the person used before for the same description, then a category the words point to (Uber →
+ * Transport), then extra income for what came in and "Other" for what went out; the first category when
+ * none of those exists.
+ * @example suggestCategoryId(row, categories, rememberCategories(pastTransactions)) // 'food'
  */
 export function suggestCategoryId(
   row: Pick<StatementRow, 'kind' | 'amountCents' | 'description'>,
   categories: readonly FinanceCategory[],
+  memory: CategoryMemory = new Map(),
 ): string | undefined {
-  const wanted =
-    row.kind === 'internal' ? 'investments' : row.amountCents > 0 ? 'extra income' : 'other';
-  const found = categories.find((category) => category.name.trim().toLowerCase() === wanted);
-  return (found ?? categories[0])?.id;
+  if (row.kind === 'internal') return findByName(categories, 'investments') ?? categories[0]?.id;
+  const remembered = memory.get(memoryKey(row.description, row.amountCents));
+  if (remembered !== undefined && categories.some((category) => category.id === remembered)) {
+    return remembered;
+  }
+  const fallback = row.amountCents > 0 ? 'extra income' : 'other';
+  return (
+    categoryFromWords(row, categories) ?? findByName(categories, fallback) ?? categories[0]?.id
+  );
 }
 
 /**
