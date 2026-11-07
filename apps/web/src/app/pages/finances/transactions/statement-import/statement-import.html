@@ -56,6 +56,9 @@
       @if (internalCount() > 0) {
         · {{ '{count} between your own accounts, left out' | t: { count: internalCount() } }}
       }
+      @if (invoiceCount() > 0) {
+        · {{ '{count} card invoice payments' | t: { count: invoiceCount() } }}
+      }
       @if (storedCount() > 0) {
         · {{ '{count} already imported' | t: { count: storedCount() } }}
       }
@@ -91,7 +94,7 @@
                     'Import {description}' | t: { description: line.row.description }
                   "
                   [checked]="line.isIncluded"
-                  [disabled]="line.isStored"
+                  [disabled]="!canTick(line)"
                   (change)="toggleLine(index)"
                 />
               </td>
@@ -100,25 +103,47 @@
                 <span>{{ line.row.description }}</span>
                 @if (line.isStored) {
                   <span class="ui-tag">{{ 'Already imported' | t }}</span>
+                } @else if (line.row.kind === 'invoicePayment') {
+                  <span class="ui-tag">{{ 'Invoice payment' | t }}</span>
                 } @else if (line.row.kind === 'internal') {
                   <span class="ui-tag">{{ 'Own accounts' | t }}</span>
                 }
               </td>
               <td>
-                <select
-                  class="ui-input category"
-                  [attr.aria-label]="
-                    'Category of {description}' | t: { description: line.row.description }
-                  "
-                  [disabled]="line.isStored"
-                  (change)="pickCategory(index, valueOf($event))"
-                >
-                  @for (category of categories(); track category.id) {
-                    <option [value]="category.id" [selected]="category.id === line.categoryId">
-                      {{ category.name | t }}
-                    </option>
-                  }
-                </select>
+                @if (line.row.kind === 'invoicePayment') {
+                  <select
+                    class="ui-input category"
+                    name="card"
+                    [attr.aria-label]="
+                      'Card of {description}' | t: { description: line.row.description }
+                    "
+                    [disabled]="line.isStored || cards().length === 0"
+                    (change)="pickCard(index, valueOf($event))"
+                  >
+                    @for (card of cards(); track card.id) {
+                      <option [value]="card.id" [selected]="card.id === line.cardId">
+                        {{ card.name }}
+                      </option>
+                    } @empty {
+                      <option value="">{{ 'No card yet' | t }}</option>
+                    }
+                  </select>
+                } @else {
+                  <select
+                    class="ui-input category"
+                    [attr.aria-label]="
+                      'Category of {description}' | t: { description: line.row.description }
+                    "
+                    [disabled]="line.isStored"
+                    (change)="pickCategory(index, valueOf($event))"
+                  >
+                    @for (category of categories(); track category.id) {
+                      <option [value]="category.id" [selected]="category.id === line.categoryId">
+                        {{ category.name | t }}
+                      </option>
+                    }
+                  </select>
+                }
               </td>
               <td
                 class="number ui-tabular"

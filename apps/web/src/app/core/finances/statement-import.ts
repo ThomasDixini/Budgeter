@@ -1,11 +1,13 @@
+import { CardPayment } from './account-statement';
 import { MAX_AMOUNT_CENTS } from './money';
 import { FinanceCategory } from './finance-references';
 
 /**
- * Whether a statement line is money moving in the person's own accounts and investments (an RDB
- * application or redemption, a card invoice payment, buying shares) rather than something earned or spent.
+ * What a statement line is: something earned or spent ('regular'), money moving in the person's own
+ * accounts and investments ('internal': an RDB application or redemption, buying shares), or the payment
+ * of a card invoice ('invoicePayment'), which is stored as a payment to a card, not as a transaction.
  */
-export type StatementRowKind = 'regular' | 'internal';
+export type StatementRowKind = 'regular' | 'internal' | 'invoicePayment';
 
 /** One line of a bank statement file, read and tidied. */
 export interface StatementRow {
@@ -35,8 +37,8 @@ const HEADER = ['data', 'valor', 'identificador', 'descrição'];
 const DATE_PATTERN = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 const AMOUNT_PATTERN = /^(-?)(\d{1,8})(?:\.(\d{1,2}))?$/;
 const ID_PATTERN = /^[A-Za-z0-9-]{1,64}$/;
-const INTERNAL_PATTERN =
-  /^(resgate|aplicação) rdb|^pagamento de fatura|^(compra|venda) de (ações|fundos?)\b/i;
+const INTERNAL_PATTERN = /^(resgate|aplicação) rdb|^(compra|venda) de (ações|fundos?)\b/i;
+const INVOICE_PATTERN = /^pagamento de fatura/i;
 const CENTS_PER_REAL = 100;
 
 /**
@@ -123,6 +125,24 @@ export function suggestCategoryId(
 }
 
 /**
+ * The card payment an invoice payment line comes to: what left the account, in cents above zero.
+ * @example toCardPayment(row, 'visa', 'checking').amountCents // 206428
+ */
+export function toCardPayment(
+  row: Pick<StatementRow, 'id' | 'date' | 'amountCents'>,
+  cardId: string,
+  fromAccountId: string,
+): CardPayment {
+  return {
+    id: row.id,
+    cardId,
+    fromAccountId,
+    date: row.date,
+    amountCents: Math.abs(row.amountCents),
+  };
+}
+
+/**
  * The `YYYY-MM` months the lines fall in, oldest first.
  * @example statementMonths(rows) // ['2026-10']
  */
@@ -146,8 +166,15 @@ function readRow(cells: readonly string[], lineNumber: number): StatementRow | s
     return `Line ${lineNumber}: expected an identifier of letters, digits and dashes, received "${idText}".`;
   }
   const original = rest.join(',').trim();
-  const kind: StatementRowKind = INTERNAL_PATTERN.test(original) ? 'internal' : 'regular';
+  const kind = kindOf(original, amountCents);
   return { id: idText, date, amountCents, description: describeStatementLine(original), kind };
+}
+
+/** An invoice payment leaves the account; anything else with that name (a refund) is not one. */
+function kindOf(description: string, amountCents: number): StatementRowKind {
+  if (INVOICE_PATTERN.test(description) && amountCents < 0) return 'invoicePayment';
+  const isOwnMoney = INTERNAL_PATTERN.test(description) || INVOICE_PATTERN.test(description);
+  return isOwnMoney ? 'internal' : 'regular';
 }
 
 function parseStatementDate(text: string): string | undefined {

@@ -6,6 +6,7 @@ import {
   splitCsvLine,
   statementMonths,
   suggestCategoryId,
+  toCardPayment,
 } from './statement-import';
 
 const HEADER = 'Data,Valor,Identificador,Descrição';
@@ -48,7 +49,24 @@ describe('parseStatement', () => {
       ].join('\n'),
     );
 
-    expect(rows.map((row) => row.kind)).toEqual(['internal', 'internal', 'internal', 'regular']);
+    expect(rows.map((row) => row.kind)).toEqual([
+      'internal',
+      'invoicePayment',
+      'internal',
+      'regular',
+    ]);
+  });
+
+  it('only takes a line that leaves the account for the payment of an invoice', () => {
+    const { rows } = parseStatement(
+      [
+        HEADER,
+        '07/10/2026,-2064.28,a,Pagamento de fatura',
+        '08/10/2026,50.00,b,Pagamento de fatura estornado',
+      ].join('\n'),
+    );
+
+    expect(rows.map((row) => row.kind)).toEqual(['invoicePayment', 'internal']);
   });
 
   it('keeps a description with commas that the bank wrapped in quotes', () => {
@@ -153,5 +171,19 @@ describe('statementMonths', () => {
     expect(
       statementMonths([{ date: '2026-11-02' }, { date: '2026-10-31' }, { date: '2026-11-05' }]),
     ).toEqual(['2026-10', '2026-11']);
+  });
+});
+
+describe('toCardPayment', () => {
+  it('turns the money that left the account into a payment above zero', () => {
+    expect(
+      toCardPayment({ id: 'p1', date: '2026-10-07', amountCents: -206428 }, 'visa', 'checking'),
+    ).toEqual({
+      id: 'p1',
+      cardId: 'visa',
+      fromAccountId: 'checking',
+      date: '2026-10-07',
+      amountCents: 206428,
+    });
   });
 });
