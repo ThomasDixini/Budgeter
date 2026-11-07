@@ -1,10 +1,11 @@
-import { Income, PortfolioLine, Trade } from './investments';
+import { Income, MonthlyPoint, PortfolioLine, Trade } from './investments';
 import {
   appliedByMonth,
   distribution,
   filterLines,
   incomeByMonth,
   lineValueCents,
+  periodPerformance,
 } from './investments-analytics';
 
 function line(
@@ -102,5 +103,35 @@ describe('income in a range', () => {
     expect(
       incomeByMonth(incomes, new Set(['a']), ['2026-10'], { from: '2026-10-10', to: '2026-10-31' }),
     ).toEqual([200]);
+  });
+});
+
+function point(month: string, returnPercent: number, cdiPercent: number): MonthlyPoint {
+  return { month, valueCents: 0, appliedCents: 0, returnPercent, cdiPercent };
+}
+
+describe('period performance', () => {
+  it('takes the change between the first and the last month, not the total since purchase', () => {
+    const result = periodPerformance([
+      point('2026-08', 10, 2),
+      point('2026-09', 12, 3),
+      point('2026-10', 21, 4.04),
+    ]);
+
+    expect(result?.returnPercent).toBeCloseTo(10, 5);
+    expect(result?.cdiPercent).toBeCloseTo(2, 5);
+  });
+
+  it('skips the months with no figures', () => {
+    const result = periodPerformance([undefined, point('2026-09', 0, 0), point('2026-10', 5, 1)]);
+
+    expect(result?.returnPercent).toBeCloseTo(5, 5);
+  });
+
+  it('is unknown with fewer than two months', () => {
+    expect([periodPerformance([]), periodPerformance([point('2026-10', 5, 1)])]).toEqual([
+      undefined,
+      undefined,
+    ]);
   });
 });
