@@ -28,6 +28,8 @@ export interface MovementRow {
   readonly amountCents: number;
   /** The movement as the file calls it, for the lines that are left out. */
   readonly movement: string;
+  /** The product as the file writes it, ticker and fund name (a fund keeps its name when its ticker changes). */
+  readonly product: string;
 }
 
 /** What reading a movements file gave: the lines it understood and a message for each it did not. */
@@ -132,6 +134,45 @@ export function investmentKindOf(name: string): InvestmentKind {
 }
 
 /**
+ * Finds tickers that are very likely the same fund under another name: the fund's name in the file is the
+ * same for both (a ticker change keeps it), so the older ticker is suggested to be merged into the one used
+ * last. Only lines that move money count, so a subscription right such as `PCIP12` does not take part.
+ * @example suggestMerges(rows) // { CVBI11: 'PCIP11' }
+ */
+export function suggestMerges(rows: readonly MovementRow[]): Record<string, string> {
+  const byFundName = new Map<string, Map<string, string>>();
+  for (const row of rows.filter((candidate) => candidate.action !== 'ignored')) {
+    const fund = fundNameOf(row.product);
+    if (fund === '') continue;
+    const tickers = byFundName.get(fund) ?? new Map<string, string>();
+    const lastDate = tickers.get(row.name) ?? '';
+    tickers.set(row.name, row.date > lastDate ? row.date : lastDate);
+    byFundName.set(fund, tickers);
+  }
+  const merges: Record<string, string> = {};
+  for (const tickers of byFundName.values()) {
+    const [latest] = [...tickers].sort((first, second) => second[1].localeCompare(first[1]));
+    for (const name of tickers.keys()) if (name !== latest[0]) merges[name] = latest[0];
+  }
+  return merges;
+}
+
+/**
+ * The lines with each investment name replaced by the one it is merged into (a merge can lead to another
+ * merge); the lines keep their ids, so a file imports the same lines whatever was merged.
+ * @example applyMerges(rows, { CVBI11: 'PCIP11' })[0].name // 'PCIP11'
+ */
+export function applyMerges(
+  rows: readonly MovementRow[],
+  merges: Readonly<Record<string, string>>,
+): MovementRow[] {
+  return rows.map((row) => {
+    const name = finalName(row.name, merges);
+    return name === row.name ? row : { ...row, name, investmentKind: investmentKindOf(name) };
+  });
+}
+
+/**
  * Matches each line with the investment it belongs to and says which ones are stored already: by the id
  * a previous import gave it, or by being the same trade or provento someone recorded by hand.
  * @example planMovements(rows, stored)[0].isStored // false
@@ -185,6 +226,23 @@ export function buildBatch(
   };
 }
 
+/** What follows the ticker in a product (the fund's name), without punctuation or case. */
+function fundNameOf(product: string): string {
+  const [ticker, ...rest] = product.split(' - ');
+  if (!TICKER_PATTERN.test(ticker.trim())) return '';
+  return normalize(rest.join(' - '))
+    .replaceAll(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function finalName(name: string, merges: Readonly<Record<string, string>>): string {
+  let current = name;
+  for (let step = 0; step < Object.keys(merges).length && merges[current] !== undefined; step++) {
+    current = merges[current];
+  }
+  return current;
+}
+
 function locateColumns(header: readonly string[]): Record<Column, number> | string {
   const names = header.map(normalize);
   const missing = COLUMNS.filter((column) => !names.includes(column));
@@ -231,6 +289,7 @@ function readMovement(
         ? amountCents
         : Math.round((quantityThousandths * unitPriceCents) / 10 ** THOUSANDTHS),
     movement,
+    product,
   };
 }
 

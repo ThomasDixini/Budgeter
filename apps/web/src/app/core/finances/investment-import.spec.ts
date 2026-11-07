@@ -1,10 +1,12 @@
 import {
+  applyMerges,
   buildBatch,
   investmentKindOf,
   investmentNameOf,
   parseDecimal,
   parseMovements,
   planMovements,
+  suggestMerges,
 } from './investment-import';
 
 const HEADER = [
@@ -305,6 +307,113 @@ describe('planMovements and buildBatch', () => {
         ['2026-10-20', 'sell', 'import-inv-vino11'],
       ],
       [['2026-10-15', 'yield', 500]],
+    ]);
+  });
+});
+
+describe('merging tickers of the same fund', () => {
+  const rows = parseMovements([
+    HEADER,
+    line(
+      'Credito',
+      '10/09/2025',
+      'Transferência - Liquidação',
+      'CVBI11 - FDO INV. IMOB. VBI CRI',
+      '3',
+      '85.11',
+      '255.33',
+    ),
+    line(
+      'Credito',
+      '15/09/2025',
+      'Rendimento',
+      'CVBI11 - FDO INV. IMOB. VBI CRI',
+      '3',
+      '1.05',
+      '3.15',
+    ),
+    line('Credito', '25/09/2025', 'Atualização', 'PCIP11 - FDO INV. IMOB. VBI CRI', '3', '-', '-'),
+    line(
+      'Credito',
+      '09/10/2025',
+      'Transferência - Liquidação',
+      'PCIP11 - FDO INV. IMOB. VBI CRI',
+      '3',
+      '83.3',
+      '249.9',
+    ),
+    line(
+      'Credito',
+      '16/10/2026',
+      'Rendimento',
+      'PCIP11 - PATRIA CREDITO IMOBILIARIO',
+      '6',
+      '0.65',
+      '3.9',
+    ),
+    line(
+      'Credito',
+      '17/09/2026',
+      'Direito de Subscrição',
+      'PCIP12 - FDO INV. IMOB. VBI CRI',
+      '15',
+      '-',
+      '-',
+    ),
+    line(
+      'Credito',
+      '15/10/2026',
+      'Rendimento',
+      'VINO11 - VINCI OFFICES FDO INV IMOB',
+      '132',
+      '0.042',
+      '5.54',
+    ),
+  ]).rows;
+
+  it('suggests the older ticker be merged into the one used last, by the name of the fund', () => {
+    expect(suggestMerges(rows)).toEqual({ CVBI11: 'PCIP11' });
+  });
+
+  it('leaves out a subscription right and funds with names of their own', () => {
+    expect(Object.keys(suggestMerges(rows))).not.toContain('PCIP12');
+    expect(Object.keys(suggestMerges(rows))).not.toContain('VINO11');
+  });
+
+  it('renames the lines of a merged ticker, keeping their ids', () => {
+    const merged = applyMerges(rows, { CVBI11: 'PCIP11' });
+
+    expect([
+      merged.map((row) => row.name),
+      merged.map((row) => row.id),
+      merged[0].investmentKind,
+    ]).toEqual([
+      ['PCIP11', 'PCIP11', 'PCIP11', 'PCIP11', 'PCIP11', 'PCIP12', 'VINO11'],
+      rows.map((row) => row.id),
+      'realEstateFund',
+    ]);
+  });
+
+  it('follows a merge that leads to another and does not loop', () => {
+    const merged = applyMerges(rows.slice(0, 1), { CVBI11: 'PCIP11', PCIP11: 'VBI' });
+    const looping = applyMerges(rows.slice(0, 1), { CVBI11: 'PCIP11', PCIP11: 'CVBI11' });
+
+    expect([merged[0].name, ['CVBI11', 'PCIP11'].includes(looping[0].name)]).toEqual(['VBI', true]);
+  });
+
+  it('puts the lines of the merged ticker on the investment that already exists', () => {
+    const planned = planMovements(applyMerges(rows, { CVBI11: 'PCIP11' }), {
+      investments: [{ id: 'pcip', name: 'PCIP11' }],
+      trades: [],
+      incomes: [],
+    });
+
+    expect(planned.slice(0, 5).map((item) => item.investmentId)).toEqual([
+      'pcip',
+      'pcip',
+      'pcip',
+      'pcip',
+      'pcip',
     ]);
   });
 });

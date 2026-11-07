@@ -48,24 +48,53 @@
       }
     </p>
 
-    @if (newInvestments().length > 0) {
-      <div class="created" role="group" [attr.aria-label]="'New investments' | t">
-        <p class="created-title">{{ 'These investments will be created:' | t }}</p>
+    @if (investments().length > 0) {
+      <div class="created" role="group" [attr.aria-label]="'Investments in the file' | t">
+        <p class="created-title">
+          {{
+            'Investments in the file. A fund that changed its ticker can be merged into the new one.'
+              | t
+          }}
+        </p>
         <ul>
-          @for (name of newInvestments(); track name) {
+          @for (investment of investments(); track investment.name) {
             <li>
-              <span class="created-name">{{ name }}</span>
+              <span class="created-name">{{ investment.name }}</span>
               <select
                 class="ui-input kind"
-                [attr.aria-label]="'Kind of {name}' | t: { name: name }"
-                (change)="pickKind(name, valueOf($event))"
+                name="merge"
+                [attr.aria-label]="'Merge {name} into' | t: { name: investment.name }"
+                (change)="pickMerge(investment.name, valueOf($event))"
               >
-                @for (option of kindOptions; track option.value) {
-                  <option [value]="option.value" [selected]="option.value === kindOf(name)">
-                    {{ option.label | t }}
+                <option
+                  [value]="investment.name"
+                  [selected]="investment.target === investment.name"
+                >
+                  {{ 'Keep as it is' | t }}
+                </option>
+                @for (option of investment.mergeOptions; track option) {
+                  <option [value]="option" [selected]="investment.target === option">
+                    {{ 'Merge into {name}' | t: { name: option } }}
                   </option>
                 }
               </select>
+              @if (investment.target === investment.name && investment.isNew) {
+                <select
+                  class="ui-input kind"
+                  name="kind"
+                  [attr.aria-label]="'Kind of {name}' | t: { name: investment.name }"
+                  (change)="pickKind(investment.name, valueOf($event))"
+                >
+                  @for (option of kindOptions; track option.value) {
+                    <option
+                      [value]="option.value"
+                      [selected]="option.value === kindOf(investment.name)"
+                    >
+                      {{ option.label | t }}
+                    </option>
+                  }
+                </select>
+              }
             </li>
           }
         </ul>
