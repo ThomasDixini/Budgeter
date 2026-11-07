@@ -127,7 +127,7 @@ export function suggestCategoryId(
  * @example statementMonths(rows) // ['2026-10']
  */
 export function statementMonths(rows: readonly Pick<StatementRow, 'date'>[]): string[] {
-  return [...new Set(rows.map((row) => row.date.slice(0, 7)))].sort();
+  return [...new Set(rows.map((row) => row.date.slice(0, 7)))].sort((a, b) => a.localeCompare(b));
 }
 
 function readRow(cells: readonly string[], lineNumber: number): StatementRow | string {
