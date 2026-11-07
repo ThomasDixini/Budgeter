@@ -25,6 +25,7 @@ import {
   filterLines,
   incomeByMonth,
   lineValueCents,
+  periodPerformance,
 } from '../../../core/finances/investments-analytics';
 import { InvestmentsStore } from '../../../core/finances/investments-store';
 import { Period, periodMonths, periodRange } from '../../../core/finances/period';
@@ -281,17 +282,33 @@ export class Investments {
         note: `${formatSignedMoney(gain, this.locale)} (${formatPercent(this.percentOf(gain, cost), this.locale)}) since purchase`,
       },
       { label: 'Invested', value: formatMoney(cost, this.locale), note: 'Sum at cost' },
-      {
-        label: 'Return',
-        value: formatPercent(this.percentOf(gain, cost), this.locale),
-        note: this.describeCdiComparison(),
-      },
+      this.returnStat(this.percentOf(gain, cost)),
       {
         label: this.incomeLabel(),
         value: formatBalance(this.incomeInPeriod(), this.locale),
         note: 'Dividends and yields',
       },
     ];
+  }
+
+  /**
+   * The return of the period when month-end figures cover it; otherwise the return since purchase, the
+   * only one known for a single investment or class, since the history is the whole portfolio's.
+   */
+  private returnStat(sincePurchasePercent: number): Stat {
+    const inPeriod = periodPerformance(this.wholeHistory());
+    if (inPeriod === undefined) {
+      return {
+        label: 'Return',
+        value: formatPercent(sincePurchasePercent, this.locale),
+        note: this.describeCdiComparison(),
+      };
+    }
+    return {
+      label: 'Return',
+      value: formatPercent(inPeriod.returnPercent, this.locale),
+      note: `CDI in the period: ${formatPercent(inPeriod.cdiPercent, this.locale)}`,
+    };
   }
 
   private placeholderStats(): Stat[] {

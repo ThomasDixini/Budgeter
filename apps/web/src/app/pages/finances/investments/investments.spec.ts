@@ -225,6 +225,23 @@ describe('Investments page', () => {
     );
   });
 
+  it('shows the return of the period, not since purchase, once month-end figures cover it', async () => {
+    const gateway = new FakeInvestmentsGateway();
+    gateway.portfolioToServe = {
+      ...gateway.portfolioToServe,
+      history: [
+        { month: '2026-09', valueCents: 1, appliedCents: 1, returnPercent: 11, cdiPercent: 1 },
+        { month: '2026-10', valueCents: 1, appliedCents: 1, returnPercent: 30, cdiPercent: 2 },
+      ],
+    };
+    const { fixture } = await render(gateway);
+
+    expect([texts(fixture, '.stat .value')[2], texts(fixture, '.stat .note')[2]]).toEqual([
+      '+17.12%',
+      'CDI in the period: +0.99%',
+    ]);
+  });
+
   it('shows the figures of the month picked on the gains chart, and clears them', async () => {
     const gateway = new FakeInvestmentsGateway();
     gateway.portfolioToServe = {

@@ -1,4 +1,11 @@
-import { Income, InvestmentKind, PortfolioLine, Trade, tradeTotalCents } from './investments';
+import {
+  Income,
+  InvestmentKind,
+  MonthlyPoint,
+  PortfolioLine,
+  Trade,
+  tradeTotalCents,
+} from './investments';
 
 import { DayRange, Period } from './period';
 
@@ -99,4 +106,34 @@ export function distribution(lines: readonly PortfolioLine[]): DistributionSlice
 function signedTradeCents(trade: Trade): number {
   const total = tradeTotalCents(trade.quantityThousandths, trade.unitPriceCents);
   return trade.kind === 'buy' ? total : -total;
+}
+
+/** How the portfolio and the CDI did between the first and the last month of a period, in percent. */
+export interface PeriodPerformance {
+  readonly returnPercent: number;
+  readonly cdiPercent: number;
+}
+
+const PERCENT = 100;
+
+/**
+ * The return and the CDI inside the period, from the accumulated figures at its first and last month.
+ * Undefined when fewer than two months are known, since one point cannot show a change.
+ * @example periodPerformance([may, june, july])?.returnPercent // 4.5
+ */
+export function periodPerformance(
+  months: readonly (MonthlyPoint | undefined)[],
+): PeriodPerformance | undefined {
+  const known = months.filter((point): point is MonthlyPoint => point !== undefined);
+  if (known.length < 2) return undefined;
+  const first = known[0];
+  const last = known[known.length - 1];
+  return {
+    returnPercent: growthBetween(first.returnPercent, last.returnPercent),
+    cdiPercent: growthBetween(first.cdiPercent, last.cdiPercent),
+  };
+}
+
+function growthBetween(startPercent: number, endPercent: number): number {
+  return ((1 + endPercent / PERCENT) / (1 + startPercent / PERCENT) - 1) * PERCENT;
 }
