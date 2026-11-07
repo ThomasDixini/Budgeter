@@ -53,7 +53,15 @@ export class IncomeSplitPage {
   /** Types a new category name in the manager and adds it. */
   async addCategory(name: string): Promise<void> {
     await this.categories.getByRole('textbox', { name: 'New category' }).fill(name);
+    // Wait for the save: a reload right after the click would otherwise race the request.
+    const saved = this.page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PUT' &&
+        response.url().includes('/api/finance-categories/') &&
+        response.ok(),
+    );
     await this.categories.getByRole('button', { name: 'Add category' }).click();
+    await saved;
   }
 
   /** Page width beyond the viewport; zero means no horizontal scroll. */
