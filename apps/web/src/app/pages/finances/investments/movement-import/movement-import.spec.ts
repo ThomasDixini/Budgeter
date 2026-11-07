@@ -104,8 +104,16 @@ async function choose(fixture: ComponentFixture<MovementImport>, bytes: Uint8Arr
     configurable: true,
   });
   input.dispatchEvent(new Event('change'));
-  await new Promise((resolve) => setTimeout(resolve, 20));
-  fixture.detectChanges();
+  await untilRead(fixture);
+}
+
+/** Waits for the file to be read: until the lines or the problems show, as reading takes as long as it takes. */
+async function untilRead(fixture: ComponentFixture<MovementImport>): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    fixture.detectChanges();
+    if (element(fixture).querySelector('.lines, .problems') !== null) return;
+  }
 }
 
 async function workbook(rows = ROWS): Promise<Uint8Array> {

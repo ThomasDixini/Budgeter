@@ -3,11 +3,6 @@ import { LineChart } from '../../../components/line-chart/line-chart';
 import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { formatPercent } from '../../../core/finances/investments';
-import {
-  PERIOD_OPTIONS,
-  PeriodMonths,
-  monthKeys,
-} from '../../../core/finances/investments-analytics';
 import { formatBalance, formatMoney, formatSignedMoney } from '../../../core/finances/money';
 import {
   NetWorthPoint,
@@ -16,6 +11,8 @@ import {
   netWorthRows,
 } from '../../../core/finances/net-worth';
 import { NetWorthStore } from '../../../core/finances/net-worth-store';
+import { Period, periodMonths } from '../../../core/finances/period';
+import { PeriodFilter } from '../../../components/period-filter/period-filter';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 interface Stat {
@@ -45,7 +42,7 @@ interface TableRow {
  */
 @Component({
   selector: 'app-finances-net-worth',
-  imports: [TranslatePipe, PageHeading, LoadFailed, LineChart],
+  imports: [TranslatePipe, PageHeading, LoadFailed, LineChart, PeriodFilter],
   providers: [NetWorthStore],
   templateUrl: './net-worth.html',
   styleUrl: './net-worth.css',
@@ -58,8 +55,9 @@ export class NetWorth {
   protected readonly hasLoadFailed = this.store.hasLoadFailed;
   protected readonly worth = this.store.netWorth;
   protected readonly unpricedCount = this.store.unpricedCount;
-  protected readonly periodOptions = PERIOD_OPTIONS;
-  protected readonly months = signal<PeriodMonths>(12);
+  protected readonly today = this.store.today;
+  protected readonly period = signal<Period>({ kind: 'months', months: 12 });
+  private readonly months = computed(() => periodMonths(this.period(), this.today));
   protected readonly points = computed(() => this.pointsInPeriod());
   protected readonly stats = computed(() => this.describeStats());
   protected readonly composition = computed(() => this.describeComposition());
@@ -83,16 +81,12 @@ export class NetWorth {
     return formatBalance(cents, this.locale);
   }
 
-  protected pickPeriod(months: PeriodMonths): void {
-    this.months.set(months);
-  }
-
   protected reload(): void {
     this.store.reload();
   }
 
   private pointsInPeriod(): NetWorthPoint[] {
-    const keys = new Set(monthKeys(this.store.today, this.months()));
+    const keys = new Set(this.months());
     return this.store.history().filter((point) => keys.has(point.month));
   }
 
@@ -110,7 +104,7 @@ export class NetWorth {
         value: growth ? formatSignedMoney(growth.growthCents, this.locale) : '—',
         note:
           growth &&
-          `${formatPercent(growth.growthPercent, this.locale)} in ${this.months()} months`,
+          `${formatPercent(growth.growthPercent, this.locale)} in ${this.months().length} months`,
       },
       {
         label: 'Average per month',

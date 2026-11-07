@@ -5,7 +5,6 @@ import {
   filterLines,
   incomeByMonth,
   lineValueCents,
-  monthKeys,
 } from './investments-analytics';
 
 function line(
@@ -24,10 +23,6 @@ function line(
 }
 
 describe('investments analytics', () => {
-  it('lists the months ending at the current one, across a year change', () => {
-    expect(monthKeys('2026-02-10', 4)).toEqual(['2025-11', '2025-12', '2026-01', '2026-02']);
-  });
-
   it('values a line at cost while it has no price', () => {
     expect(lineValueCents(line('a', 'stock', 500))).toBe(500);
   });
@@ -94,5 +89,18 @@ describe('investments analytics', () => {
 
   it('has no slices for a portfolio worth nothing', () => {
     expect(distribution([])).toEqual([]);
+  });
+});
+
+describe('income in a range', () => {
+  it('counts only the proventos received on the days of a range', () => {
+    const incomes: Income[] = [
+      { id: '1', investmentId: 'a', date: '2026-10-05', kind: 'yield', amountCents: 100 },
+      { id: '2', investmentId: 'a', date: '2026-10-20', kind: 'yield', amountCents: 200 },
+    ];
+
+    expect(
+      incomeByMonth(incomes, new Set(['a']), ['2026-10'], { from: '2026-10-10', to: '2026-10-31' }),
+    ).toEqual([200]);
   });
 });

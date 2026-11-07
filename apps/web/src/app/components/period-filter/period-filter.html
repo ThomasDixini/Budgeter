@@ -1,0 +1,51 @@
+<div class="period-filter">
+  <div class="chips" role="group" [attr.aria-label]="'Period' | t">
+    @for (months of options; track months) {
+      <button
+        class="ui-chip"
+        type="button"
+        [attr.aria-pressed]="presetMonths() === months"
+        (click)="pickPreset(months)"
+      >
+        @if (shortLabels()) {
+          {{ '{months}M' | t: { months: months } }}
+        } @else {
+          {{ '{months} months' | t: { months: months } }}
+        }
+      </button>
+    }
+    <button class="ui-chip" type="button" [attr.aria-pressed]="isCustom()" (click)="pickCustom()">
+      {{ 'Custom' | t }}
+    </button>
+  </div>
+
+  @if (isCustom()) {
+    <div class="custom" role="group" [attr.aria-label]="'Custom period' | t">
+      <label class="ui-field">
+        {{ 'From' | t }}
+        <input
+          class="ui-input"
+          type="date"
+          name="from"
+          [value]="range().from"
+          [attr.max]="range().to"
+          (change)="changeRange('from', valueOf($event))"
+        />
+      </label>
+      <label class="ui-field">
+        {{ 'To' | t }}
+        <input
+          class="ui-input"
+          type="date"
+          name="to"
+          [value]="range().to"
+          [attr.min]="range().from"
+          (change)="changeRange('to', valueOf($event))"
+        />
+      </label>
+      @if (error(); as message) {
+        <p class="error" role="alert">{{ message | t }}</p>
+      }
+    </div>
+  }
+</div>

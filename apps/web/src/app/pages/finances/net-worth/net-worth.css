@@ -151,13 +151,6 @@
   }
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
 .pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
@@ -211,9 +204,5 @@
 @media (max-width: 767px) {
   .pair {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .chips {
-    justify-content: flex-start;
   }
 }

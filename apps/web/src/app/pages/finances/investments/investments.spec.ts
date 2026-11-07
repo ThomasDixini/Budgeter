@@ -196,6 +196,74 @@ describe('Investments page', () => {
     ).toBe(3);
   });
 
+  it('covers a period of days picked by the person, in the cards and the charts', async () => {
+    const { fixture } = await render();
+    await clickButton(fixture, 'Custom');
+
+    fill(fixture, 'input[name="from"]', '2026-10-29');
+    const afterTheDividend = [texts(fixture, '.stat .label')[3], texts(fixture, '.stat .value')[3]];
+    fill(fixture, 'input[name="from"]', '2026-10-01');
+
+    expect([
+      afterTheDividend,
+      texts(fixture, '.stat .value')[3],
+      (fixture.nativeElement as HTMLElement).querySelectorAll('app-bar-chart .bar').length,
+    ]).toEqual([['Proventos · Oct 29, 2026 – Nov 3, 2026', 'R$0.00'], 'R$15.00', 2]);
+  });
+
+  it('says why a period is refused and keeps the last good one', async () => {
+    const { fixture } = await render();
+    await clickButton(fixture, 'Custom');
+
+    fill(fixture, 'input[name="from"]', '2027-01-01');
+
+    expect([texts(fixture, 'app-period-filter .error'), texts(fixture, '.stat .label')[3]]).toEqual(
+      [
+        ['Pick a start day that is not after the end, within 10 years.'],
+        'Proventos · Dec 1, 2025 – Nov 3, 2026',
+      ],
+    );
+  });
+
+  it('shows the figures of the month picked on the gains chart, and clears them', async () => {
+    const gateway = new FakeInvestmentsGateway();
+    gateway.portfolioToServe = {
+      ...gateway.portfolioToServe,
+      history: [
+        {
+          month: '2026-09',
+          valueCents: 100000,
+          appliedCents: 90000,
+          returnPercent: 11,
+          cdiPercent: 1,
+        },
+        {
+          month: '2026-10',
+          valueCents: 130000,
+          appliedCents: 100000,
+          returnPercent: 30,
+          cdiPercent: 2,
+        },
+      ],
+    };
+    const { fixture } = await render(gateway);
+    const hits = (): NodeListOf<SVGRectElement> =>
+      (fixture.nativeElement as HTMLElement).querySelectorAll<SVGRectElement>('.hit');
+
+    hits()[hits().length - 2].dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+    const picked = texts(fixture, '.month-detail div');
+    const title = texts(fixture, '.month-title');
+    hits()[hits().length - 2].dispatchEvent(new Event('click'));
+    fixture.detectChanges();
+
+    expect([title, picked, texts(fixture, '.month-hint')]).toEqual([
+      ['October 2026'],
+      ['Gain +R$200.00', 'Value at month endR$1,300.00', 'AppliedR$1,000.00'],
+      ['Click a bar to see that month. Click it again to clear.'],
+    ]);
+  });
+
   it('splits the portfolio between kinds of investment', async () => {
     const { fixture } = await render();
 

@@ -31,6 +31,7 @@
         <rect
           class="bar"
           [class.negative]="bar.isNegative"
+          [class.dimmed]="selectedIndex() !== undefined && selectedIndex() !== $index"
           rx="2"
           [attr.x]="bar.x"
           [attr.y]="bar.y"
@@ -47,9 +48,26 @@
         >
           {{ bar.label | t }}
         </text>
+        @if (selectable()) {
+          <rect
+            class="hit"
+            role="button"
+            tabindex="0"
+            [attr.x]="bar.slotX"
+            y="0"
+            [attr.width]="slot()"
+            [attr.height]="height"
+            [attr.aria-pressed]="selectedIndex() === $index"
+            [attr.aria-label]="bar.description"
+            (click)="pick.emit($index)"
+            (keydown.enter)="pick.emit($index)"
+            (keydown.space)="pick.emit($index); $event.preventDefault()"
+          />
+        }
       }
     </svg>
   } @else {
     <p class="empty ui-muted">{{ emptyText() | t }}</p>
   }
+  <ng-content />
 </section>
