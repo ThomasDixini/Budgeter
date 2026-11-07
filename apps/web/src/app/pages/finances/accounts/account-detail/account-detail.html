@@ -2,7 +2,7 @@
   <div class="header">
     <div class="title">
       <span class="kind">{{ kindLabel() | t }}</span>
-      <h2 id="account-detail-title" class="name">{{ account().name }}</h2>
+      <h2 id="account-detail-title" class="name">{{ account().name | t }}</h2>
     </div>
     <div class="actions">
       <button class="ui-button-ghost" type="button" (click)="edit.emit()">{{ 'Edit' | t }}</button>

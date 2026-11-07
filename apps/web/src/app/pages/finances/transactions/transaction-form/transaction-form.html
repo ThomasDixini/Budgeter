@@ -71,7 +71,7 @@
         </option>
         @for (account of accounts(); track account.id) {
           <option [value]="account.id" [selected]="account.id === accountId()">
-            {{ account.name }}
+            {{ account.name | t }}
           </option>
         }
       </select>

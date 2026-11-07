@@ -22,7 +22,7 @@
       <select class="ui-input" name="account" (change)="pickAccount(valueOf($event))">
         @for (account of bankAccounts(); track account.id) {
           <option [value]="account.id" [selected]="account.id === accountId()">
-            {{ account.name }}
+            {{ account.name | t }}
           </option>
         }
       </select>
@@ -122,7 +122,7 @@
                   >
                     @for (card of cards(); track card.id) {
                       <option [value]="card.id" [selected]="card.id === line.cardId">
-                        {{ card.name }}
+                        {{ card.name | t }}
                       </option>
                     } @empty {
                       <option value="">{{ 'No card yet' | t }}</option>

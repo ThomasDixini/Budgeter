@@ -5,13 +5,13 @@
       <span class="ui-muted">{{ current.remaining | t }}</span>
     </div>
     <div class="details">
-      <h2 id="now-title" class="title">{{ current.block.name }}</h2>
+      <h2 id="now-title" class="title">{{ current.block.name | t }}</h2>
       <div class="meta">
         <span class="ui-tabular">{{ current.block.start }} – {{ current.block.end }}</span>
         @if (current.category; as category) {
           <span aria-hidden="true">·</span>
           <span class="ui-dot" [style.background]="category.color"></span>
-          <span [style.color]="category.color">{{ category.name }}</span>
+          <span [style.color]="category.color">{{ category.name | t }}</span>
         }
       </div>
     </div>

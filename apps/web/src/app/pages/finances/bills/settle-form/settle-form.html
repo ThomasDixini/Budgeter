@@ -14,7 +14,7 @@
       <select class="ui-input" name="account" (change)="accountId.set(valueOf($event))">
         @for (account of accounts(); track account.id) {
           <option [value]="account.id" [selected]="account.id === accountId()">
-            {{ account.name }}
+            {{ account.name | t }}
           </option>
         }
       </select>
