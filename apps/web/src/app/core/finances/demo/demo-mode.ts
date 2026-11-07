@@ -1,8 +1,8 @@
-/** Where the choice of showing made-up Finances data is kept between visits. */
+/** Where the choice of showing made-up data is kept between visits. */
 export const DEMO_STORAGE_KEY = 'budgeter.demo';
 
 /**
- * Whether the Finances screens show made-up (demo) data instead of the person's own. Off unless it was
+ * Whether the screens show made-up (demo) data instead of the person's own. Off unless it was
  * turned on, so real data is never hidden by surprise. Read once when the app starts, as the gateways it
  * picks are chosen then.
  * @example isDemoMode() // false

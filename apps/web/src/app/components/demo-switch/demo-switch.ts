@@ -4,7 +4,7 @@ import { PageReloader } from '../../core/i18n/page-reloader';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 
 /**
- * A button in the header that swaps the Finances screens between the person's own data and made-up demo
+ * A button in the header that swaps the screens between the person's own data and made-up demo
  * data. The page starts again for the change to apply, as the data sources are chosen when the app starts.
  */
 @Component({
@@ -15,10 +15,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
     class="demo"
     type="button"
     [attr.aria-pressed]="isOn"
-    [title]="
-      (isOn ? 'Showing made-up Finances data. Click to use yours.' : 'Show made-up Finances data')
-        | t
-    "
+    [title]="(isOn ? 'Showing made-up data. Click to use yours.' : 'Show made-up data') | t"
     (click)="toggle()"
   >
     {{ 'Demo' | t }}
