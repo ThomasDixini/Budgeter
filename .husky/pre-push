@@ -22,9 +22,6 @@ echo "[pre-push] Checking web formatting and lint..."
 }
 (cd apps/web && npm run lint) || exit 1
 
-if command -v gh >/dev/null 2>&1; then
-  if ! gh pr view "$current_branch" >/dev/null 2>&1; then
-    echo "[pre-push] Opening pull request for $current_branch..."
-    gh pr create --fill --base main --head "$current_branch" || true
-  fi
-fi
+# No pull request is opened here: this hook runs before the push, so the branch is not on GitHub yet and
+# the request always failed; on a stacked branch it also opened a pull request against main by mistake.
+# Open it after pushing: gh pr create --base <target> --fill
