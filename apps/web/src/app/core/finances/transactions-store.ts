@@ -1,4 +1,5 @@
 import { ErrorHandler, Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { Clock } from '../calendar/clock';
 import { IdGenerator } from '../ids/id-generator';
 import { Positioned, positionOf, restoredAt, sameId } from '../lists/list-positions';
@@ -6,6 +7,9 @@ import { FinanceReferencesStore } from './finance-references-store';
 import { Transaction, TransactionDraft } from './transaction';
 import { monthOf, monthOfDay } from './transaction-month';
 import { TransactionsGateway } from './transactions-gateway';
+
+/** How many transactions of an import are sent at the same time. */
+const IMPORT_BATCH_SIZE = 8;
 
 /**
  * The transactions of the month on screen, with the categories and accounts they refer to (shared
@@ -113,6 +117,44 @@ export class TransactionsStore {
     this.gateway.delete(transactionId).subscribe({
       error: (error: unknown) => this.rejected(error, () => this.putBack(removed)),
     });
+  }
+
+  /**
+   * The ids of the transactions already stored in the given `YYYY-MM` months, to tell what an import
+   * would repeat.
+   * @example await store.storedIds(['2026-10']) // Set { 'groceries', 'salary' }
+   */
+  async storedIds(months: readonly string[]): Promise<Set<string>> {
+    const lists = await Promise.all(
+      months.map((month) => firstValueFrom(this.gateway.listMonth(month), { defaultValue: [] })),
+    );
+    return new Set(lists.flat().map((transaction) => transaction.id));
+  }
+
+  /**
+   * Stores many transactions at once (a statement import), a few requests at a time, then reads the
+   * month on screen again. A refusal is reported and counted, and the rest still go through.
+   * @example await store.addAll(transactions) // { saved: 28, failed: 0 }
+   */
+  async addAll(transactions: readonly Transaction[]): Promise<{ saved: number; failed: number }> {
+    let failed = 0;
+    for (let start = 0; start < transactions.length; start += IMPORT_BATCH_SIZE) {
+      const batch = transactions.slice(start, start + IMPORT_BATCH_SIZE);
+      const results = await Promise.all(batch.map((transaction) => this.tryToSave(transaction)));
+      failed += results.filter((isSaved) => !isSaved).length;
+    }
+    this.loadMonth(this.shownMonth());
+    return { saved: transactions.length - failed, failed };
+  }
+
+  private async tryToSave(transaction: Transaction): Promise<boolean> {
+    try {
+      await firstValueFrom(this.gateway.save(transaction), { defaultValue: transaction });
+      return true;
+    } catch (error) {
+      this.errorHandler.handleError(error);
+      return false;
+    }
   }
 
   private loadMonth(month: string): void {

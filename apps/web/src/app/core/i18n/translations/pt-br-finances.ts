@@ -61,6 +61,45 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
   'Delete {description}, {amountCents}': 'Excluir {description}, {amountCents}',
   'E.g. Rent': 'Ex.: Aluguel',
 
+  // Statement import
+  'Import statement': 'Importar extrato',
+  'Pick the CSV your bank exported. Nothing is saved until you confirm.':
+    'Escolha o CSV que o banco exportou. Nada é salvo até você confirmar.',
+  'Statement file': 'Arquivo do extrato',
+  'Import into': 'Importar na conta',
+  'Reading the file…': 'Lendo o arquivo…',
+  'Some lines could not be read and were left out:':
+    'Algumas linhas não puderam ser lidas e ficaram de fora:',
+  'and {count} more': 'e mais {count}',
+  '{count} to import': '{count} para importar',
+  '{count} between your own accounts, left out': '{count} entre suas próprias contas, de fora',
+  '{count} already imported': '{count} já importadas',
+  'Select all': 'Selecionar todas',
+  Amount: 'Valor',
+  'Import {description}': 'Importar {description}',
+  'Already imported': 'Já importada',
+  'Own accounts': 'Contas próprias',
+  'Category of {description}': 'Categoria de {description}',
+  'Changing a category changes every line with the same description.':
+    'Mudar uma categoria muda todas as linhas com a mesma descrição.',
+  'Importing…': 'Importando…',
+  'Import 1 transaction': 'Importar 1 transação',
+  'Import {count} transactions': 'Importar {count} transações',
+  '1 transaction imported.': '1 transação importada.',
+  '{count} transactions imported.': '{count} transações importadas.',
+  '{count} could not be saved.': '{count} não puderam ser salvas.',
+  'The file is empty.': 'O arquivo está vazio.',
+  'Expected the columns Data, Valor, Identificador, Descrição on the first line, received "{line}".':
+    'Esperava as colunas Data, Valor, Identificador, Descrição na primeira linha, mas recebi "{line}".',
+  'Line {number}: expected 4 columns, received {received}.':
+    'Linha {number}: esperava 4 colunas, mas recebi {received}.',
+  'Line {number}: expected a date like 31/10/2026, received "{value}".':
+    'Linha {number}: esperava uma data como 31/10/2026, mas recebi "{value}".',
+  'Line {number}: expected an amount like 57.10 or -3.75, received "{value}".':
+    'Linha {number}: esperava um valor como 57.10 ou -3.75, mas recebi "{value}".',
+  'Line {number}: expected an identifier of letters, digits and dashes, received "{value}".':
+    'Linha {number}: esperava um identificador de letras, números e hifens, mas recebi "{value}".',
+
   // Banks & Cards
   'Accounts and cards': 'Contas e cartões',
   'Add account or card': 'Adicionar conta ou cartão',

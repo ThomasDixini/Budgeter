@@ -208,3 +208,39 @@ describe('TransactionsStore writes', () => {
     ]);
   });
 });
+
+describe('TransactionsStore import', () => {
+  const IMPORTED: Transaction = { ...GROCERIES, id: 'bank-1', description: 'Imported' };
+
+  it('finds which of the ids are already stored in the given months', async () => {
+    const { store } = createStore();
+
+    expect(await store.storedIds(['2026-10', '2026-09'])).toEqual(
+      new Set(['groceries', 'pharmacy', 'salary']),
+    );
+  });
+
+  it('saves every transaction of an import and reads the month again', async () => {
+    const { store, gateway } = createStore();
+    const second = { ...IMPORTED, id: 'bank-2' };
+
+    const result = await store.addAll([IMPORTED, second]);
+
+    expect([
+      result,
+      gateway.saved.map((transaction) => transaction.id),
+      gateway.askedMonths,
+    ]).toEqual([{ saved: 2, failed: 0 }, ['bank-1', 'bank-2'], ['2026-10', '2026-10']]);
+  });
+
+  it('counts and reports a transaction the gateway refuses, without stopping the others', async () => {
+    const { store, gateway, errors } = createStore();
+    gateway.failure = new Error('offline');
+
+    const result = await store.addAll([IMPORTED, { ...IMPORTED, id: 'bank-2' }]);
+
+    expect(result).toEqual({ saved: 0, failed: 2 });
+    // One report per refused save, and one more for the month that could not be read again.
+    expect(errors.errors.length).toBe(3);
+  });
+});
