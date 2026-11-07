@@ -24,9 +24,9 @@ export const PT_BR: Readonly<Record<string, string>> = {
   Close: 'Fechar',
   Dismiss: 'Dispensar',
   Demo: 'Demo',
-  'Show made-up Finances data': 'Mostrar dados fictícios de Finanças',
-  'Showing made-up Finances data. Click to use yours.':
-    'Mostrando dados fictícios de Finanças. Clique para usar os seus.',
+  'Show made-up data': 'Mostrar dados fictícios',
+  'Showing made-up data. Click to use yours.':
+    'Mostrando dados fictícios. Clique para usar os seus.',
   Modules: 'Módulos',
   'Choose one': 'Escolha um',
   'All modules': 'Todos os módulos',
