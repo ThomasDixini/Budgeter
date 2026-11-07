@@ -181,6 +181,7 @@ export const PT_BR_SENTENCES: Readonly<Record<string, string>> = {
   'Sum at cost': 'Soma pelo custo',
   'Since purchase': 'Desde a compra',
   'CDI on the same money: {percent}': 'CDI sobre o mesmo dinheiro: {percent}',
+  'CDI in the period: {percent}': 'CDI no período: {percent}',
   'Average {amount} per month': 'Média de {amount} por mês',
   'CDI rates through {date}.': 'Taxas do CDI até {date}.',
   'CDI rates could not be loaded.': 'Não foi possível carregar as taxas do CDI.',
