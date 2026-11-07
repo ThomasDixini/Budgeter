@@ -2,7 +2,7 @@
 
 ## General
 - [x] Translate the app to PT-BR and EN-US
-- [ ] Add animations when switching between modules
+- [x] Animation when switching between modules (a slide in the direction of the move; none for people who prefer less motion)
 - [ ] Run the E2E (Playwright) tests again: they have not run since the language and page changes
 - [ ] Names that come from the database (routines, blocks, goals, accounts, parts made from a template) are not translated
 

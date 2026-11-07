@@ -5,9 +5,10 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { TitleStrategy, provideRouter } from '@angular/router';
+import { TitleStrategy, provideRouter, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
 import { provideLanguage } from './core/i18n/locale-provider';
+import { animateModuleSwitch } from './core/modules/module-view-transition';
 import { NET_WORTH_HISTORY } from './core/finances/net-worth-store';
 import { DemoFinances } from './core/finances/demo/demo-finances';
 import {
@@ -56,7 +57,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(),
-    provideRouter(routes),
+    provideRouter(routes, withViewTransitions({ onViewTransitionCreated: animateModuleSwitch })),
     provideLanguage(),
     { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
     { provide: ErrorHandler, useClass: NoticeErrorHandler },
