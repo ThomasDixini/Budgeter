@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { Router } from '@angular/router';
 import { appConfig } from './app.config';
 import { routes } from './app.routes';
 import { APP_MODULES } from './core/modules/module-catalog';
@@ -22,6 +22,12 @@ describe('appConfig', () => {
   it('exposes a router when the application config is used', () => {
     expect(TestBed.inject(Router)).toBeTruthy();
   });
+
+  it('gives the router the application routes', () => {
+    expect(TestBed.inject(Router).config.map((route) => route.path)).toEqual(
+      routes.map((route) => route.path),
+    );
+  });
 });
 
 describe('routes', () => {
@@ -31,10 +37,6 @@ describe('routes', () => {
 
   it('redirects unknown paths to the home page', () => {
     expect(routes.find((route) => route.path === '**')?.redirectTo).toBe('');
-  });
-
-  it('is wired into the application config', () => {
-    expect(appConfig.providers).toContainEqual(provideRouter(routes));
   });
 
   // Regression: Finances linked to /finances, which no route served, so "Open module" led back home.

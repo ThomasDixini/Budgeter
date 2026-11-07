@@ -311,3 +311,56 @@
   opacity: 0.4;
   cursor: default;
 }
+
+/* Changing module: the old page slides out and the new one in, in the direction of the move. The
+   direction is set by core/modules/module-view-transition.ts, which skips the whole transition for
+   anyone who asked for less motion. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-module-move='forward']::view-transition-old(root) {
+  animation-name: module-leave-to-left;
+}
+
+:root[data-module-move='forward']::view-transition-new(root) {
+  animation-name: module-enter-from-right;
+}
+
+:root[data-module-move='backward']::view-transition-old(root) {
+  animation-name: module-leave-to-right;
+}
+
+:root[data-module-move='backward']::view-transition-new(root) {
+  animation-name: module-enter-from-left;
+}
+
+@keyframes module-leave-to-left {
+  to {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+}
+
+@keyframes module-leave-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+}
+
+@keyframes module-enter-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+}
+
+@keyframes module-enter-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+}
