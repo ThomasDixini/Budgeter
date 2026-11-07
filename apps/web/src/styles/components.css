@@ -231,3 +231,83 @@
 .ui-enter {
   animation: ui-in-up 0.35s var(--ease-spring);
 }
+
+/* The file picker: the browser's grey button becomes a pill like the other ghost buttons. */
+.ui-file {
+  display: flex;
+  align-items: center;
+  height: auto;
+  min-height: 48px;
+  padding: 6px 8px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.ui-file::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--color-border-strong);
+  background: var(--color-surface-glass);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.ui-file:hover::file-selector-button {
+  background: var(--color-surface-hover);
+}
+
+/* Checkboxes drawn to match the dark glass look instead of the browser default. */
+.ui-checkbox {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border-radius: 6px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  cursor: pointer;
+  vertical-align: middle;
+  transition:
+    background var(--duration-fast),
+    border-color var(--duration-fast);
+}
+
+.ui-checkbox::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--color-text-inverse);
+  clip-path: polygon(14% 52%, 0 66%, 38% 100%, 100% 24%, 86% 10%, 38% 72%);
+  transform: scale(0);
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+
+.ui-checkbox:hover:not(:disabled) {
+  border-color: var(--color-text-muted);
+}
+
+.ui-checkbox:checked {
+  border-color: var(--color-mint);
+  background: var(--color-mint);
+}
+
+.ui-checkbox:checked::after {
+  transform: scale(1);
+}
+
+.ui-checkbox:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.ui-checkbox:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

@@ -100,6 +100,36 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
   'Line {number}: expected an identifier of letters, digits and dashes, received "{value}".':
     'Linha {number}: esperava um identificador de letras, números e hifens, mas recebi "{value}".',
 
+  // Movements import
+  'Import movements': 'Importar movimentações',
+  'Pick the Excel (.xlsx) the broker exported with your movements. Nothing is saved until you confirm.':
+    'Escolha o Excel (.xlsx) que a corretora exportou com suas movimentações. Nada é salvo até você confirmar.',
+  'Movements file': 'Arquivo de movimentações',
+  '{buys} purchases · {sells} sales · {incomes} proventos':
+    '{buys} compras · {sells} vendas · {incomes} proventos',
+  '{count} without a value, left out': '{count} sem valor, de fora',
+  '{count} already recorded': '{count} já registradas',
+  'New investments': 'Novos investimentos',
+  'These investments will be created:': 'Estes investimentos serão criados:',
+  'Kind of {name}': 'Tipo de {name}',
+  Movement: 'Movimentação',
+  Purchase: 'Compra',
+  Sale: 'Venda',
+  'Already recorded': 'Já registrada',
+  'No value': 'Sem valor',
+  'Import 1 line': 'Importar 1 linha',
+  'Import {count} lines': 'Importar {count} linhas',
+  '1 record imported.': '1 registro importado.',
+  '{count} records imported.': '{count} registros importados.',
+  'Expected a zip archive (an .xlsx file), found {reason}.':
+    'Esperava um arquivo zip (um .xlsx), mas encontrei {reason}.',
+  'Expected an .xlsx workbook with a sheet, found none.':
+    'Esperava uma planilha .xlsx com uma aba, mas não encontrei nenhuma.',
+  'Expected the columns Entrada/Saída, Data, Movimentação, Produto, Instituição, Quantidade, Preço unitário, Valor da Operação, but "{column}" is missing.':
+    'Esperava as colunas Entrada/Saída, Data, Movimentação, Produto, Instituição, Quantidade, Preço unitário, Valor da Operação, mas falta "{column}".',
+  'Line {number}: expected a quantity, a unit price and a value above zero for "{movement}", received "{quantity}", "{price}", "{value}".':
+    'Linha {number}: esperava quantidade, preço unitário e valor acima de zero para "{movement}", mas recebi "{quantity}", "{price}", "{value}".',
+
   // Banks & Cards
   'Accounts and cards': 'Contas e cartões',
   'Add account or card': 'Adicionar conta ou cartão',

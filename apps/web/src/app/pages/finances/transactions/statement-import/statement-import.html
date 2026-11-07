@@ -10,7 +10,7 @@
     <label class="ui-field">
       {{ 'Statement file' | t }}
       <input
-        class="ui-input file-input"
+        class="ui-input ui-file"
         type="file"
         accept=".csv,text/csv"
         (change)="readFile($event)"
@@ -67,6 +67,7 @@
           <tr>
             <th scope="col" class="check">
               <input
+                class="ui-checkbox"
                 type="checkbox"
                 [attr.aria-label]="'Select all' | t"
                 [checked]="allSelected()"
@@ -84,6 +85,7 @@
             <tr [class.muted]="!line.isIncluded">
               <td class="check">
                 <input
+                  class="ui-checkbox"
                   type="checkbox"
                   [attr.aria-label]="
                     'Import {description}' | t: { description: line.row.description }

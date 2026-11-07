@@ -38,6 +38,11 @@
   color: var(--color-text-muted);
 }
 
+.import-result {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
 .cdi-note {
   margin: -12px 0 0;
   font-size: var(--font-size-xs);
