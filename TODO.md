@@ -8,7 +8,7 @@
 
 ## Transactions
 - [x] Bank statement import on the Transactions page
-- [ ] Statement import: suggest categories from what the person chose before and from keywords (today it is only "Extra income" / "Other")
+- [x] Statement import: suggest categories from what the person chose before and from keywords (today it is only "Extra income" / "Other")
 
 ## To pay & receive
 - [x] Cards

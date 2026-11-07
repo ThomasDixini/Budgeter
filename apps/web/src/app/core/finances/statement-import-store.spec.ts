@@ -12,7 +12,7 @@ import {
   FakeTransactionsGateway,
   SAMPLE_OCTOBER,
 } from './fake-finances-gateways';
-import { StatementImportStore } from './statement-import-store';
+import { StatementImportStore, monthsUpTo } from './statement-import-store';
 import { FinanceReferencesGateway, TransactionsGateway } from './transactions-gateway';
 
 /** Records reported errors instead of logging them. */
@@ -53,7 +53,22 @@ function createStore(): {
   return { store: TestBed.inject(StatementImportStore), transactions, statements, errors };
 }
 
+describe('monthsUpTo', () => {
+  it('lists the months ending at the given one, across a year change', () => {
+    expect(monthsUpTo('2026-02', 3)).toEqual(['2025-12', '2026-01', '2026-02']);
+  });
+});
+
 describe('StatementImportStore', () => {
+  it('learns the category of a description from the months before the statement', async () => {
+    const { store, transactions } = createStore();
+
+    const memory = await store.categoryMemory('2026-10', 3);
+
+    expect(memory.get('out|farmacia')).toBe('health');
+    expect(transactions.askedMonths).toEqual(expect.arrayContaining(['2026-08', '2026-09']));
+  });
+
   it('finds the transactions and the card payments already stored in the months', async () => {
     const { store } = createStore();
 

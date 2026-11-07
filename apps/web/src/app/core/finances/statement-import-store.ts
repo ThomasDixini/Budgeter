@@ -2,6 +2,7 @@ import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { CardPayment } from './account-statement';
 import { AccountStatementsGateway } from './account-statements-gateway';
+import { CategoryMemory, rememberCategories } from './statement-import';
 import { Transaction } from './transaction';
 import { TransactionsStore } from './transactions-store';
 
@@ -38,6 +39,15 @@ export class StatementImportStore {
   }
 
   /**
+   * What the categories of the past months say about each description: the months before and including
+   * the given `YYYY-MM` one, `count` of them.
+   * @example await store.categoryMemory('2026-10', 6) // Map { 'out|padaria' => 'food' }
+   */
+  async categoryMemory(month: string, count: number): Promise<CategoryMemory> {
+    return rememberCategories(await this.transactions.inMonths(monthsUpTo(month, count)));
+  }
+
+  /**
    * Saves the transactions and the card payments; a refusal is reported and counted, and the rest still
    * go through.
    * @example await store.importAll({ transactions, payments }) // { saved: 22, failed: 0 }
@@ -60,4 +70,16 @@ export class StatementImportStore {
       return false;
     }
   }
+}
+
+/**
+ * The `count` months ending at a `YYYY-MM` month, oldest first.
+ * @example monthsUpTo('2026-02', 3) // ['2025-12', '2026-01', '2026-02']
+ */
+export function monthsUpTo(month: string, count: number): string[] {
+  const index = Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
+  return Array.from({ length: count }, (_, position) => {
+    const at = index - (count - 1 - position);
+    return `${Math.floor(at / 12)}-${String((at % 12) + 1).padStart(2, '0')}`;
+  });
 }

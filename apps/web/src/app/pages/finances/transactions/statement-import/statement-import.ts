@@ -35,6 +35,9 @@ export interface ImportResult {
 /** How many of the problems found in a file are listed; the rest are counted. */
 const PROBLEMS_SHOWN = 5;
 
+/** How many months before the end of the statement teach which category a payee belongs to. */
+const MEMORY_MONTHS = 6;
+
 /**
  * Panel above the transactions list to import a bank statement (CSV): pick the file, review every line
  * (category, skip) and confirm. Lines already stored are left out, and money moving between the person's
@@ -185,13 +188,17 @@ export class StatementImport {
     const statement = parseStatement(text);
     this.problems.set(statement.problems);
     if (statement.rows.length === 0) return;
-    const stored = await this.store.storedIds(statementMonths(statement.rows));
+    const months = statementMonths(statement.rows);
+    const [stored, memory] = await Promise.all([
+      this.store.storedIds(months),
+      this.store.categoryMemory(months[months.length - 1], MEMORY_MONTHS),
+    ]);
     this.lines.set(
       statement.rows.map((row) => ({
         row,
         isStored: stored.has(row.id),
         isIncluded: !stored.has(row.id) && this.startsTicked(row),
-        categoryId: suggestCategoryId(row, this.categories()) ?? '',
+        categoryId: suggestCategoryId(row, this.categories(), memory) ?? '',
         cardId: row.kind === 'invoicePayment' ? (this.cards()[0]?.id ?? '') : '',
       })),
     );
