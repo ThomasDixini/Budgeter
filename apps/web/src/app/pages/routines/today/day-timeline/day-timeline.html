@@ -70,7 +70,7 @@
                   <path d="M5 5l9 7-9 7V5zM19 5v14"></path>
                 </svg>
               }
-              {{ block.name }}
+              {{ block.name | t }}
             </span>
             <span class="block-range ui-tabular">{{ block.range | t }}</span>
           </button>
@@ -94,7 +94,7 @@
               } @else {
                 <span class="category-badge" [style.color]="category.color">
                   <span class="ui-dot" [style.background]="category.color"></span>
-                  {{ category.name }}
+                  {{ category.name | t }}
                 </span>
               }
             }

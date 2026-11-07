@@ -72,13 +72,13 @@
             <li class="row block-row">
               <span class="at ui-tabular">{{ block.at }}</span>
               <span class="row-text">
-                <span class="row-title">{{ block.name }}</span>
+                <span class="row-title">{{ block.name | t }}</span>
                 <span class="row-meta">{{ block.routineName }}</span>
               </span>
               @if (block.category; as category) {
                 <span class="category" [style.color]="category.color">
                   <span class="ui-dot" [style.background]="category.color"></span>
-                  {{ category.name }}
+                  {{ category.name | t }}
                 </span>
               }
             </li>
@@ -93,7 +93,7 @@
               <li class="row block-row is-skipped">
                 <span class="at ui-tabular">{{ block.at }}</span>
                 <span class="row-text">
-                  <span class="row-title">{{ block.name }}</span>
+                  <span class="row-title">{{ block.name | t }}</span>
                   <span class="row-meta">{{ block.routineName }}</span>
                 </span>
               </li>

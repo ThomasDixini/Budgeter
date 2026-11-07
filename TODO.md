@@ -4,7 +4,7 @@
 - [x] Translate the app to PT-BR and EN-US
 - [ ] Add animations when switching between modules
 - [ ] Run the E2E (Playwright) tests again: they have not run since the language and page changes
-- [ ] Names that come from the database (routines, blocks, goals, accounts, parts made from a template) are not translated
+- [x] Names the database starts with (accounts, routine categories, routines, blocks, tasks) are translated; names the person typed stay as typed
 
 ## Transactions
 - [x] Bank statement import on the Transactions page

@@ -56,13 +56,13 @@
       <label class="task" [class.is-done]="item.isDone">
         <input type="checkbox" [checked]="item.isDone" (change)="toggleTask(item.task.id)" />
         <span class="task-text">
-          <span class="task-title">{{ item.task.title }}</span>
+          <span class="task-title">{{ item.task.title | t }}</span>
           <span class="task-repeat">{{ item.repeat | t }}</span>
         </span>
         @if (item.category; as category) {
           <span class="task-category" [style.color]="category.color">
             <span class="ui-dot" [style.background]="category.color"></span>
-            {{ category.name }}
+            {{ category.name | t }}
           </span>
         }
       </label>
@@ -134,7 +134,7 @@
           [class.is-highlighted]="item.task.id === highlightedTaskId()"
         >
           <span class="task-text">
-            <span class="task-title">{{ item.task.title }}</span>
+            <span class="task-title">{{ item.task.title | t }}</span>
             <span class="task-repeat">
               {{ notTodayGroupLabels[item.group] | t }} · {{ item.repeat | t }}
             </span>
@@ -142,7 +142,7 @@
           @if (item.category; as category) {
             <span class="task-category" [style.color]="category.color">
               <span class="ui-dot" [style.background]="category.color"></span>
-              {{ category.name }}
+              {{ category.name | t }}
             </span>
           }
           <button

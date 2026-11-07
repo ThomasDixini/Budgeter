@@ -33,7 +33,7 @@
       <select class="ui-input" (change)="fromAccountId.set(valueOf($event))">
         @for (account of bankAccounts(); track account.id) {
           <option [value]="account.id" [selected]="account.id === fromAccountId()">
-            {{ account.name }}
+            {{ account.name | t }}
           </option>
         }
       </select>

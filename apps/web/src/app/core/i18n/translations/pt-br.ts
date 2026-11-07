@@ -1,5 +1,6 @@
 import { PT_BR_FINANCES } from './pt-br-finances';
 import { PT_BR_ROUTINES } from './pt-br-routines';
+import { PT_BR_SAMPLES } from './pt-br-samples';
 import { PT_BR_SENTENCES } from './pt-br-sentences';
 
 /**
@@ -9,6 +10,7 @@ import { PT_BR_SENTENCES } from './pt-br-sentences';
 export const PT_BR: Readonly<Record<string, string>> = {
   ...PT_BR_FINANCES,
   ...PT_BR_ROUTINES,
+  ...PT_BR_SAMPLES,
   ...PT_BR_SENTENCES,
   // Shell: header, dock, home
   Profile: 'Perfil',

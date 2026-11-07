@@ -114,7 +114,7 @@
           </div>
         }
         <div class="hero-text">
-          <h1 id="category-title" class="hero-title">{{ category.name }}</h1>
+          <h1 id="category-title" class="hero-title">{{ category.name | t }}</h1>
           <span class="hero-caption">{{ stats().blocksLabel | t }}</span>
         </div>
         <div class="hero-stats">
@@ -137,7 +137,7 @@
         <h2 id="blocks-title" class="in-routine-title">{{ 'In the routine' | t }}</h2>
         @for (block of blocks(); track block.name + block.when) {
           <div class="routine-block">
-            <span class="routine-block-name">{{ block.name }}</span>
+            <span class="routine-block-name">{{ block.name | t }}</span>
             <span class="routine-block-when ui-tabular">{{ block.when | t }}</span>
           </div>
         } @empty {

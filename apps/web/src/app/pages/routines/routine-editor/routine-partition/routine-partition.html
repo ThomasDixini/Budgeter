@@ -9,7 +9,7 @@
         ></span>
         {{ segment.category?.name ?? ('No category' | t) }}
       </span>
-      <span class="tooltip-block">{{ segment.name }} · {{ segment.range | t }}</span>
+      <span class="tooltip-block">{{ segment.name | t }} · {{ segment.range | t }}</span>
     </div>
   }
   <div
@@ -45,7 +45,7 @@
             (click)="togglePinned(segment.key)"
           >
             @if (segment.showsName) {
-              <span class="segment-name">{{ segment.name }}</span>
+              <span class="segment-name">{{ segment.name | t }}</span>
             }
           </button>
         </div>
@@ -72,7 +72,7 @@
         [style.border-color]="entry.category.id === shownCategoryId() ? entry.category.color : null"
       >
         <span class="legend-swatch" [style.background]="entry.category.color"></span>
-        <span class="legend-name">{{ entry.category.name }}</span>
+        <span class="legend-name">{{ entry.category.name | t }}</span>
         <span class="legend-duration ui-tabular">{{ entry.duration }}</span>
       </li>
     }

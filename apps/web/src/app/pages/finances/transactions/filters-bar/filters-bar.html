@@ -52,7 +52,7 @@
       [attr.aria-pressed]="account.id === filters().accountId"
       (click)="changeAccount(account.id)"
     >
-      {{ account.name }}
+      {{ account.name | t }}
     </button>
   }
 </div>

@@ -88,7 +88,7 @@
         <ul class="list">
           @for (item of worth().bankAccounts; track item.id) {
             <li class="row">
-              <span>{{ item.name }}</span>
+              <span>{{ item.name | t }}</span>
               <span class="ui-tabular">{{ balance(item.cents) }}</span>
             </li>
           }
@@ -107,7 +107,7 @@
         <ul class="list">
           @for (item of worth().investments; track item.id) {
             <li class="row">
-              <span>{{ item.name }}</span>
+              <span>{{ item.name | t }}</span>
               <span class="ui-tabular">{{ balance(item.cents) }}</span>
             </li>
           }
@@ -135,7 +135,7 @@
         <ul class="list">
           @for (item of worth().cards; track item.id) {
             <li class="row">
-              <span>{{ item.name }}</span>
+              <span>{{ item.name | t }}</span>
               <span class="ui-tabular">{{ money(item.cents) }}</span>
             </li>
           }

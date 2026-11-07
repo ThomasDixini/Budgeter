@@ -21,7 +21,7 @@
       <option value="" [selected]="categoryId() === ''">{{ 'No category' | t }}</option>
       @for (category of categories(); track category.id) {
         <option [value]="category.id" [selected]="category.id === categoryId()">
-          {{ category.name }}
+          {{ category.name | t }}
         </option>
       }
     </select>
