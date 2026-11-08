@@ -5,14 +5,18 @@ namespace Budgeter.Api.Application.Investments;
 
 /// <summary>The portfolio with the trades and proventos behind it, for the page to list.</summary>
 public sealed record PortfolioSnapshot(
-    Portfolio Portfolio, IReadOnlyList<InvestmentTrade> Trades, IReadOnlyList<InvestmentIncome> Incomes);
+    Portfolio Portfolio, IReadOnlyList<InvestmentTrade> Trades, IReadOnlyList<InvestmentIncome> Incomes,
+    IReadOnlyList<MonthlyPoint> History);
 
 /// <summary>
 /// Reads the portfolio as of a day. The daily CDI rates it compares against are stored once fetched; when
 /// the Central Bank cannot be reached, the rates already stored are used and the result says how far they go.
+/// The month-end history is valued at closing prices, fetched once per finished month, and the quoted
+/// investments take their latest price from the quote source.
 /// </summary>
 public sealed class GetPortfolio(
-    IInvestmentRepository investments, ICdiRateStore rateStore, ICdiRateSource rateSource, ILogger<GetPortfolio> logger)
+    IInvestmentRepository investments, ICdiRateStore rateStore, ICdiRateSource rateSource,
+    MonthEndPrices monthEndPrices, LatestPrices latestPrices, ILogger<GetPortfolio> logger)
 {
     private const int ClosedDaysSlack = 4;
 
@@ -22,11 +26,14 @@ public sealed class GetPortfolio(
     /// <example><code>var snapshot = await getPortfolio.ExecuteAsync(new DateOnly(2026, 11, 3), ct);</code></example>
     public async Task<PortfolioSnapshot> ExecuteAsync(DateOnly asOf, CancellationToken cancellationToken)
     {
-        var all = await investments.ListAsync(cancellationToken);
+        var all = await latestPrices.RefreshAsync(await investments.ListAsync(cancellationToken), asOf, cancellationToken);
         var trades = await investments.ListTradesAsync(cancellationToken);
         var incomes = await investments.ListIncomesAsync(cancellationToken);
         var cdi = await CdiSinceFirstTradeAsync(trades, asOf, cancellationToken);
-        return new PortfolioSnapshot(Portfolio.Build(all, trades, incomes, asOf, cdi), trades, incomes);
+        var prices = await monthEndPrices.LoadAsync(all, trades, asOf, cancellationToken);
+        return new PortfolioSnapshot(
+            Portfolio.Build(all, trades, incomes, asOf, cdi), trades, incomes,
+            PortfolioHistory.Build(all, trades, incomes, prices, cdi, asOf));
     }
 
     private async Task<CdiIndex> CdiSinceFirstTradeAsync(

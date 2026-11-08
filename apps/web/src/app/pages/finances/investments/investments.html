@@ -260,11 +260,11 @@
                 <td class="number ui-tabular">{{ quantity(line) }}</td>
                 <td class="number ui-tabular">{{ average(line) }}</td>
                 <td class="number ui-tabular">
-                  {{ priceText(line.investment) }}
+                  {{ priceText(line.investment) | t }}
                   <span class="detail">{{ priceDay(line.investment) }}</span>
                 </td>
                 <td class="number ui-tabular">{{ costText(line) }}</td>
-                <td class="number ui-tabular strong value-text">{{ valueText(line) }}</td>
+                <td class="number ui-tabular strong value-text">{{ valueText(line) | t }}</td>
                 <td
                   class="number ui-tabular"
                   [class.gain]="(line.gainCents ?? 0) > 0"

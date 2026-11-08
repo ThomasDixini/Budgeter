@@ -69,14 +69,15 @@ public sealed record PerformanceResponse(
 
 public sealed record PortfolioResponse(
     IReadOnlyList<PortfolioLineResponse> Lines, PortfolioTotals Totals, PerformanceResponse? Performance,
-    IReadOnlyList<TradeResponse> Trades, IReadOnlyList<IncomeResponse> Incomes)
+    IReadOnlyList<TradeResponse> Trades, IReadOnlyList<IncomeResponse> Incomes, IReadOnlyList<MonthlyPoint> History)
 {
     public static PortfolioResponse From(PortfolioSnapshot snapshot) =>
         new(snapshot.Portfolio.Lines.Select(PortfolioLineResponse.From).ToList(),
             snapshot.Portfolio.Totals,
             PerformanceResponse.From(snapshot.Portfolio.Performance),
             snapshot.Trades.Select(TradeResponse.From).ToList(),
-            snapshot.Incomes.Select(IncomeResponse.From).ToList());
+            snapshot.Incomes.Select(IncomeResponse.From).ToList(),
+            snapshot.History);
 }
 
 /// <summary>HTTP routes for investments, their trades and proventos, and the portfolio they make up.</summary>

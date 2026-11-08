@@ -20,10 +20,9 @@
 - [x] Demo data for every Finances tab (turn on with the DEMO button in the header or ?demo=on)
 - [x] Demo data for every Routines & Goals screen too (Today, routine editor, categories, goals, history), under the same DEMO button
 - [x] Charts
-- [ ] Real month-end price history (today made up, see below): fetch quotes from a public source and keep one record per month
+- [x] Real month-end price history: the API fetches monthly closes from brapi.dev (token in Quotes__Token) for B3 tickers (stocks and real estate funds named by their ticker) and keeps one record per month
+- [x] Current prices: the API takes the latest price of B3 tickers from brapi.dev (at most once a day per ticker) and stores it as the investment price
 
 ## Net worth
 - [x] Charts
 
-## Placeholders to replace
-- [ ] Investments history charts use made-up month-end values (core/finances/placeholder-history.ts, applied in HttpInvestmentsGateway); swap for real price history

@@ -9,6 +9,7 @@ using Budgeter.Api.Application.Routines;
 using Budgeter.Api.Application.Tasks;
 using Budgeter.Api.Endpoints;
 using Budgeter.Api.Infrastructure.Cdi;
+using Budgeter.Api.Infrastructure.Quotes;
 using Budgeter.Api.Infrastructure.Sqlite;
 
 [assembly: InternalsVisibleTo("Budgeter.Api.Tests")]
@@ -35,6 +36,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
 builder.Services.AddSqlitePersistence();
 builder.Services.AddCdiRateSource(builder.Configuration);
+builder.Services.AddQuoteSource(builder.Configuration);
 builder.Services.AddScoped<ListCategories>();
 builder.Services.AddScoped<CreateCategory>();
 builder.Services.AddScoped<UpdateCategory>();
@@ -75,6 +77,8 @@ builder.Services.AddScoped<SaveBill>();
 builder.Services.AddScoped<DeleteBill>();
 builder.Services.AddScoped<SettleBill>();
 builder.Services.AddScoped<ReopenBill>();
+builder.Services.AddScoped<MonthEndPrices>();
+builder.Services.AddScoped<LatestPrices>();
 builder.Services.AddScoped<GetPortfolio>();
 builder.Services.AddScoped<SaveInvestment>();
 builder.Services.AddScoped<DeleteInvestment>();
