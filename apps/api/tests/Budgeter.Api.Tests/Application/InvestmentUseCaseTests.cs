@@ -15,12 +15,14 @@ public class InvestmentUseCaseTests
 
     private readonly InMemoryInvestmentRepository _investments = new();
     private readonly InMemoryCdiRateStore _rateStore = new();
+    private LatestPrices _latestPrices => new(_investments, new FakeQuoteSource(), NullLogger<LatestPrices>.Instance);
+    private readonly MonthEndPrices _monthEndPrices = new(new InMemoryMonthEndPriceStore(), new FakeQuoteSource(), NullLogger<MonthEndPrices>.Instance);
     private readonly FakeCdiRateSource _rateSource = new(
         new CdiRate(new DateOnly(2026, 1, 5), 0.05m), new CdiRate(January6, 0.05m));
 
     private SaveInvestment SaveInvestment => new(_investments);
     private SaveTrade SaveTrade => new(_investments);
-    private GetPortfolio GetPortfolio => new(_investments, _rateStore, _rateSource, NullLogger<GetPortfolio>.Instance);
+    private GetPortfolio GetPortfolio => new(_investments, _rateStore, _rateSource, _monthEndPrices, _latestPrices, NullLogger<GetPortfolio>.Instance);
 
     private static SaveInvestmentCommand Petr4(long? price = 1200) => new("petr4", "PETR4", InvestmentKind.Stock, price, January6);
 

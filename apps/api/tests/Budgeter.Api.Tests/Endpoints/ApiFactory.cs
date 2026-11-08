@@ -1,4 +1,5 @@
 using Budgeter.Api.Infrastructure.Cdi;
+using Budgeter.Api.Infrastructure.Quotes;
 using Budgeter.Api.Infrastructure.Sqlite;
 using Budgeter.Api.Tests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -16,6 +17,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting($"ConnectionStrings:{SqliteOptions.ConnectionStringName}", _database.ConnectionString);
         builder.UseSetting(SqliteOptions.SeedSampleDataKey, "false");
         builder.UseSetting(CdiRegistration.EnabledKey, "false");
+        builder.UseSetting(QuotesRegistration.EnabledKey, "false");
     }
 
     protected override void Dispose(bool disposing)

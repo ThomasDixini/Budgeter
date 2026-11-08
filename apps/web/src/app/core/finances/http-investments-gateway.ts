@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   Income,
   IncomeDraft,
@@ -11,7 +11,6 @@ import {
   TradeDraft,
 } from './investments';
 import { InvestmentsGateway } from './investments-gateway';
-import { placeholderHistory } from './placeholder-history';
 
 const INVESTMENTS_URL = '/api/investments';
 const TRADES_URL = '/api/investment-trades';
@@ -23,10 +22,7 @@ export class HttpInvestmentsGateway extends InvestmentsGateway {
   private readonly httpClient = inject(HttpClient);
 
   override portfolio(asOf: string): Observable<Portfolio> {
-    // PLACEHOLDER: the API sends no month-end history yet, so made-up points fill the history charts.
-    return this.httpClient
-      .get<Portfolio>(INVESTMENTS_URL, { params: { date: asOf } })
-      .pipe(map((portfolio) => ({ ...portfolio, history: placeholderHistory(portfolio, asOf) })));
+    return this.httpClient.get<Portfolio>(INVESTMENTS_URL, { params: { date: asOf } });
   }
 
   override saveInvestment(investmentId: string, draft: InvestmentDraft): Observable<Investment> {

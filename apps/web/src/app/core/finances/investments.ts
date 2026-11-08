@@ -93,7 +93,7 @@ export interface Portfolio {
   readonly lines: readonly PortfolioLine[];
   readonly totals: PortfolioTotals;
   readonly performance?: Performance;
-  /** Month-end history; absent until the API keeps price history, and the charts then stay empty. */
+  /** Month-end history sent by the API, valued at the real closing prices; empty before the first trade. */
   readonly history?: readonly MonthlyPoint[];
   readonly trades: readonly Trade[];
   readonly incomes: readonly Income[];

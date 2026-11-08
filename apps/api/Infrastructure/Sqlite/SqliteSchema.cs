@@ -155,6 +155,12 @@ internal static class SqliteSchema
             date TEXT PRIMARY KEY,
             daily_percent TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS month_end_prices (
+            symbol TEXT NOT NULL,
+            month TEXT NOT NULL,
+            price_cents INTEGER NOT NULL,
+            PRIMARY KEY (symbol, month)
+        );
         CREATE TABLE IF NOT EXISTS income_split (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             base_income_cents INTEGER NOT NULL

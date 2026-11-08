@@ -47,6 +47,8 @@ export default defineConfig({
         Persistence__SeedSampleData: 'true',
         // The CDI comes from the Central Bank; the suite never reaches the internet.
         Cdi__Enabled: 'false',
+        // Stock quotes come from brapi.dev, which the suite never reaches either.
+        Quotes__Enabled: 'false',
       },
     },
     {

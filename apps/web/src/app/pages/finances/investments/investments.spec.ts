@@ -1,4 +1,4 @@
-import { ErrorHandler } from '@angular/core';
+import { ErrorHandler, LOCALE_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Clock } from '../../../core/calendar/clock';
 import { FixedClock } from '../../../core/calendar/fixed-clock';
@@ -26,10 +26,12 @@ async function flush(fixture: ComponentFixture<Investments>): Promise<void> {
 
 async function render(
   gateway = new FakeInvestmentsGateway(),
+  locale = 'en-US',
 ): Promise<{ fixture: ComponentFixture<Investments>; gateway: FakeInvestmentsGateway }> {
   TestBed.configureTestingModule({
     providers: [
       { provide: InvestmentsGateway, useValue: gateway },
+      { provide: LOCALE_ID, useValue: locale },
       { provide: Clock, useValue: new FixedClock(NOW) },
       { provide: IdGenerator, useValue: new SequentialIdGenerator() },
       { provide: ErrorHandler, useClass: SilentErrorHandler },
@@ -122,6 +124,15 @@ describe('Investments page', () => {
     const { fixture } = await render(gateway);
 
     expect(texts(fixture, '.cdi-note')[0]).toContain('CDI rates could not be loaded.');
+  });
+
+  it('says in Portuguese that an asset has no price yet and is valued at cost', async () => {
+    const { fixture } = await render(new FakeInvestmentsGateway(), 'pt-BR');
+
+    const cells = texts(fixture, '.assets tbody .number');
+
+    expect(cells).toContain('Sem preço ainda');
+    expect(cells).toContain('Pelo custo');
   });
 
   it('lists each asset with its units, prices, value and return, biggest first', async () => {
