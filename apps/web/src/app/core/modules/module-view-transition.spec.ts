@@ -12,6 +12,13 @@ class FakeViewTransition {
   skipped = false;
   finish: () => void = () => undefined;
   readonly finished = new Promise<void>((resolve) => (this.finish = resolve));
+  /** Handlers given to `ready.catch`; the browser rejects `ready` with an AbortError once a transition is skipped. */
+  readonly readyHandlers: ((reason: unknown) => unknown)[] = [];
+  readonly ready = {
+    catch: (handler: (reason: unknown) => unknown): void => {
+      this.readyHandlers.push(handler);
+    },
+  };
 
   skipTransition(): void {
     this.skipped = true;
@@ -33,6 +40,17 @@ function preferReducedMotion(reduced: boolean): void {
 }
 
 describe('animateModuleSwitch', () => {
+  it('catches the AbortError a skipped transition raises, so it is not reported', () => {
+    preferReducedMotion(false);
+
+    const { transition } = moveBetween('', 'routines');
+
+    expect(transition.readyHandlers).toHaveLength(1);
+    expect(
+      transition.readyHandlers[0](new DOMException('Transition was skipped', 'AbortError')),
+    ).toBeUndefined();
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
     delete document.documentElement.dataset['moduleMove'];
