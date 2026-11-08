@@ -1,0 +1,132 @@
+/* Changing module. Both pages move as one strip, like a carousel: it picks up speed, then eases into
+   place, with a light motion blur at its fastest; the dock wheel spins the chosen module to the top
+   meanwhile. The direction is set by core/modules/module-view-transition.ts, which skips the whole
+   transition for anyone who asked for less motion. */
+
+:root {
+  --module-switch-duration: 640ms;
+  /* Slow start that builds up speed, then a long gentle landing. */
+  --module-switch-easing: cubic-bezier(0.65, 0, 0.2, 1);
+  /* Angle between the dock's top slot and a neighbour, around the centre of the dome. */
+  --module-switch-wheel-step: 40deg;
+}
+
+/* The page */
+
+:root[data-module-move]::view-transition-old(root),
+:root[data-module-move]::view-transition-new(root) {
+  mix-blend-mode: normal;
+  /* The blur runs as its own animation so the slide keeps a single, unbroken easing curve. */
+  animation-duration: var(--module-switch-duration);
+  animation-timing-function: var(--module-switch-easing), ease-in-out;
+  animation-fill-mode: both;
+}
+
+:root[data-module-move='forward']::view-transition-old(root) {
+  animation-name: module-slide-to-left, module-motion-blur;
+}
+
+:root[data-module-move='forward']::view-transition-new(root) {
+  animation-name: module-slide-in-from-right, module-motion-blur;
+}
+
+:root[data-module-move='backward']::view-transition-old(root) {
+  animation-name: module-slide-to-right, module-motion-blur;
+}
+
+:root[data-module-move='backward']::view-transition-new(root) {
+  animation-name: module-slide-in-from-left, module-motion-blur;
+}
+
+/* The dock: the dome stays put and only shifts colour, the wheel of icons spins. */
+
+:root[data-module-move]::view-transition-old(module-dock),
+:root[data-module-move]::view-transition-new(module-dock) {
+  animation-duration: var(--module-switch-duration);
+}
+
+:root[data-module-move]::view-transition-old(module-dock-wheel),
+:root[data-module-move]::view-transition-new(module-dock-wheel) {
+  /* The centre of the 240px dome, whose top edge is the top of the 72px dock. */
+  transform-origin: 50% 120px;
+  animation-duration: var(--module-switch-duration);
+  animation-timing-function: var(--module-switch-easing);
+  animation-fill-mode: both;
+}
+
+:root[data-module-move='forward']::view-transition-old(module-dock-wheel) {
+  animation-name: module-wheel-leave-forward;
+}
+
+:root[data-module-move='forward']::view-transition-new(module-dock-wheel) {
+  animation-name: module-wheel-enter-forward;
+}
+
+:root[data-module-move='backward']::view-transition-old(module-dock-wheel) {
+  animation-name: module-wheel-leave-backward;
+}
+
+:root[data-module-move='backward']::view-transition-new(module-dock-wheel) {
+  animation-name: module-wheel-enter-backward;
+}
+
+@keyframes module-slide-to-left {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes module-slide-to-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes module-slide-in-from-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes module-slide-in-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+/* Peaks halfway, where the strip moves fastest, and is gone by the time the page lands. */
+@keyframes module-motion-blur {
+  50% {
+    filter: blur(3px);
+  }
+}
+
+/* Going forward brings the right-hand neighbour to the top, so the wheel turns anticlockwise. */
+
+@keyframes module-wheel-leave-forward {
+  to {
+    transform: rotate(calc(-1 * var(--module-switch-wheel-step)));
+    opacity: 0;
+  }
+}
+
+@keyframes module-wheel-enter-forward {
+  from {
+    transform: rotate(var(--module-switch-wheel-step));
+    opacity: 0;
+  }
+}
+
+@keyframes module-wheel-leave-backward {
+  to {
+    transform: rotate(var(--module-switch-wheel-step));
+    opacity: 0;
+  }
+}
+
+@keyframes module-wheel-enter-backward {
+  from {
+    transform: rotate(calc(-1 * var(--module-switch-wheel-step)));
+    opacity: 0;
+  }
+}

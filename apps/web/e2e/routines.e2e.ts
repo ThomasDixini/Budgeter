@@ -46,12 +46,17 @@ test.describe('entering the module', () => {
     await expect(page.getByRole('heading', { name: 'Day timeline' })).toBeVisible();
   });
 
-  test('the module dock leads back to the wheel', async ({ page }) => {
+  test('the module dock switches straight to the next module and back', async ({ page }) => {
     await routines.goto();
 
-    await routines.moduleDock.getByRole('link', { name: /Next module/ }).click();
+    await routines.moduleDock.getByRole('link', { name: 'Next module: Finances' }).click();
+    await expect(page).toHaveURL(/\/finances\/overview$/);
+    await routines.moduleDock
+      .getByRole('link', { name: 'Previous module: Routines & Goals' })
+      .click();
 
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/routines');
+    await expect(routines.currentTab).toHaveText('Today');
   });
 });
 
