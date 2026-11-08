@@ -6,6 +6,9 @@
   width: 240px;
   height: 72px;
   margin-left: -120px;
+  /* Named so a module switch cross-fades the dome in place instead of sliding it away with the page;
+     the spin itself lives on `.wheel` (see the module switch styles in styles/components.css). */
+  view-transition-name: module-dock;
 }
 
 .dock {
@@ -38,6 +41,12 @@
   border: var(--border-hairline) solid var(--color-border);
 }
 
+.wheel {
+  position: absolute;
+  inset: 0;
+  view-transition-name: module-dock-wheel;
+}
+
 .neighbour,
 .current {
   position: absolute;
@@ -51,14 +60,31 @@
   top: 29px;
   width: 36px;
   height: 36px;
+  padding: 0;
   color: var(--color-text-soft);
   background: rgba(255, 255, 255, 0.04);
   border: var(--border-hairline) solid var(--color-border);
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
 }
 
-.neighbour:hover {
+a.neighbour:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--color-text);
+  transform: scale(1.08);
+}
+
+.neighbour:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.neighbour.is-upcoming {
+  opacity: 0.4;
+  cursor: default;
+  font: inherit;
 }
 
 .neighbour-previous {

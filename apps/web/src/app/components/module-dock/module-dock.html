@@ -1,23 +1,32 @@
 <nav class="dock" [attr.aria-label]="'Switch module' | t" [style.--dock-accent-rgb]="accentRgb()">
   <div class="glow" aria-hidden="true"></div>
   <div class="dome" aria-hidden="true"></div>
-  <a
-    class="neighbour neighbour-previous"
-    routerLink="/"
-    [attr.aria-label]="'Previous module: {name}' | t: { name: previous().name | t }"
-    [title]="previous().name | t"
-  >
-    <app-module-icon [kind]="previous().kind" [size]="16" />
-  </a>
-  <span class="current" aria-current="page" [title]="current().name | t">
-    <app-module-icon [kind]="current().kind" [size]="18" />
-  </span>
-  <a
-    class="neighbour neighbour-next"
-    routerLink="/"
-    [attr.aria-label]="'Next module: {name}' | t: { name: next().name | t }"
-    [title]="next().name | t"
-  >
-    <app-module-icon [kind]="next().kind" [size]="16" />
-  </a>
+  <div class="wheel">
+    @for (neighbour of neighbours(); track neighbour.side) {
+      @if (neighbour.isAvailable) {
+        <a
+          [class]="'neighbour neighbour-' + neighbour.side"
+          [routerLink]="neighbour.module.route"
+          [attr.aria-label]="neighbour.label | t: { name: neighbour.module.name | t }"
+          [title]="neighbour.module.name | t"
+        >
+          <app-module-icon [kind]="neighbour.module.kind" [size]="16" />
+        </a>
+      } @else {
+        <!-- A module that is not built yet keeps its place on the wheel but cannot be opened. -->
+        <button
+          [class]="'neighbour is-upcoming neighbour-' + neighbour.side"
+          type="button"
+          disabled
+          [attr.aria-label]="neighbour.label | t: { name: neighbour.module.name | t }"
+          [title]="neighbour.module.name | t"
+        >
+          <app-module-icon [kind]="neighbour.module.kind" [size]="16" />
+        </button>
+      }
+    }
+    <span class="current" aria-current="page" [title]="current().name | t">
+      <app-module-icon [kind]="current().kind" [size]="18" />
+    </span>
+  </div>
 </nav>
