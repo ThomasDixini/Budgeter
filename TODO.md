@@ -3,7 +3,7 @@
 ## General
 - [x] Translate the app to PT-BR and EN-US
 - [x] Animation when switching between modules (a slide in the direction of the move; none for people who prefer less motion)
-- [ ] Run the E2E (Playwright) tests again: they have not run since the language and page changes
+- [x] Run the E2E (Playwright) tests again: they have not run since the language and page changes
 - [x] Names the database starts with (accounts, routine categories, routines, blocks, tasks) are translated; names the person typed stay as typed
 
 ## Transactions
@@ -24,7 +24,6 @@
 
 ## Net worth
 - [x] Charts
-- [ ] Keep the net worth of each month so growth, average, best month, the chart and the table can fill in
 
 ## Placeholders to replace
 - [ ] Investments history charts use made-up month-end values (core/finances/placeholder-history.ts, applied in HttpInvestmentsGateway); swap for real price history
