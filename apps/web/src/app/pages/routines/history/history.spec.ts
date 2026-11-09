@@ -1,3 +1,4 @@
+import { provideFakeBackupGateway } from '../../../core/backups/fake-backup-gateway';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -35,6 +36,7 @@ async function openHistory() {
   TestBed.configureTestingModule({
     providers: [
       provideRouter(routes),
+      provideFakeBackupGateway(),
       { provide: Clock, useValue: new FixedClock(TODAY) },
       ...provideFakeRoutinesGateways(
         new FakeCategoriesGateway(),

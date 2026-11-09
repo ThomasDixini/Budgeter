@@ -35,6 +35,17 @@ export const PT_BR: Readonly<Record<string, string>> = {
   'Spin left (previous module)': 'Girar à esquerda (módulo anterior)',
   'Spin right (next module)': 'Girar à direita (próximo módulo)',
   'Try again': 'Tentar de novo',
+  Backup: 'Backup',
+  'Back up or restore your data': 'Fazer backup ou restaurar seus dados',
+  'One file with everything: finances, routines, goals and tasks.':
+    'Um arquivo com tudo: finanças, rotinas, metas e tarefas.',
+  'Download backup': 'Baixar backup',
+  'Restore from a backup': 'Restaurar de um backup',
+  'Restoring replaces all your data, in every module, with the data in {file}.':
+    'Restaurar substitui todos os seus dados, em todos os módulos, pelos dados de {file}.',
+  'Replace my data': 'Substituir meus dados',
+  'That file is not a Budgeter backup. Nothing was changed.':
+    'Esse arquivo não é um backup do Budgeter. Nada foi alterado.',
 
   // Modules
   'Routines & Goals': 'Rotinas e Metas',

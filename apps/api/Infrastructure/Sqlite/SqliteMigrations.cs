@@ -8,6 +8,9 @@ namespace Budgeter.Api.Infrastructure.Sqlite;
 /// </summary>
 internal static class SqliteMigrations
 {
+    /// <summary>The <c>user_version</c> once every step ran; raise it with each new step.</summary>
+    public const int LatestVersion = 3;
+
     /// <summary>
     /// Runs every step the database has not seen, each in its own transaction.
     /// </summary>

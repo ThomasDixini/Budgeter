@@ -1,3 +1,4 @@
+import { provideFakeBackupGateway } from '../../core/backups/fake-backup-gateway';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Home } from './home';
@@ -25,7 +26,7 @@ function clickAndRender(fixture: ComponentFixture<Home>, selector: string): void
 
 describe('Home', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideFakeBackupGateway()] });
   });
 
   it('starts on the routines module', () => {
