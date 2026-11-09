@@ -13,7 +13,9 @@
     "format:check": "prettier --check .",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
-    "e2e:typecheck": "tsc -p tsconfig.e2e.json"
+    "e2e:typecheck": "tsc -p tsconfig.e2e.json",
+    "create-shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/create-shortcut.ps1",
+    "stop-app": "powershell -NoProfile -ExecutionPolicy Bypass -File ../../scripts/stop-app.ps1"
   },
   "private": true,
   "packageManager": "npm@11.19.0",
