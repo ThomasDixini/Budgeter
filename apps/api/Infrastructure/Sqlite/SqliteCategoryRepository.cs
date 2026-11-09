@@ -1,8 +1,8 @@
-using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Domain.Categories;
+using Orbit.Api.Application.Categories;
+using Orbit.Api.Domain.Categories;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>Categories stored in the <c>categories</c> table.</summary>
 public sealed class SqliteCategoryRepository(SqliteConnectionFactory connections) : ICategoryRepository

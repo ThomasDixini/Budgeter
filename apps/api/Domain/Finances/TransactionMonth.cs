@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>A calendar month, the span the transactions list is read by.</summary>
 public sealed partial record TransactionMonth

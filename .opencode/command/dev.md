@@ -15,4 +15,4 @@ Then verify the services are up:
 - API: http://localhost:5099
 - Web: http://localhost:4200 (proxies `/api` to the API)
 
-If a new window is not possible, run `scripts\dev.ps1` in the background and report the log files under `$env:TEMP\budgetcontroller-dev`.
+If a new window is not possible, run `scripts\dev.ps1` in the background and report the log files under `$env:TEMP\orbit-dev`.

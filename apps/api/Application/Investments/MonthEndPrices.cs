@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 /// <summary>Port to the stored month-end closing prices, kept so each month is fetched from the outside only once.</summary>
 public interface IMonthEndPriceStore

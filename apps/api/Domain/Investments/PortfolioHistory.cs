@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>The whole portfolio at the end of a month: what it is worth, what was put in and how it did against the CDI.</summary>
 public sealed record MonthlyPoint(string Month, long ValueCents, long AppliedCents, decimal ReturnPercent, decimal CdiPercent);

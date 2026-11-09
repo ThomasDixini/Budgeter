@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Application;
+namespace Orbit.Api.Application;
 
 /// <summary>Raised when a use case references a record that does not exist.</summary>
 /// <example><code>throw ResourceNotFoundException.For("category", "study");</code></example>

@@ -10,8 +10,8 @@ fi
 # Checks only: the pushed commits are what CI will see. Rewriting the last commit here (an amend with
 # --no-verify) used to fold any uncommitted work into it behind the developer's back.
 echo "[pre-push] Checking .NET formatting..."
-dotnet format Budgeter.slnx --no-restore --verify-no-changes || {
-  echo "[pre-push] Run 'dotnet format Budgeter.slnx' and commit the result."
+dotnet format Orbit.slnx --no-restore --verify-no-changes || {
+  echo "[pre-push] Run 'dotnet format Orbit.slnx' and commit the result."
   exit 1
 }
 

@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// A connection lent to one repository call. It is closed on dispose only when the call opened it;

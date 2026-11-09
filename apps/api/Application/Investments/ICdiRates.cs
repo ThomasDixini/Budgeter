@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 /// <summary>Port to the stored daily CDI rates, kept so they are fetched from the outside only once.</summary>
 public interface ICdiRateStore

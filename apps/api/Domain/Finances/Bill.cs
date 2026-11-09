@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// Money still to be paid (payable) or received (receivable) by a due date. Settling it records when and

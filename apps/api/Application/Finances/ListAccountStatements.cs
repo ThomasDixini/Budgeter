@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 /// <summary>
 /// Where every account stands on a day: bank balances, and each card's debt and invoices. Counts only what

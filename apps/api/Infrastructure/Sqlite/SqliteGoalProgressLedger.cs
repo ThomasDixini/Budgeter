@@ -1,8 +1,8 @@
 using System.Globalization;
-using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Application.Goals;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// The goal progress log in the <c>goal_progress</c> table. Entries are only ever added or removed,

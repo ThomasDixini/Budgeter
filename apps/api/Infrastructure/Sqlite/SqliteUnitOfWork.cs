@@ -1,6 +1,6 @@
-using Budgeter.Api.Application;
+using Orbit.Api.Application;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>Runs repository writes in one SQLite transaction.</summary>
 public sealed class SqliteUnitOfWork(SqliteConnectionFactory connections) : IUnitOfWork

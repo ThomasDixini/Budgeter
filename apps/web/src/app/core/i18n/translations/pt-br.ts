@@ -44,8 +44,8 @@ export const PT_BR: Readonly<Record<string, string>> = {
   'Restoring replaces all your data, in every module, with the data in {file}.':
     'Restaurar substitui todos os seus dados, em todos os módulos, pelos dados de {file}.',
   'Replace my data': 'Substituir meus dados',
-  'That file is not a Budgeter backup. Nothing was changed.':
-    'Esse arquivo não é um backup do Budgeter. Nada foi alterado.',
+  'That file is not an Orbit backup. Nothing was changed.':
+    'Esse arquivo não é um backup do Orbit. Nada foi alterado.',
 
   // Modules
   'Routines & Goals': 'Rotinas e Metas',

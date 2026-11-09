@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Domain;
+using Orbit.Api.Application.Goals;
+using Orbit.Api.Domain;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 /// <summary>
 /// Puts a block completed or skipped by mistake back as planned for that day, and takes back the goal

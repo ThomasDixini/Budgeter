@@ -10,7 +10,7 @@ function categoryUrl(categoryId: string): string {
   return `${CATEGORIES_URL}/${encodeURIComponent(categoryId)}`;
 }
 
-/** Categories stored by the Budgeter API. */
+/** Categories stored by the Orbit API. */
 @Injectable()
 export class HttpCategoriesGateway extends CategoriesGateway {
   private readonly httpClient = inject(HttpClient);

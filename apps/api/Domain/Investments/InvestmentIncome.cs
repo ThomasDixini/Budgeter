@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>What sort of provento was received.</summary>
 public enum IncomeKind

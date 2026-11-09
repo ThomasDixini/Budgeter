@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Application.Goals;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 public sealed record CreateGoalRequest(
     string Id,

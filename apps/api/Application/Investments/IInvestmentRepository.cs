@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 /// <summary>Port to the storage of investments, their trades and the proventos they paid.</summary>
 public interface IInvestmentRepository

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Budgeter.Api.Domain;
+namespace Orbit.Api.Domain;
 
 /// <summary>Validates times of day exchanged as <c>HH:mm</c>, the shape of an HTML time input.</summary>
 public static partial class ClockTime

@@ -1,8 +1,8 @@
-using Budgeter.Api.Application.Finances;
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Application.Finances;
+using Orbit.Api.Domain.Finances;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Bank accounts and credit cards stored in the <c>accounts</c> table (kind kept by name); a card's terms

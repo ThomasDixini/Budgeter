@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Budgeter.Api.Domain;
+namespace Orbit.Api.Domain;
 
 /// <summary>
 /// Validates identifiers. Clients generate them (UUIDs) so offline creations can be retried idempotently.

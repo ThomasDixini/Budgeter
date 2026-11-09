@@ -1,9 +1,9 @@
 using System.Globalization;
-using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Application.Routines;
+using Orbit.Api.Domain.Routines;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Routines stored in the <c>routines</c> table (weekdays kept as "0,1,2") and their blocks in

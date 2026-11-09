@@ -16,7 +16,7 @@ const INVESTMENTS_URL = '/api/investments';
 const TRADES_URL = '/api/investment-trades';
 const INCOMES_URL = '/api/investment-incomes';
 
-/** Investments stored by the Budgeter API. */
+/** Investments stored by the Orbit API. */
 @Injectable()
 export class HttpInvestmentsGateway extends InvestmentsGateway {
   private readonly httpClient = inject(HttpClient);

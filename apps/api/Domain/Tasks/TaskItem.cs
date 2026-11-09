@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Tasks;
+namespace Orbit.Api.Domain.Tasks;
 
 /// <summary>
 /// A to-do on the Today list: once on a given date, every day, or on some weekdays. Named

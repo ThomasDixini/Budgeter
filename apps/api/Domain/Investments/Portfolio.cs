@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>One investment as held today: units, what they cost, what they are worth and what they paid out.</summary>
 public sealed record PortfolioLine(

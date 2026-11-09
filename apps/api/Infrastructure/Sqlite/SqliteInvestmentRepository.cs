@@ -1,9 +1,9 @@
 using System.Globalization;
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Investments, trades and proventos stored in the <c>investments</c>, <c>investment_trades</c> and

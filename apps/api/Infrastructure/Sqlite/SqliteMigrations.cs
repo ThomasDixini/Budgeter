@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Changes to tables that already existed before the current schema, applied once each and

@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Routines;
+namespace Orbit.Api.Domain.Routines;
 
 /// <summary>One stretch of the rotation: a routine followed for a number of weeks in a row.</summary>
 public sealed class RotationStep

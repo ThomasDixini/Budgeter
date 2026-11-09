@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>How a bill repeats once it is created; each occurrence is stored as a bill of its own.</summary>
 public enum BillRecurrence

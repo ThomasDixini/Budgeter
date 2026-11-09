@@ -1,9 +1,9 @@
 using System.Globalization;
-using Budgeter.Api.Application.Tasks;
-using Budgeter.Api.Domain.Tasks;
+using Orbit.Api.Application.Tasks;
+using Orbit.Api.Domain.Tasks;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Tasks stored in the <c>tasks</c> table (weekdays kept as "0,2,4", repeat as a lower-case name)

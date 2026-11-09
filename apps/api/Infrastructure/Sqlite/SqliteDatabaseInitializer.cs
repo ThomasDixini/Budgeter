@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>Prepares the database before the API starts serving requests.</summary>
 internal sealed class SqliteDatabaseInitializer(

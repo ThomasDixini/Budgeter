@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Finances;
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Application.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>How a new bill repeats; sent only when it is created.</summary>
 public sealed record BillRecurrenceBody(BillRecurrence Kind, int Count)

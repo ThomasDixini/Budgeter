@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>The closing price, in cents, of one unit of a traded symbol in a month (<c>YYYY-MM</c>).</summary>
 public sealed record MonthEndPrice(string Symbol, string Month, long Cents);

@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Infrastructure.Cdi;
+namespace Orbit.Api.Infrastructure.Cdi;
 
 /// <summary>A source that publishes nothing, for when fetching the CDI is switched off (<c>Cdi:Enabled=false</c>).</summary>
 public sealed class NoCdiRateSource : ICdiRateSource

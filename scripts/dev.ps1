@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-$logDir = Join-Path $env:TEMP "budgetcontroller-dev"
+$logDir = Join-Path $env:TEMP "orbit-dev"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 
 $services = @(

@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>A bank account or credit card that transactions are paid from or received into.</summary>
 public sealed class Account

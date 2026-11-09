@@ -6,7 +6,7 @@ import { GoalsGateway } from './goals-gateway';
 
 const GOALS_URL = '/api/goals';
 
-/** Goals stored by the Budgeter API. */
+/** Goals stored by the Orbit API. */
 @Injectable()
 export class HttpGoalsGateway extends GoalsGateway {
   private readonly httpClient = inject(HttpClient);

@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Tasks;
+using Orbit.Api.Domain.Tasks;
 
-namespace Budgeter.Api.Application.Tasks;
+namespace Orbit.Api.Application.Tasks;
 
 /// <summary>Lists every task in creation order.</summary>
 public sealed class ListTasks(ITaskRepository tasks)

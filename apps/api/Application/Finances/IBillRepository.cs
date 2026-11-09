@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 /// <summary>Port to the storage of bills to pay and to receive.</summary>
 public interface IBillRepository

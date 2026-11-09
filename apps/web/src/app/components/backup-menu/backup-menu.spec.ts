@@ -93,7 +93,7 @@ describe('BackupMenu', () => {
     clickAction(fixture, 'Download backup');
 
     expect([downloads.saved, element(fixture).querySelector('.panel')]).toEqual([
-      ['budgeter-backup-2026-11-09-153000.db'],
+      ['orbit-backup-2026-11-09-153000.db'],
       null,
     ]);
   });

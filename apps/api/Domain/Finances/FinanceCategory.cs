@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// What money went to or came from (food, salary…). Kept apart from the routines

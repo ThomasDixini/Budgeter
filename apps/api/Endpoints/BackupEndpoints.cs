@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Backups;
+using Orbit.Api.Application.Backups;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>HTTP routes to download a copy of all the data and to put one back.</summary>
 public static class BackupEndpoints

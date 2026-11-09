@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Tasks;
+namespace Orbit.Api.Domain.Tasks;
 
 /// <summary>How often a task shows up on the Today list.</summary>
 public enum TaskRepeat

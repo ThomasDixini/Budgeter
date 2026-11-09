@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain;
+using Orbit.Api.Domain;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 /// <summary>
 /// Deletes an investment with no trades or proventos; deleting one already gone succeeds, so retries are

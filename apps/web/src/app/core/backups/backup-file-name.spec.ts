@@ -3,9 +3,9 @@ import { FALLBACK_BACKUP_FILE_NAME, backupFileName } from './backup-file-name';
 describe('backupFileName', () => {
   it('reads the plain file name the API sends', () => {
     const header =
-      "attachment; filename=budgeter-backup-2026-11-09-153000.db; filename*=UTF-8''budgeter-backup-2026-11-09-153000.db";
+      "attachment; filename=orbit-backup-2026-11-09-153000.db; filename*=UTF-8''orbit-backup-2026-11-09-153000.db";
 
-    expect(backupFileName(header)).toBe('budgeter-backup-2026-11-09-153000.db');
+    expect(backupFileName(header)).toBe('orbit-backup-2026-11-09-153000.db');
   });
 
   it('reads a quoted file name', () => {

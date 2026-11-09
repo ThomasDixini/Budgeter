@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Tasks;
-using Budgeter.Api.Domain.Tasks;
+using Orbit.Api.Application.Tasks;
+using Orbit.Api.Domain.Tasks;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>Body of <c>PUT /tasks/{taskId}</c>; the id comes from the route.</summary>
 public sealed record SaveTaskRequest(

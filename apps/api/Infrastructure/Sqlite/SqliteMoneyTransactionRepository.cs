@@ -1,9 +1,9 @@
 using System.Globalization;
-using Budgeter.Api.Application.Finances;
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Application.Finances;
+using Orbit.Api.Domain.Finances;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Money transactions stored in the <c>transactions</c> table, dated as <c>YYYY-MM-DD</c> text so date

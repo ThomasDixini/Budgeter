@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Routines;
+namespace Orbit.Api.Domain.Routines;
 
 /// <summary>How a routine block ended on a given day.</summary>
 public enum BlockOutcomeKind

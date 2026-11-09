@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { BlockOutcomesGateway } from './block-outcomes-gateway';
 import { BlockOutcome } from './day-plan';
 
-/** Block outcomes stored by the Budgeter API. */
+/** Block outcomes stored by the Orbit API. */
 @Injectable()
 export class HttpBlockOutcomesGateway extends BlockOutcomesGateway {
   private readonly httpClient = inject(HttpClient);

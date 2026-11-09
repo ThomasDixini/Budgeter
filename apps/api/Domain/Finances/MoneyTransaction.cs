@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// Money that came in (positive amount) or went out (negative amount) of an account on a day. Named

@@ -1,7 +1,7 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// The finance categories and accounts every database starts with, which the user can then change.

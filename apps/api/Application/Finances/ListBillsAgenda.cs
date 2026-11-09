@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 /// <summary>What is to pay and to receive: bills and card invoices, plus the bills settled recently.</summary>
 public sealed record BillsAgenda(IReadOnlyList<Bill> Bills, IReadOnlyList<CardInvoiceDue> CardInvoices);

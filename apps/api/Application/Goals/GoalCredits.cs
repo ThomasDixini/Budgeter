@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Application.Goals;
+namespace Orbit.Api.Application.Goals;
 
 /// <summary>
 /// Turns completed routine blocks into goal progress. Callers store the block outcome and its credit in

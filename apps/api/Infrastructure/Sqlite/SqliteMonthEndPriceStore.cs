@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>Month-end closing prices stored in the <c>month_end_prices</c> table, one row per symbol and month.</summary>
 public sealed class SqliteMonthEndPriceStore(SqliteConnectionFactory connections) : IMonthEndPriceStore

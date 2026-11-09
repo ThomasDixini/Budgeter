@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// Money moved from a bank account to a credit card to pay its invoice. It is neither income nor an

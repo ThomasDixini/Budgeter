@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Application;
+namespace Orbit.Api.Application;
 
 /// <summary>
 /// Outcome of an idempotent create: the stored record and whether this call inserted it

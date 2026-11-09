@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Sample categories, referenced by the blocks of <see cref="SampleRoutineSeed"/>.

@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain;
+namespace Orbit.Api.Domain;
 
 /// <summary>Validates free-text fields typed by the user.</summary>
 public static class RequiredText

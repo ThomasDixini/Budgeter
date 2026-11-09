@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Goals;
+namespace Orbit.Api.Domain.Goals;
 
 /// <summary>Something to repeat (frequency) or reach (objective) within a period, with its progress.</summary>
 public sealed class Goal

@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Finances;
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Application.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>Body of <c>PUT /transactions/{transactionId}</c>; the id comes from the route.</summary>
 public sealed record SaveTransactionRequest(

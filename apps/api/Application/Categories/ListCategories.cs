@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Categories;
+using Orbit.Api.Domain.Categories;
 
-namespace Budgeter.Api.Application.Categories;
+namespace Orbit.Api.Application.Categories;
 
 /// <summary>Lists every category in creation order.</summary>
 public sealed class ListCategories(ICategoryRepository categories)

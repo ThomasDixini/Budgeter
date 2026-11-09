@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Routines;
+namespace Orbit.Api.Domain.Routines;
 
 /// <summary>
 /// A slice of a routine day, optionally tied to a category so it counts toward that category's goals.

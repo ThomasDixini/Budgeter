@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain;
+using Orbit.Api.Domain;
 
-namespace Budgeter.Api.Application.Categories;
+namespace Orbit.Api.Application.Categories;
 
 /// <summary>
 /// Deletes a category together with its goals; routine blocks and tasks that used it stay, without a

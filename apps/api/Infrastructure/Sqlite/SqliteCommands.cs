@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>Runs parameterized SQL and maps rows, so repositories only hold their queries.</summary>
 internal static class SqliteCommands

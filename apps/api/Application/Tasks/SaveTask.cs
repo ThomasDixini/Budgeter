@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Domain.Tasks;
+using Orbit.Api.Application.Categories;
+using Orbit.Api.Domain.Tasks;
 
-namespace Budgeter.Api.Application.Tasks;
+namespace Orbit.Api.Application.Tasks;
 
 public sealed record SaveTaskCommand(
     string Id, string Title, string? CategoryId, TaskRepeat Repeat, IReadOnlyList<int> Days, DateOnly? Date);

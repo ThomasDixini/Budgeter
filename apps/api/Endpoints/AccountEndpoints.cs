@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Finances;
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Application.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>A credit card's limit (in cents) and the days its invoices close and are due.</summary>
 public sealed record CardTermsBody(long LimitCents, int ClosingDay, int DueDay)

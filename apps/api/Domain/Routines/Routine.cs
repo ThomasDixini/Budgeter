@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Routines;
+namespace Orbit.Api.Domain.Routines;
 
 /// <summary>A day template (e.g. weekdays) with its hours and the blocks the day is split into.</summary>
 public sealed class Routine

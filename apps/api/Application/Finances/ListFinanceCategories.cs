@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 /// <summary>Lists every finance category, ordered by name.</summary>
 public sealed class ListFinanceCategories(IFinanceCategoryRepository categories)

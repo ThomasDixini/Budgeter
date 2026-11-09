@@ -1,9 +1,9 @@
 using System.Globalization;
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Daily CDI rates stored in the <c>cdi_rates</c> table. The rate is kept as text so a decimal survives

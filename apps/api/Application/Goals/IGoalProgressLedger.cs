@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Application.Goals;
+namespace Orbit.Api.Application.Goals;
 
 /// <summary>
 /// Port to the log of goal progress. Entries are never edited and every write is idempotent (an entry

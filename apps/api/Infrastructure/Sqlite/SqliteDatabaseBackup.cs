@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Backups;
+using Orbit.Api.Application.Backups;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Backs up and restores the SQLite file as a whole, so every table — of any module, today's or one
@@ -69,5 +69,5 @@ public sealed class SqliteDatabaseBackup(SqliteConnectionFactory connections) : 
             FileOptions.Asynchronous | FileOptions.DeleteOnClose);
 
     private static string TemporaryPath() =>
-        Path.Combine(Path.GetTempPath(), $"budgeter-backup-{Guid.NewGuid():N}.db");
+        Path.Combine(Path.GetTempPath(), $"orbit-backup-{Guid.NewGuid():N}.db");
 }

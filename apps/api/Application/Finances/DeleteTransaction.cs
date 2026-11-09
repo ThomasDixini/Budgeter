@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain;
+using Orbit.Api.Domain;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 /// <summary>Deletes a transaction; deleting one already gone succeeds, so retries are harmless.</summary>
 public sealed class DeleteTransaction(IMoneyTransactionRepository transactions)

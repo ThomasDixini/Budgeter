@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Application.Categories;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 public sealed record SaveRoutineBlockCommand(string Id, string Name, string Start, string End, string? CategoryId);
 

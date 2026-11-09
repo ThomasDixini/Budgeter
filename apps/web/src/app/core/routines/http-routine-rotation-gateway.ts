@@ -6,7 +6,7 @@ import { RoutineRotationGateway } from './routine-rotation-gateway';
 
 const ROUTINE_ROTATION_URL = '/api/routine-rotation';
 
-/** The routine rotation stored by the Budgeter API. */
+/** The routine rotation stored by the Orbit API. */
 @Injectable()
 export class HttpRoutineRotationGateway extends RoutineRotationGateway {
   private readonly httpClient = inject(HttpClient);

@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Domain.Categories;
+using Orbit.Api.Application.Categories;
+using Orbit.Api.Domain.Categories;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 public sealed record CreateCategoryRequest(string Id, string Name, string Color);
 

@@ -1,9 +1,9 @@
-using Budgeter.Api.Application;
-using Budgeter.Api.Application.Backups;
-using Budgeter.Api.Domain;
+using Orbit.Api.Application;
+using Orbit.Api.Application.Backups;
+using Orbit.Api.Domain;
 using Microsoft.AspNetCore.Diagnostics;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>
 /// Turns malformed requests and broken business rules into 400, missing records into 404 and creates

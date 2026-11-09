@@ -9,7 +9,7 @@ const TRANSACTIONS_URL = '/api/transactions';
 const ACCOUNTS_URL = '/api/accounts';
 const CATEGORIES_URL = '/api/finance-categories';
 
-/** Transactions stored by the Budgeter API. */
+/** Transactions stored by the Orbit API. */
 @Injectable()
 export class HttpTransactionsGateway extends TransactionsGateway {
   private readonly httpClient = inject(HttpClient);
@@ -29,7 +29,7 @@ export class HttpTransactionsGateway extends TransactionsGateway {
   }
 }
 
-/** Finance categories and accounts served by the Budgeter API. */
+/** Finance categories and accounts served by the Orbit API. */
 @Injectable()
 export class HttpFinanceReferencesGateway extends FinanceReferencesGateway {
   private readonly httpClient = inject(HttpClient);

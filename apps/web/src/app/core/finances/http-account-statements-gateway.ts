@@ -6,7 +6,7 @@ import { AccountStatementsGateway } from './account-statements-gateway';
 
 const CARD_PAYMENTS_URL = '/api/card-payments';
 
-/** Account statements and card payments served by the Budgeter API. */
+/** Account statements and card payments served by the Orbit API. */
 @Injectable()
 export class HttpAccountStatementsGateway extends AccountStatementsGateway {
   private readonly httpClient = inject(HttpClient);

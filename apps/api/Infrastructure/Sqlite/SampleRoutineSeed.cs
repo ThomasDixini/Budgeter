@@ -1,7 +1,7 @@
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Domain.Routines;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// The weekday and weekend routines the web app used to keep in memory, so a fresh database

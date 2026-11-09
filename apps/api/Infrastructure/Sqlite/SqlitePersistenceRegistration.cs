@@ -1,13 +1,13 @@
-using Budgeter.Api.Application;
-using Budgeter.Api.Application.Backups;
-using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Application.Finances;
-using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Application.Tasks;
+using Orbit.Api.Application;
+using Orbit.Api.Application.Backups;
+using Orbit.Api.Application.Categories;
+using Orbit.Api.Application.Finances;
+using Orbit.Api.Application.Goals;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Application.Routines;
+using Orbit.Api.Application.Tasks;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>Wires the SQLite adapters behind the repository ports.</summary>
 public static class SqlitePersistenceRegistration

@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain;
+namespace Orbit.Api.Domain;
 
 /// <summary>
 /// Quotes a rejected value for an error message. Long values are cut short: the message is logged and

@@ -1,7 +1,7 @@
-using Budgeter.Api.Domain.Tasks;
+using Orbit.Api.Domain.Tasks;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// The tasks the web app used to keep in memory, now recurring so the Today list has something on

@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>Spreads a recurring bill into one bill per occurrence.</summary>
 public static class BillSchedule

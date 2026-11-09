@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// How the monthly income is meant to be shared: a base income and parts that each take a percentage of

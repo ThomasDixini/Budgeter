@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Goals;
+namespace Orbit.Api.Domain.Goals;
 
 /// <summary>
 /// One entry of a goal's progress log. Progress is the sum of the entries inside the goal's current

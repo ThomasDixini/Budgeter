@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// How a credit card bills: its limit, the day each invoice closes and the day it is due. A purchase made

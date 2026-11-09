@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Tasks;
+using Orbit.Api.Domain.Tasks;
 
-namespace Budgeter.Api.Application.Tasks;
+namespace Orbit.Api.Application.Tasks;
 
 /// <summary>Port to the storage of tasks and the days they were done.</summary>
 public interface ITaskRepository

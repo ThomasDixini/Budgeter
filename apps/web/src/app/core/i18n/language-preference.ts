@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Language, languageForBrowser, parseLanguage } from './language';
 
 /** Where the chosen language is kept between visits. */
-export const LANGUAGE_STORAGE_KEY = 'budgeter.language';
+export const LANGUAGE_STORAGE_KEY = 'orbit.language';
 
 /**
  * The language the person picked, remembered in the browser. With nothing remembered (or when storage is

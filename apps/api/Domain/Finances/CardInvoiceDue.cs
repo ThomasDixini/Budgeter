@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// A card invoice still to be paid, shown next to the bills. It is derived from the card's statement, not

@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Application.Backups;
+namespace Orbit.Api.Application.Backups;
 
 /// <summary>Puts back all the data from a backup, replacing what is stored now.</summary>
 public sealed class RestoreBackup(IDatabaseBackup backup)
