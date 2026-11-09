@@ -4,7 +4,9 @@ import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { IdGenerator } from '../../../core/ids/id-generator';
 import { findCategory } from '../../../core/routines/category';
-import { Routine, WEEKDAY_LABELS } from '../../../core/routines/routine';
+import { Routine, WEEKDAY_LABELS, weekdaysLabel } from '../../../core/routines/routine';
+import { RoutineRotationStore } from '../../../core/routines/routine-rotation-store';
+import { dayClashes } from '../../../core/routines/routine-schedule';
 import {
   BlockChanges,
   appendBlock,
@@ -16,6 +18,7 @@ import {
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { RoutinePartition } from './routine-partition/routine-partition';
 import { RoutineSummary } from './routine-summary/routine-summary';
+import { RotationPlan } from './rotation-plan/rotation-plan';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
 const UNCATEGORIZED_COLOR = '#8A8A94';
@@ -26,20 +29,26 @@ const SAVE_STATE_MESSAGES: Readonly<Record<SaveState, string>> = {
   idle: '',
   saving: 'Saving…',
   saved: 'All changes saved',
-  // The notice at the bottom of the screen gives the reason, e.g. a weekday another routine uses.
+  // The notice at the bottom of the screen gives the reason, e.g. a block category that is gone.
   failed: "Couldn't save the routine. Fix what the message below says, then try again.",
   'delete-failed': "Couldn't delete the routine. Try again.",
 };
 
+const CLASH_LOST =
+  '"{name}" also runs on {days} and is the one used on those days. To alternate them by week, add both to the rotation plan.';
+const CLASH_WON =
+  '"{name}" also runs on {days}; this routine is the one used on those days. To alternate them by week, add both to the rotation plan.';
+
 /** Lets the user pick a day template, its weekdays and hours, and split the day into blocks. */
 @Component({
   selector: 'app-routine-editor',
-  imports: [TranslatePipe, PageHeading, RoutinePartition, RoutineSummary, LoadFailed],
+  imports: [TranslatePipe, PageHeading, RoutinePartition, RoutineSummary, RotationPlan, LoadFailed],
   templateUrl: './routine-editor.html',
   styleUrl: './routine-editor.css',
 })
 export class RoutineEditor {
   private readonly store = inject(RoutinesStore);
+  private readonly rotationStore = inject(RoutineRotationStore);
   private readonly ids = inject(IdGenerator);
   /** Unsaved edits per routine id, so switching templates keeps them until "Save routine". */
   private readonly edits = signal<ReadonlyMap<string, Routine>>(new Map());
@@ -70,6 +79,16 @@ export class RoutineEditor {
       ? 'Unsaved changes'
       : SAVE_STATE_MESSAGES[this.saveState()],
   );
+  /** Other routines that claim some of the draft's weekdays in the same weeks. */
+  protected readonly clashes = computed(() => {
+    const draft = this.draft();
+    if (draft === undefined) return [];
+    return dayClashes(this.routines(), this.rotationStore.rotation(), draft).map((clash) => ({
+      name: clash.routine.name,
+      days: weekdaysLabel(clash.days),
+      message: clash.winsTheDays ? CLASH_LOST : CLASH_WON,
+    }));
+  });
   protected readonly rows = computed(() =>
     (this.draft()?.blocks ?? []).map((block) => ({
       block,
@@ -100,6 +119,7 @@ export class RoutineEditor {
       this.saveState.set('delete-failed');
       return;
     }
+    this.rotationStore.forgetRoutine(draft.id);
     this.dropEdit(draft.id);
     this.selectRoutine(undefined);
   }

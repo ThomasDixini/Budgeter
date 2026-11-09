@@ -8,6 +8,7 @@ import {
   DemoBlockOutcomesGateway,
   DemoCategoriesGateway,
   DemoGoalsGateway,
+  DemoRoutineRotationGateway,
   DemoRoutinesGateway,
   DemoTasksGateway,
 } from './demo-routines-gateways';
@@ -125,5 +126,49 @@ describe('demo routines gateways', () => {
     const blocks = demo.routines.flatMap((routine) => routine.blocks);
     expect(blocks.some((block) => block.categoryId === 'study')).toBe(false);
     expect(demo.tasks.some((task) => task.categoryId === 'study')).toBe(false);
+  });
+});
+
+describe('demo routine rotation gateway', () => {
+  function rotationSetup(): {
+    rotation: DemoRoutineRotationGateway;
+    routines: DemoRoutinesGateway;
+  } {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: Clock, useValue: new FixedClock(NOW) },
+        DemoRoutineRotationGateway,
+        DemoRoutinesGateway,
+      ],
+    });
+    return {
+      rotation: TestBed.inject(DemoRoutineRotationGateway),
+      routines: TestBed.inject(DemoRoutinesGateway),
+    };
+  }
+
+  it('starts off and keeps a saved rotation from the Monday of its week', async () => {
+    const { rotation } = rotationSetup();
+    const before = await firstValueFrom(rotation.get());
+
+    await firstValueFrom(
+      rotation.save({ startsOn: TODAY, steps: [{ routineId: 'weekdays', weeks: 2 }] }),
+    );
+
+    expect([before.steps, await firstValueFrom(rotation.get())]).toEqual([
+      [],
+      { startsOn: '2026-11-02', steps: [{ routineId: 'weekdays', weeks: 2 }] },
+    ]);
+  });
+
+  it('drops the steps of a deleted routine', async () => {
+    const { rotation, routines } = rotationSetup();
+    await firstValueFrom(
+      rotation.save({ startsOn: TODAY, steps: [{ routineId: 'weekdays', weeks: 2 }] }),
+    );
+
+    await firstValueFrom(routines.delete('weekdays'));
+
+    expect((await firstValueFrom(rotation.get())).steps).toEqual([]);
   });
 });

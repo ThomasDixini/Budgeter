@@ -5,6 +5,7 @@ import { routes } from '../../../app.routes';
 import { Clock } from '../../../core/calendar/clock';
 import { FixedClock } from '../../../core/calendar/fixed-clock';
 import { FakeBlockOutcomesGateway } from '../../../core/routines/fake-block-outcomes-gateway';
+import { FakeRoutineRotationGateway } from '../../../core/routines/fake-routine-rotation-gateway';
 import {
   FakeCategoriesGateway,
   FakeGoalsGateway,
@@ -42,6 +43,7 @@ async function openToday(
   clock: Clock,
   routines: readonly Routine[] = SAMPLE_ROUTINES,
   outcomes = new FakeBlockOutcomesGateway(),
+  rotation = new FakeRoutineRotationGateway(),
 ): Promise<HTMLElement> {
   TestBed.configureTestingModule({
     providers: [
@@ -53,6 +55,7 @@ async function openToday(
         new FakeRoutinesGateway(routines),
         undefined,
         outcomes,
+        rotation,
       ),
     ],
   });
@@ -148,6 +151,51 @@ describe('Today with a routine that runs past midnight', () => {
     press(element, 'Complete Patrol');
 
     expect(outcomes.recorded.at(-1)?.isoDay).toBe('2026-10-26');
+  });
+});
+
+describe('Today with a rotation plan', () => {
+  const intense: Routine = { ...SAMPLE_ROUTINES[0], id: 'intense', name: 'Intense', end: '22:00' };
+  const routines = [...SAMPLE_ROUTINES, intense];
+  /** Two weeks of the weekday routine, then one of "Intense", from Monday, October 26, 2026. */
+  const plan = (): FakeRoutineRotationGateway =>
+    new FakeRoutineRotationGateway({
+      startsOn: '2026-10-26',
+      steps: [
+        { routineId: 'weekdays', weeks: 2 },
+        { routineId: 'intense', weeks: 1 },
+      ],
+    });
+  const header = '.timeline-card .card-header';
+
+  it("follows the routine of this week's step and says which week of the cycle it is", async () => {
+    const wednesdayOfWeekThree = new FixedClock(new Date(2026, 10, 11, 10, 0));
+
+    const element = await openToday(wednesdayOfWeekThree, routines, undefined, plan());
+
+    expect(text(element, `${header} .ui-muted`)).toContain('Intense');
+    expect(text(element, `${header} .rotation-week`)).toBe('Week 3 of 3');
+  });
+
+  it('starts the cycle over after its last step', async () => {
+    const element = await openToday(
+      new FixedClock(new Date(2026, 10, 16, 10, 0)),
+      routines,
+      undefined,
+      plan(),
+    );
+
+    expect(text(element, `${header} .ui-muted`)).toContain('Weekdays');
+    expect(text(element, `${header} .rotation-week`)).toBe('Week 1 of 3');
+  });
+
+  it('keeps a routine outside the plan on its days, without a week badge', async () => {
+    const saturday = new FixedClock(new Date(2026, 10, 14, 10, 0));
+
+    const element = await openToday(saturday, routines, undefined, plan());
+
+    expect(text(element, `${header} .ui-muted`)).toContain('Weekend');
+    expect(element.querySelector(`${header} .rotation-week`)).toBeNull();
   });
 });
 

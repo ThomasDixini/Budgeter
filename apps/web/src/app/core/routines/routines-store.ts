@@ -17,6 +17,8 @@ import {
   sameId,
 } from '../lists/list-positions';
 import { Routine, blockMinutesWithin, weekdaysLabel, weeklyMinutesByCategory } from './routine';
+import { RoutineRotationStore } from './routine-rotation-store';
+import { weekShare } from './routine-rotation';
 import { RoutinesGateway } from './routines-gateway';
 
 /** A routine block seen from its category: which block and when it happens. */
@@ -54,6 +56,7 @@ export class RoutinesStore {
   private readonly ids = inject(IdGenerator);
   private readonly errorHandler = inject(ErrorHandler);
   private readonly clock = inject(Clock);
+  private readonly rotationStore = inject(RoutineRotationStore);
   private readonly categoryList = signal<readonly Category[]>([]);
   private readonly routineList = signal<readonly Routine[]>([]);
   private readonly goalList = signal<readonly Goal[]>([]);
@@ -286,14 +289,16 @@ export class RoutinesStore {
   }
 
   /**
-   * Minutes per week the routines dedicate to a category.
+   * Minutes per week the routines dedicate to a category; a routine of the rotation counts for the
+   * share of weeks it applies in, so this is the average week of the cycle.
    * @example store.weeklyMinutes('study') // 450
    */
   weeklyMinutes(categoryId: string): number {
-    return this.routineList().reduce(
-      (sum, routine) => sum + (weeklyMinutesByCategory(routine).get(categoryId) ?? 0),
-      0,
-    );
+    const rotation = this.rotationStore.rotation();
+    return this.routineList().reduce((sum, routine) => {
+      const minutes = weeklyMinutesByCategory(routine).get(categoryId) ?? 0;
+      return sum + minutes * weekShare(rotation, routine.id);
+    }, 0);
   }
 
   /**

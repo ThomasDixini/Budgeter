@@ -14,6 +14,6 @@ public interface IRoutineRepository
     /// <summary>Stores the routine, replacing every field and block of a stored one with the same id.</summary>
     Task SaveAsync(Routine routine, CancellationToken cancellationToken);
 
-    /// <summary>Removes the routine and its blocks; an unknown id is ignored.</summary>
+    /// <summary>Removes the routine, its blocks and its rotation steps; an unknown id is ignored.</summary>
     Task DeleteAsync(string routineId, CancellationToken cancellationToken);
 }

@@ -117,6 +117,14 @@
   gap: 12px;
 }
 
+/* Two routines on one weekday is allowed (the rotation may alternate them), so this only warns. */
+.clash {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-warning-text);
+}
+
 /* The name sits on its own row above the weekdays and hours. */
 .routine-name {
   flex: 1 1 100%;

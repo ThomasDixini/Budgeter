@@ -24,9 +24,12 @@ import {
   DemoBlockOutcomesGateway,
   DemoCategoriesGateway,
   DemoGoalsGateway,
+  DemoRoutineRotationGateway,
   DemoRoutinesGateway,
   DemoTasksGateway,
 } from './core/routines/demo/demo-routines-gateways';
+import { HttpRoutineRotationGateway } from './core/routines/http-routine-rotation-gateway';
+import { RoutineRotationGateway } from './core/routines/routine-rotation-gateway';
 import { TranslatedTitleStrategy } from './core/i18n/translated-title-strategy';
 import { NoticeErrorHandler } from './core/notices/notice-error-handler';
 import { CategoriesGateway } from './core/routines/categories-gateway';
@@ -74,6 +77,10 @@ export const appConfig: ApplicationConfig = {
     },
     { provide: GoalsGateway, useClass: isDemo ? DemoGoalsGateway : HttpGoalsGateway },
     { provide: RoutinesGateway, useClass: isDemo ? DemoRoutinesGateway : HttpRoutinesGateway },
+    {
+      provide: RoutineRotationGateway,
+      useClass: isDemo ? DemoRoutineRotationGateway : HttpRoutineRotationGateway,
+    },
     { provide: TasksGateway, useClass: isDemo ? DemoTasksGateway : HttpTasksGateway },
     {
       provide: BlockOutcomesGateway,

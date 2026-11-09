@@ -1,0 +1,122 @@
+:host {
+  display: block;
+}
+
+.rotation {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.intro {
+  margin: 0;
+  max-width: 720px;
+  font-size: var(--font-size-sm);
+}
+
+.start .ui-input {
+  max-width: 220px;
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: var(--border-hairline) solid rgba(255, 255, 255, 0.08);
+}
+
+.step-weeks {
+  width: 96px;
+  padding-left: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-mint);
+}
+
+.step-routine {
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.step-length {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.weeks-input {
+  width: 76px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.remove-step {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border-radius: var(--radius-control);
+  border: 0;
+  background: transparent;
+  color: var(--color-text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.remove-step:hover {
+  color: var(--color-danger);
+  background: rgba(var(--color-danger-rgb), 0.08);
+}
+
+.add-step {
+  height: 52px;
+  border-radius: 16px;
+}
+
+.add-step:disabled,
+.save-plan:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+.plan-message {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.plan-message.failed {
+  color: var(--color-danger);
+}

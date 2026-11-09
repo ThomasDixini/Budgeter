@@ -1,5 +1,4 @@
 using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Domain;
 using Budgeter.Api.Domain.Routines;
 
 namespace Budgeter.Api.Application.Routines;
@@ -16,7 +15,9 @@ public sealed record SaveRoutineCommand(
 
 /// <summary>
 /// Creates or replaces a routine as a whole; saving the same routine twice leaves the same state,
-/// so a retried request is harmless.
+/// so a retried request is harmless. Routines may share weekdays: the rotation alternates routines by
+/// week (e.g. "Normal" and "Intense" both on Mon–Fri), so whether two of them clash depends on it. The
+/// web app picks one deterministically and warns about days two routines claim in the same week.
 /// </summary>
 public sealed class SaveRoutine(IRoutineRepository routines, ICategoryRepository categories)
 {
@@ -31,22 +32,8 @@ public sealed class SaveRoutine(IRoutineRepository routines, ICategoryRepository
         {
             await RequireCategoryAsync(categoryId, cancellationToken);
         }
-        await RequireFreeDaysAsync(routine, cancellationToken);
         await routines.SaveAsync(routine, cancellationToken);
         return routine;
-    }
-
-    // Two routines on the same weekday would leave Today guessing which one applies.
-    private async Task RequireFreeDaysAsync(Routine routine, CancellationToken cancellationToken)
-    {
-        var stored = await routines.ListAsync(cancellationToken);
-        foreach (var other in stored.Where(other => other.Id != routine.Id))
-        {
-            var shared = other.Days.Intersect(routine.Days).ToList();
-            if (shared.Count == 0) continue;
-            throw new DomainRuleException(
-                $"Expected weekdays no other routine uses, received [{string.Join(", ", shared)}] already used by \"{other.Name}\"");
-        }
     }
 
     private static Routine ToRoutine(SaveRoutineCommand command)

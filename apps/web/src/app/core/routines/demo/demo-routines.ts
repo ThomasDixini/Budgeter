@@ -6,6 +6,7 @@ import { Category } from '../category';
 import { BlockOutcome } from '../day-plan';
 import { Goal } from '../goal';
 import { Routine } from '../routine';
+import { NO_ROTATION, RoutineRotation } from '../routine-rotation';
 import { Task } from '../task';
 import { completedInPeriod } from './demo-goal-progress';
 import { buildDemoRoutines } from './demo-routines-data';
@@ -29,6 +30,7 @@ export function upsertById<TRecord extends { readonly id: string }>(
 export class DemoRoutines {
   categories: Category[];
   routines: Routine[];
+  rotation: RoutineRotation = NO_ROTATION;
   tasks: Task[];
   goals: Goal[];
   private readonly outcomes: Map<string, BlockOutcome[]>;

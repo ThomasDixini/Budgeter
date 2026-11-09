@@ -35,6 +35,11 @@
               | t: { name: routine.name, start: routine.start, end: routine.end }
           }}</span>
         }
+        @if (rotationWeek(); as week) {
+          <span class="ui-tag rotation-week">{{
+            'Week {week} of {total}' | t: { week: week.week, total: week.cycleLength }
+          }}</span>
+        }
       </div>
       @if (routine(); as routine) {
         <app-day-timeline
