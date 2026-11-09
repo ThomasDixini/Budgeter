@@ -1,0 +1,105 @@
+/*
+ * Not positioned itself: the panel hangs from the header's row of controls, so it lines up with that
+ * row's right edge. On a phone the button sits at the far left, and a panel under it ran off-screen.
+ */
+:host {
+  display: inline-block;
+}
+
+.toggle {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: var(--border-hairline) solid var(--color-border-card);
+  background: var(--color-surface-glass);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.toggle:hover,
+.toggle[aria-expanded='true'] {
+  color: var(--color-text);
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(280px, 100%);
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--radius-card);
+  border: var(--border-hairline) solid var(--color-border-card);
+  /* The surface tint is see-through; the page colour under it keeps the screen behind from showing. */
+  background: linear-gradient(var(--color-surface), var(--color-surface)), var(--color-bg);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+}
+
+.hint,
+.warning {
+  margin: 0 0 4px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.warning {
+  color: var(--color-warning-text);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action {
+  position: relative;
+  flex: 1;
+  min-height: var(--touch-target);
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  border: var(--border-hairline) solid var(--color-border-control);
+  background: var(--color-surface-glass);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.action:hover {
+  background: var(--color-surface-hover);
+}
+
+.action:disabled,
+.action.disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.action.danger {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.action:focus-within {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* The label is the visible control; the input stays reachable by keyboard and screen readers. */
+.file {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}

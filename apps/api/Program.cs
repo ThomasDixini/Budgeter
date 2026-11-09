@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Budgeter.Api.Application.Backups;
 using Budgeter.Api.Application.Categories;
 using Budgeter.Api.Application.Finances;
 using Budgeter.Api.Application.Goals;
@@ -88,6 +89,9 @@ builder.Services.AddScoped<SaveTrade>();
 builder.Services.AddScoped<DeleteTrade>();
 builder.Services.AddScoped<SaveIncome>();
 builder.Services.AddScoped<DeleteIncome>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ExportBackup>();
+builder.Services.AddScoped<RestoreBackup>();
 
 var app = builder.Build();
 
@@ -108,5 +112,6 @@ app.MapCardPaymentEndpoints();
 app.MapBillEndpoints();
 app.MapInvestmentEndpoints();
 app.MapIncomeSplitEndpoints();
+app.MapBackupEndpoints();
 
 await app.RunAsync();

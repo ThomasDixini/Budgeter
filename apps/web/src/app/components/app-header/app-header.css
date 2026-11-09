@@ -14,6 +14,8 @@
 }
 
 .end {
+  /* Anchors the backup panel to the right edge of this row. */
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;

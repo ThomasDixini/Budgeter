@@ -1,0 +1,50 @@
+<button
+  class="toggle"
+  type="button"
+  aria-controls="backup-panel"
+  [attr.aria-expanded]="isOpen()"
+  [title]="'Back up or restore your data' | t"
+  (click)="toggle()"
+>
+  {{ 'Backup' | t }}
+</button>
+@if (isOpen()) {
+  <div class="panel" id="backup-panel" role="group" [attr.aria-label]="'Backup' | t">
+    @if (chosenFile(); as file) {
+      <p class="warning">
+        {{
+          'Restoring replaces all your data, in every module, with the data in {file}.'
+            | t: { file: file.name }
+        }}
+      </p>
+      <div class="actions">
+        <button class="action danger" type="button" [disabled]="isBusy()" (click)="restore(file)">
+          {{ 'Replace my data' | t }}
+        </button>
+        <button
+          class="action"
+          type="button"
+          [disabled]="isBusy()"
+          (click)="chosenFile.set(undefined)"
+        >
+          {{ 'Cancel' | t }}
+        </button>
+      </div>
+    } @else {
+      <p class="hint">{{ 'One file with everything: finances, routines, goals and tasks.' | t }}</p>
+      <button class="action" type="button" [disabled]="isBusy()" (click)="download()">
+        {{ 'Download backup' | t }}
+      </button>
+      <label class="action" [class.disabled]="isBusy()">
+        {{ 'Restore from a backup' | t }}
+        <input
+          class="file"
+          type="file"
+          accept=".db,application/vnd.sqlite3"
+          [disabled]="isBusy()"
+          (change)="choose($event)"
+        />
+      </label>
+    }
+  </div>
+}

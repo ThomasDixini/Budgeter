@@ -5,6 +5,12 @@ namespace Budgeter.Api.Infrastructure.Sqlite;
 /// <summary>Creates the tables on startup; every statement is safe to run on an existing database.</summary>
 internal static class SqliteSchema
 {
+    /// <summary>
+    /// Stamped in SQLite's <c>application_id</c> header field ("Budg" in ASCII) so a restore can tell a
+    /// Budgeter database from any other SQLite file.
+    /// </summary>
+    public const int ApplicationId = 0x42756467;
+
     private const string CreateTables = """
         CREATE TABLE IF NOT EXISTS categories (
             id TEXT PRIMARY KEY,
@@ -201,6 +207,7 @@ internal static class SqliteSchema
     public static async Task EnsureCreatedAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
         await SqliteCommands.ExecuteAsync(connection, CreateTables, cancellationToken);
+        await SqliteCommands.ExecuteAsync(connection, $"PRAGMA application_id = {ApplicationId}", cancellationToken);
         await SqliteMigrations.ApplyAsync(connection, cancellationToken);
     }
 }

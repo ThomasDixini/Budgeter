@@ -1,4 +1,5 @@
 using Budgeter.Api.Application;
+using Budgeter.Api.Application.Backups;
 using Budgeter.Api.Domain;
 using Microsoft.AspNetCore.Diagnostics;
 
@@ -40,6 +41,7 @@ internal sealed class BusinessExceptionHandler(
     private static int? StatusCodeFor(Exception exception) => exception switch
     {
         DomainRuleException => StatusCodes.Status400BadRequest,
+        InvalidBackupException => StatusCodes.Status400BadRequest,
         ResourceNotFoundException => StatusCodes.Status404NotFound,
         ConflictException => StatusCodes.Status409Conflict,
         BadHttpRequestException badRequest => badRequest.StatusCode,

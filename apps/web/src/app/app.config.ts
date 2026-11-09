@@ -58,6 +58,8 @@ import { BillsGateway } from './core/finances/bills-gateway';
 import { HttpInvestmentsGateway } from './core/finances/http-investments-gateway';
 import { InvestmentsGateway } from './core/finances/investments-gateway';
 import { HttpBillsGateway } from './core/finances/http-bills-gateway';
+import { BackupGateway } from './core/backups/backup-gateway';
+import { HttpBackupGateway } from './core/backups/http-backup-gateway';
 
 // A link with ?demo=on (or off) switches the made-up data before the gateways are chosen.
 applyDemoFromAddress(globalThis.location?.search ?? '');
@@ -107,6 +109,7 @@ export const appConfig: ApplicationConfig = {
       provide: InvestmentsGateway,
       useClass: isDemo ? DemoInvestmentsGateway : HttpInvestmentsGateway,
     },
+    { provide: BackupGateway, useClass: HttpBackupGateway },
     ...(isDemo
       ? [
           {
