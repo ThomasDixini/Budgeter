@@ -15,7 +15,9 @@ $launcher = Join-Path $PSScriptRoot 'launch-app.ps1'
 # The same icon the browser tab shows. It is copied out of the project so the shortcut keeps its icon
 # even while the project folder is being moved or recloned.
 $sourceIcon = Join-Path $root 'apps\web\public\favicon.ico'
-$iconPath = Join-Path $env:LOCALAPPDATA 'Orbit\orbit.ico'
+# Windows caches shortcut icons by file path, so an icon that changes must come with a new file name
+# (bump the number) or Explorer keeps showing the old one.
+$iconPath = Join-Path $env:LOCALAPPDATA 'Orbit\orbit-icon-2.ico'
 # The Desktop can be redirected (OneDrive), so ask Windows instead of assuming %USERPROFILE%\Desktop.
 $shortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Orbit.lnk'
 
