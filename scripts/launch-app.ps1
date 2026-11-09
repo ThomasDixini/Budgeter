@@ -1,7 +1,8 @@
 ﻿<#
 .SYNOPSIS
-Starts Budgeter like a desktop app: runs the API and the web app in the background and opens it in its
-own browser window; closing that window stops what this script started.
+Starts Budgeter like a desktop app: runs the API and the web app in the background and opens it in the
+default browser. The servers keep running afterwards (scripts\stop-app.ps1 stops them); opening it again
+reuses them.
 
 .EXAMPLE
 powershell -ExecutionPolicy Bypass -File scripts\launch-app.ps1
@@ -135,30 +136,6 @@ function Wait-Until([string] $Url, [string] $What) {
     throw "$What did not answer at $Url within $startupTimeoutSeconds seconds; see $logDir"
 }
 
-# Edge ships with Windows, so it is the first choice; Chrome is the fallback.
-function Find-AppBrowser {
-    foreach ($name in 'msedge.exe', 'chrome.exe') {
-        foreach ($hive in 'HKLM', 'HKCU') {
-            $key = "${hive}:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\$name"
-            $path = (Get-ItemProperty -Path $key -ErrorAction SilentlyContinue).'(default)'
-            if ($path -and (Test-Path $path)) { return $path }
-        }
-    }
-    return $null
-}
-
-# A profile of its own makes the window a separate instance, so waiting for it to close works.
-function Open-AppWindow {
-    $browser = Find-AppBrowser
-    if (-not $browser) {
-        Start-Process $webUrl
-        return $null
-    }
-    $profile = Join-Path $appData 'browser-profile'
-    return Start-Process -FilePath $browser -PassThru -ArgumentList `
-        "--app=$webUrl", "--user-data-dir=`"$profile`"", '--no-first-run', '--no-default-browser-check'
-}
-
 function Stop-Tree($Process) {
     if ($Process -and -not $Process.HasExited) { & taskkill /PID $Process.Id /T /F | Out-Null }
 }
@@ -173,26 +150,22 @@ $started = @()
 try {
     $splash = Show-Splash
     Install-WebDependencies
-    # Servers already running (for example from scripts\dev.ps1) are reused and left running on exit.
-    # The web app is slower to start, so it goes first and builds while the API compiles.
+    # Servers already running (from an earlier launch or scripts\dev.ps1) are reused: opening the shortcut
+    # again just opens another tab. The web app is slower to start, so it goes first and builds while
+    # the API compiles.
     if (-not (Test-Url $webUrl)) { $started += Start-Web }
     if (-not (Test-Url "$apiUrl/health")) { $started += Start-Api }
     Wait-Until "$apiUrl/health" 'The API'
     Wait-Until $webUrl 'The web app'
-    $window = Open-AppWindow
     Close-Splash
-    # Without a window of its own there is nothing to wait for, so the servers stay up.
-    if (-not $window) { $started = @() }
-    elseif ($started.Count -gt 0) { $window.WaitForExit() }
+    # The default browser has no window this script could wait on, so the servers keep running after it
+    # exits; scripts\stop-app.ps1 stops them.
+    Start-Process $webUrl
 }
 catch {
     Close-Splash
     $started | ForEach-Object { Stop-Tree $_ }
-    $started = @()
     # Logged first: a hidden script that dies while showing the message would otherwise leave no trace.
     "$(Get-Date -Format s) $($_ | Out-String)" | Add-Content (Join-Path $logDir 'launcher.log')
     Show-Failure $_.Exception.Message
-}
-finally {
-    $started | ForEach-Object { Stop-Tree $_ }
 }
