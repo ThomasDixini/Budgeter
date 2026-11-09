@@ -6,6 +6,9 @@ import {
   FakeRoutinesGateway,
   provideFakeRoutinesGateways,
 } from '../../../core/routines/fake-routines-gateways';
+import { FakeRoutineRotationGateway } from '../../../core/routines/fake-routine-rotation-gateway';
+import { RoutineRotationGateway } from '../../../core/routines/routine-rotation-gateway';
+import { RoutineRotationStore } from '../../../core/routines/routine-rotation-store';
 import { RoutinesGateway } from '../../../core/routines/routines-gateway';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { RoutineEditor } from './routine-editor';
@@ -334,6 +337,55 @@ describe('RoutineEditor', () => {
     click(fixture, '.new-routine');
 
     expect(selectedTab(fixture)).toBe('New routine');
+  });
+
+  it('warns when a weekday is also used by a routine created before', () => {
+    const fixture = createEditor();
+    click(fixture, '[role="tab"]', 1);
+
+    click(fixture, '.day', 4);
+
+    expect(element(fixture).querySelector('.clash')?.textContent?.trim()).toBe(
+      '"Weekdays" also runs on Fri and is the one used on those days. To alternate them by week, add both to the rotation plan.',
+    );
+  });
+
+  it('shows no warning for routines the rotation alternates', () => {
+    const rotation = new FakeRoutineRotationGateway({
+      startsOn: '2026-10-26',
+      steps: [
+        { routineId: 'weekdays', weeks: 1 },
+        { routineId: 'weekend', weeks: 1 },
+      ],
+    });
+    TestBed.overrideProvider(RoutineRotationGateway, { useValue: rotation });
+    const fixture = createEditor();
+    click(fixture, '[role="tab"]', 1);
+
+    click(fixture, '.day', 4);
+
+    expect(element(fixture).querySelector('.clash')).toBeNull();
+  });
+
+  it('takes a deleted routine out of the rotation plan', async () => {
+    const rotation = new FakeRoutineRotationGateway({
+      startsOn: '2026-10-26',
+      steps: [
+        { routineId: 'weekdays', weeks: 2 },
+        { routineId: 'weekend', weeks: 1 },
+      ],
+    });
+    TestBed.overrideProvider(RoutineRotationGateway, { useValue: rotation });
+    const fixture = createEditor();
+
+    click(fixture, '.delete-routine');
+    click(fixture, '.delete-yes');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(TestBed.inject(RoutineRotationStore).rotation().steps).toEqual([
+      { routineId: 'weekend', weeks: 1 },
+    ]);
   });
 
   it('waits for routines before showing the editor', () => {

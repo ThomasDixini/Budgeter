@@ -53,6 +53,16 @@ internal static class SqliteSchema
             PRIMARY KEY (routine_id, id)
         );
         CREATE INDEX IF NOT EXISTS ix_routine_blocks_category_id ON routine_blocks (category_id);
+        CREATE TABLE IF NOT EXISTS routine_rotation (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            starts_on TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS routine_rotation_steps (
+            position INTEGER PRIMARY KEY,
+            routine_id TEXT NOT NULL REFERENCES routines (id) ON DELETE CASCADE,
+            weeks INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ix_routine_rotation_steps_routine ON routine_rotation_steps (routine_id);
         CREATE TABLE IF NOT EXISTS tasks (
             id TEXT PRIMARY KEY,
             title TEXT NOT NULL,

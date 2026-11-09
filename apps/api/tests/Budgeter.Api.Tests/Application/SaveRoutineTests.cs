@@ -35,17 +35,15 @@ public class SaveRoutineTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_RejectsWeekdaysAnotherRoutineUses()
+    public async Task ExecuteAsync_AllowsWeekdaysAnotherRoutineUses()
     {
+        // The rotation alternates routines on the same weekdays by week, so sharing days is not an error.
         var routines = new InMemoryRoutineRepository(Routines.Weekdays());
-        var overlapping = new SaveRoutineCommand("friday-late", "Friday late", [4, 5], "09:00", "18:00", []);
+        var intense = new SaveRoutineCommand("intense", "Intense", [0, 1, 2, 3, 4], "07:00", "22:00", []);
 
-        var exception = await Should.ThrowAsync<DomainRuleException>(() =>
-            new SaveRoutine(routines, _categories).ExecuteAsync(overlapping, CancellationToken.None));
+        await new SaveRoutine(routines, _categories).ExecuteAsync(intense, CancellationToken.None);
 
-        exception.Message.ShouldContain("[4]");
-        exception.Message.ShouldContain("Weekdays");
-        routines.SaveCount.ShouldBe(0);
+        (await routines.ListAsync(CancellationToken.None)).Select(routine => routine.Id).ShouldBe(["weekdays", "intense"]);
     }
 
     [Fact]

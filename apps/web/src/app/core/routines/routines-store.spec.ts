@@ -5,6 +5,7 @@ import { Clock } from '../calendar/clock';
 import { FixedClock } from '../calendar/fixed-clock';
 import { Category } from './category';
 import { Goal, GoalChanges } from './goal';
+import { FakeRoutineRotationGateway } from './fake-routine-rotation-gateway';
 import { Routine } from './routine';
 import {
   FakeCategoriesGateway,
@@ -727,6 +728,31 @@ describe('RoutinesStore', () => {
 
   it('sums weekly minutes of a category across routines', () => {
     expect(createStore().store.weeklyMinutes('networking')).toBe(600);
+  });
+
+  it('averages the weekly minutes of a routine the rotation follows only some weeks', () => {
+    const rotation = new FakeRoutineRotationGateway({
+      startsOn: '2026-10-26',
+      steps: [
+        { routineId: 'weekdays', weeks: 1 },
+        { routineId: 'weekend', weeks: 1 },
+      ],
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        ...provideFakeRoutinesGateways(
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          rotation,
+        ),
+        { provide: Clock, useValue: new FixedClock(new Date(2026, 9, 26, 9, 0)) },
+      ],
+    });
+
+    expect(TestBed.inject(RoutinesStore).weeklyMinutes('networking')).toBe(300);
   });
 
   it('lists the routine blocks of a category', () => {

@@ -7,7 +7,10 @@ import { BlockOutcome } from '../day-plan';
 import { Goal, GoalChanges } from '../goal';
 import { GoalsGateway } from '../goals-gateway';
 import { Routine } from '../routine';
+import { RoutineRotation } from '../routine-rotation';
+import { RoutineRotationGateway } from '../routine-rotation-gateway';
 import { RoutinesGateway } from '../routines-gateway';
+import { withStart, withoutRoutine } from '../rotation-edits';
 import { Task } from '../task';
 import { TasksGateway } from '../tasks-gateway';
 import { DemoRoutines, upsertById } from './demo-routines';
@@ -32,7 +35,23 @@ export class DemoRoutinesGateway extends RoutinesGateway {
 
   override delete(routineId: string): Observable<void> {
     this.demo.routines = this.demo.routines.filter((routine) => routine.id !== routineId);
+    this.demo.rotation = withoutRoutine(this.demo.rotation, routineId);
     return of(undefined);
+  }
+}
+
+/** The routine rotation kept in memory by the demo; it starts off, with no steps. */
+@Injectable()
+export class DemoRoutineRotationGateway extends RoutineRotationGateway {
+  private readonly demo = inject(DemoRoutines);
+
+  override get(): Observable<RoutineRotation> {
+    return of(this.demo.rotation);
+  }
+
+  override save(rotation: RoutineRotation): Observable<RoutineRotation> {
+    this.demo.rotation = withStart(rotation, rotation.startsOn);
+    return of(this.demo.rotation);
   }
 }
 

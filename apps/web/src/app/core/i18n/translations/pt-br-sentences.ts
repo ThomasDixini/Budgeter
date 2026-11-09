@@ -47,6 +47,8 @@ export const PT_BR_SENTENCES: Readonly<Record<string, string>> = {
   '{blocks} in the routine': '{blocks} na rotina',
   '{weekly} per week': '{weekly} por semana',
   'See all ({count})': 'Ver todas ({count})',
+  'Week {number}': 'Semana {number}',
+  'Weeks {from}–{to}': 'Semanas {from}–{to}',
 
   // Bills
   'Overdue by {days}': 'Atrasada há {days}',

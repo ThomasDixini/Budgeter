@@ -100,6 +100,11 @@
               />
             </label>
           </div>
+          @for (clash of clashes(); track clash.name) {
+            <p class="clash" role="status">
+              {{ clash.message | t: { name: clash.name, days: (clash.days | t) } }}
+            </p>
+          }
           <div class="danger-zone">
             @if (isConfirmingDelete()) {
               <div class="delete-confirm" role="group" [attr.aria-label]="'Confirm deletion' | t">
@@ -228,6 +233,7 @@
 
       <app-routine-summary class="summary" [routine]="draft" [categories]="categories()" />
     </div>
+    <app-rotation-plan />
   } @else if (hasLoadFailed()) {
     <app-load-failed class="empty" message="Couldn't load your routines." (retry)="reload()" />
   } @else {

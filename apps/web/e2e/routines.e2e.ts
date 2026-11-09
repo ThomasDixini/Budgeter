@@ -287,6 +287,37 @@ test.describe('routine editor', () => {
     await openRoutine(page, routine);
     await expect(blockCategory).toHaveValue(category.id);
   });
+
+  test('a rotation plan alternating two routines by week survives a reload', async ({
+    page,
+    request,
+  }, testInfo) => {
+    // The database holds one rotation: on both projects at once, each run would overwrite the other's.
+    test.skip(testInfo.project.name !== 'desktop', 'The rotation is one for the whole database');
+    const normal = await createRoutine(request);
+    const intense = await createRoutine(request);
+    await routines.goto('/routines/routine');
+    const plan = page.getByRole('region', { name: 'Rotation plan' });
+
+    await plan.getByRole('button', { name: 'Add step' }).click();
+    await plan.getByRole('combobox', { name: 'Routine for Week 1' }).selectOption(normal.id);
+    await plan.getByRole('spinbutton').first().fill('2');
+    await plan.getByRole('spinbutton').first().blur();
+    await plan.getByRole('button', { name: 'Add step' }).click();
+    await plan.getByRole('combobox', { name: 'Routine for Week 3' }).selectOption(intense.id);
+    await plan.getByRole('button', { name: 'Save plan' }).click();
+
+    await expect(plan.getByText('Rotation saved')).toBeVisible();
+    await page.reload();
+    await expect(plan.getByRole('combobox', { name: 'Routine for Weeks 1–2' })).toHaveValue(
+      normal.id,
+    );
+    await expect(plan.getByRole('combobox', { name: 'Routine for Week 3' })).toHaveValue(
+      intense.id,
+    );
+    // Turns the rotation off again; its routines have no weekdays, so it never changed other tests' days.
+    await request.put('/api/routine-rotation', { data: { startsOn: '2030-01-07', steps: [] } });
+  });
 });
 
 test.describe('categories & goals', () => {

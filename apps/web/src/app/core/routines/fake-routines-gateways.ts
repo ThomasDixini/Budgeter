@@ -10,7 +10,9 @@ import { Routine } from './routine';
 import { RoutinesGateway } from './routines-gateway';
 import { BlockOutcomesGateway } from './block-outcomes-gateway';
 import { FakeBlockOutcomesGateway } from './fake-block-outcomes-gateway';
+import { FakeRoutineRotationGateway } from './fake-routine-rotation-gateway';
 import { FakeTasksGateway } from './fake-tasks-gateway';
+import { RoutineRotationGateway } from './routine-rotation-gateway';
 import { SAMPLE_CATEGORIES, SAMPLE_GOALS, SAMPLE_ROUTINES } from './sample-routines';
 import { TasksGateway } from './tasks-gateway';
 
@@ -182,8 +184,10 @@ export function provideFakeRoutinesGateways(
   routines = new FakeRoutinesGateway(),
   tasks = new FakeTasksGateway(),
   blockOutcomes = new FakeBlockOutcomesGateway(),
+  rotation = new FakeRoutineRotationGateway(),
 ): Provider[] {
   return [
+    { provide: RoutineRotationGateway, useValue: rotation },
     { provide: BlockOutcomesGateway, useValue: blockOutcomes },
     { provide: CategoriesGateway, useValue: categories },
     { provide: GoalsGateway, useValue: goals },

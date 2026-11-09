@@ -3,10 +3,12 @@ import { RouterLink } from '@angular/router';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { Clock } from '../../../core/calendar/clock';
 import { isoDate, longDateLabel } from '../../../core/calendar/date-label';
-import { minutesOfDay, toMinutes, weekdayIndex } from '../../../core/calendar/time-of-day';
+import { minutesOfDay, toMinutes } from '../../../core/calendar/time-of-day';
 import { isHappening } from '../../../core/routines/day-clock';
 import { dayProgress } from '../../../core/routines/day-timeline';
-import { activeRoutine } from '../../../core/routines/routine';
+import { rotationWeek } from '../../../core/routines/routine-rotation';
+import { RoutineRotationStore } from '../../../core/routines/routine-rotation-store';
+import { activeRoutine } from '../../../core/routines/routine-schedule';
 import { RoutinesStore } from '../../../core/routines/routines-store';
 import { TasksStore } from '../../../core/routines/tasks-store';
 import { BlockOutcomesStore } from '../../../core/routines/block-outcomes-store';
@@ -29,6 +31,7 @@ const CLOCK_TICK_MS = 30_000;
 })
 export class Today {
   private readonly store = inject(RoutinesStore);
+  private readonly rotationStore = inject(RoutineRotationStore);
   private readonly tasksStore = inject(TasksStore);
   private readonly outcomesStore = inject(BlockOutcomesStore);
   private readonly clock = inject(Clock);
@@ -47,8 +50,13 @@ export class Today {
   );
   /** The routine running now, which may be last night's when it runs past midnight. */
   private readonly active = computed(() =>
-    activeRoutine(this.store.routines(), weekdayIndex(this.moment()), this.nowMinutes()),
+    activeRoutine(this.store.routines(), this.rotationStore.rotation(), this.moment()),
   );
+  /** Where this week falls in the rotation, shown while the running routine is one of its routines. */
+  protected readonly rotationWeek = computed(() => {
+    const week = rotationWeek(this.rotationStore.rotation(), this.routineDay());
+    return week?.routineId === this.active()?.routine.id ? week : undefined;
+  });
   /** The running routine's version of the day, with completed and skipped blocks applied. */
   protected readonly plan = computed(() => {
     const routine = this.active()?.routine;

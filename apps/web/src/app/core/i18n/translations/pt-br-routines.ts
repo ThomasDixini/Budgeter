@@ -76,6 +76,27 @@ export const PT_BR_ROUTINES: Readonly<Record<string, string>> = {
   "Blocks without a category (like Work and Lunch) organize the day but don't count toward goals.":
     'Blocos sem categoria (como Trabalho e Almoço) organizam o dia, mas não contam para as metas.',
   'Manage categories': 'Gerenciar categorias',
+  '"{name}" also runs on {days} and is the one used on those days. To alternate them by week, add both to the rotation plan.':
+    '"{name}" também roda em {days} e é a usada nesses dias. Para alterná-las por semana, adicione as duas ao plano de rotação.',
+  '"{name}" also runs on {days}; this routine is the one used on those days. To alternate them by week, add both to the rotation plan.':
+    '"{name}" também roda em {days}; esta rotina é a usada nesses dias. Para alterná-las por semana, adicione as duas ao plano de rotação.',
+
+  // Rotation plan
+  'Rotation plan': 'Plano de rotação',
+  'This week: week {week} of {total} · {name}': 'Esta semana: semana {week} de {total} · {name}',
+  'Alternate routines week by week, e.g. two weeks of "Normal", one of "Intense" and one of "Light". After the last step the cycle starts over. Routines left out of the plan apply every week.':
+    'Alterne rotinas semana a semana, ex.: duas semanas de "Normal", uma de "Intense" e uma de "Light". Depois da última etapa o ciclo recomeça. Rotinas fora do plano valem todas as semanas.',
+  'Week 1 starts the week of': 'A semana 1 é a semana de',
+  'Routine for {weeks}': 'Rotina de {weeks}',
+  'Remove {weeks}': 'Remover {weeks}',
+  week: 'semana',
+  weeks: 'semanas',
+  'Save a routine first to plan it here.': 'Salve uma rotina primeiro para planejá-la aqui.',
+  'Add step': 'Adicionar etapa',
+  'Save plan': 'Salvar plano',
+  'Rotation saved': 'Rotação salva',
+  "Couldn't save the rotation. Fix what the message below says, then try again.":
+    'Não foi possível salvar a rotação. Corrija o que a mensagem abaixo diz e tente novamente.',
 
   // Today
   'Blocks of the day': 'Blocos do dia',
@@ -107,6 +128,7 @@ export const PT_BR_ROUTINES: Readonly<Record<string, string>> = {
   'Edit routine': 'Editar rotina',
   'Day timeline': 'Linha do tempo do dia',
   'Routine: {name} · {start} – {end}': 'Rotina: {name} · {start} – {end}',
+  'Week {week} of {total}': 'Semana {week} de {total}',
   'No routine runs today.': 'Nenhuma rotina roda hoje.',
   'Set one up': 'Configurar uma',
 };
