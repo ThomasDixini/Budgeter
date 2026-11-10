@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>One share of the income: a name, a percentage, a display color and the categories it spends on.</summary>
 public sealed class IncomeSplitPart

@@ -6,7 +6,7 @@ import { IncomeSplitGateway } from './income-split-gateway';
 
 const INCOME_SPLIT_URL = '/api/income-split';
 
-/** The income split stored by the Budgeter API. */
+/** The income split stored by the Orbit API. */
 @Injectable()
 export class HttpIncomeSplitGateway extends IncomeSplitGateway {
   private readonly httpClient = inject(HttpClient);

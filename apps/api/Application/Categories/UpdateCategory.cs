@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Categories;
+using Orbit.Api.Domain.Categories;
 
-namespace Budgeter.Api.Application.Categories;
+namespace Orbit.Api.Application.Categories;
 
 public sealed record UpdateCategoryCommand(string Id, string Name, string Color);
 

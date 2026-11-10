@@ -25,17 +25,17 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore Budgeter.slnx
+        run: dotnet restore Orbit.slnx
 
       - name: Format check
-        run: dotnet format Budgeter.slnx --verify-no-changes --no-restore
+        run: dotnet format Orbit.slnx --verify-no-changes --no-restore
 
       - name: Build
-        run: dotnet build Budgeter.slnx --no-restore --configuration Release
+        run: dotnet build Orbit.slnx --no-restore --configuration Release
 
       - name: Test
         run: |
-          dotnet test Budgeter.slnx --no-build --configuration Release \
+          dotnet test Orbit.slnx --no-build --configuration Release \
             --collect:"XPlat Code Coverage;Format=opencover" \
             --results-directory TestResults
 
@@ -176,7 +176,7 @@ jobs:
             /d:sonar.qualitygate.timeout=300
 
       - name: Build
-        run: dotnet build Budgeter.slnx --configuration Release
+        run: dotnet build Orbit.slnx --configuration Release
 
       - name: End analysis
         env:

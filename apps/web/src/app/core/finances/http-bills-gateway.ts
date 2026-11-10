@@ -6,7 +6,7 @@ import { BillsGateway } from './bills-gateway';
 
 const BILLS_URL = '/api/bills';
 
-/** Bills stored by the Budgeter API. */
+/** Bills stored by the Orbit API. */
 @Injectable()
 export class HttpBillsGateway extends BillsGateway {
   private readonly httpClient = inject(HttpClient);

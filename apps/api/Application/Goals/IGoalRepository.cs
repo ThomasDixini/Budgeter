@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Application.Goals;
+namespace Orbit.Api.Application.Goals;
 
 /// <summary>Port to the storage of goals; progress is read for the period around a given day.</summary>
 public interface IGoalRepository

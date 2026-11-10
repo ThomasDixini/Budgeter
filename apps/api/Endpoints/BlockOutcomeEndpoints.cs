@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Application.Routines;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>Body of <c>PUT /routines/{routineId}/days/{date}/blocks/{blockId}</c>.</summary>
 public sealed record RecordBlockOutcomeRequest(BlockOutcomeKind Outcome, string At);

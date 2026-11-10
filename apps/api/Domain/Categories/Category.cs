@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Budgeter.Api.Domain.Categories;
+namespace Orbit.Api.Domain.Categories;
 
 /// <summary>A life area (study, networking…) that groups routine blocks and goals.</summary>
 public sealed partial class Category

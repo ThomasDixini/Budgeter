@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>
 /// How the portfolio did against leaving the same money in the CDI. Both gains are over the same cash

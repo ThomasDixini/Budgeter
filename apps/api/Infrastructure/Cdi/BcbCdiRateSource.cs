@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.Json;
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Infrastructure.Cdi;
+namespace Orbit.Api.Infrastructure.Cdi;
 
 /// <summary>
 /// The daily CDI rate (series 12 of the Central Bank's time-series system, free and keyless). The service

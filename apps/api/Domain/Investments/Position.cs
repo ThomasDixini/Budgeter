@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>
 /// What is held of one investment after its trades: the units and what they cost. Sales take their share

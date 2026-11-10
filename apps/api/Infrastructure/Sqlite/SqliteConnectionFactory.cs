@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Opens SQLite connections with foreign keys enforced. While a unit of work runs, repositories are

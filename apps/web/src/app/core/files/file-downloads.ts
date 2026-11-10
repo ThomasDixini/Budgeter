@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class FileDownloads {
-  /** @example inject(FileDownloads).save('budgeter-backup.db', blob) */
+  /** @example inject(FileDownloads).save('orbit-backup.db', blob) */
   save(fileName: string, content: Blob): void {
     const address = URL.createObjectURL(content);
     const link = document.createElement('a');

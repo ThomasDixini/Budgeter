@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain;
+using Orbit.Api.Domain;
 
-namespace Budgeter.Api.Application.Tasks;
+namespace Orbit.Api.Application.Tasks;
 
 /// <summary>Deletes a task and its history; deleting one already gone succeeds, so retries are harmless.</summary>
 public sealed class DeleteTask(ITaskRepository tasks)

@@ -9,7 +9,7 @@ dotnet_files="$(printf '%s\n' "$staged" | grep '\.cs$')"
 if [ -n "$dotnet_files" ]; then
   echo "[pre-commit] Formatting staged .NET code..."
   # shellcheck disable=SC2086 # one argument per file
-  dotnet format Budgeter.slnx --no-restore --include $dotnet_files || exit 1
+  dotnet format Orbit.slnx --no-restore --include $dotnet_files || exit 1
 fi
 
 web_files="$(printf '%s\n' "$staged" | grep '^apps/web/' | sed 's#^apps/web/##')"

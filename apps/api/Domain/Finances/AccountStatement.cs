@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>One invoice of a credit card and what was spent on it (purchases minus refunds), in cents.</summary>
 public sealed record InvoiceStatement(InvoiceCycle Cycle, long AmountCents);

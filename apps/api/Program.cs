@@ -1,19 +1,19 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Budgeter.Api.Application.Backups;
-using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Application.Finances;
-using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Application.Tasks;
-using Budgeter.Api.Endpoints;
-using Budgeter.Api.Infrastructure.Cdi;
-using Budgeter.Api.Infrastructure.Quotes;
-using Budgeter.Api.Infrastructure.Sqlite;
+using Orbit.Api.Application.Backups;
+using Orbit.Api.Application.Categories;
+using Orbit.Api.Application.Finances;
+using Orbit.Api.Application.Goals;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Application.Routines;
+using Orbit.Api.Application.Tasks;
+using Orbit.Api.Endpoints;
+using Orbit.Api.Infrastructure.Cdi;
+using Orbit.Api.Infrastructure.Quotes;
+using Orbit.Api.Infrastructure.Sqlite;
 
-[assembly: InternalsVisibleTo("Budgeter.Api.Tests")]
+[assembly: InternalsVisibleTo("Orbit.Api.Tests")]
 
 // Bodies are small JSON documents (a full routine is a few KB); the cap keeps an oversized one from
 // being read, validated and stored row by row.

@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain;
+using Orbit.Api.Domain;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 /// <summary>
 /// Deletes a routine with its blocks. Deleting one that is already gone succeeds, so a retried

@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>
 /// Something money is invested in (a stock, a fund, a bond). It holds the latest price the user typed in;

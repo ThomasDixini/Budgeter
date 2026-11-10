@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Application;
+namespace Orbit.Api.Application;
 
 /// <summary>
 /// Raised when a create names an id that is already stored with other contents: a retry must repeat

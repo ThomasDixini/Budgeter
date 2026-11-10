@@ -6,7 +6,7 @@ import { RoutinesGateway } from './routines-gateway';
 
 const ROUTINES_URL = '/api/routines';
 
-/** Routines stored by the Budgeter API. */
+/** Routines stored by the Orbit API. */
 @Injectable()
 export class HttpRoutinesGateway extends RoutinesGateway {
   private readonly httpClient = inject(HttpClient);

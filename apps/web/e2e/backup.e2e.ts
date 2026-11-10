@@ -17,7 +17,7 @@ test.describe('backup of all the data', () => {
   test('downloads the whole database as a dated SQLite file', async () => {
     const download = await backup.download();
 
-    expect(download.suggestedFilename()).toMatch(/^budgeter-backup-\d{4}-\d{2}-\d{2}-\d{6}\.db$/);
+    expect(download.suggestedFilename()).toMatch(/^orbit-backup-\d{4}-\d{2}-\d{2}-\d{6}\.db$/);
     const content = await readFile(await download.path());
     expect(content.subarray(0, 15).toString('latin1')).toBe('SQLite format 3');
   });
@@ -29,7 +29,7 @@ test.describe('backup of all the data', () => {
     await backup.replaceButton.click();
 
     await expect(backup.notice).toContainText(
-      'That file is not a Budgeter backup. Nothing was changed.',
+      'That file is not an Orbit backup. Nothing was changed.',
     );
   });
 });

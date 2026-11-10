@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Goals;
+namespace Orbit.Api.Domain.Goals;
 
 /// <summary>What feeds a goal's progress; it follows from the goal's type and is never chosen.</summary>
 public enum GoalTracking

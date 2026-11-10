@@ -1,13 +1,14 @@
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>Creates the tables on startup; every statement is safe to run on an existing database.</summary>
 internal static class SqliteSchema
 {
     /// <summary>
-    /// Stamped in SQLite's <c>application_id</c> header field ("Budg" in ASCII) so a restore can tell a
-    /// Budgeter database from any other SQLite file.
+    /// Stamped in SQLite's <c>application_id</c> header field so a restore can tell an Orbit database from
+    /// any other SQLite file. It spells "Budg", from when the app was named Budgeter; it stays so backups
+    /// taken back then can still be restored.
     /// </summary>
     public const int ApplicationId = 0x42756467;
 

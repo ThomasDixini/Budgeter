@@ -1,7 +1,7 @@
-using Budgeter.Api.Domain;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Domain;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 /// <summary>
 /// Deletes a trade; deleting one already gone succeeds, so retries are harmless. A purchase that later

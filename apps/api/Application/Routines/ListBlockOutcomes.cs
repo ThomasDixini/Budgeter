@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 /// <summary>Lists the blocks completed or skipped on a day.</summary>
 public sealed class ListBlockOutcomes(IBlockOutcomeRepository outcomes)

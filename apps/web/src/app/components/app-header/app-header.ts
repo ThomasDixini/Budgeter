@@ -11,7 +11,7 @@ import { LanguageSwitcher } from '../language-switcher/language-switcher';
   selector: 'app-header',
   imports: [RouterLink, TranslatePipe, LanguageSwitcher, DemoSwitch, BackupMenu],
   template: `<header class="app-header">
-    <a class="brand" routerLink="/">Budgeter</a>
+    <a class="brand" routerLink="/">Orbit</a>
     <ng-content />
     <div class="end">
       <!-- The demo shows made-up data, while a backup always holds the person's own: kept apart. -->

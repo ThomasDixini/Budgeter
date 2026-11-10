@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 public sealed record IncomeSplitPartCommand(
     string Id, string Name, int Percent, int Color, IReadOnlyList<string> CategoryIds);

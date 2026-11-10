@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Application.Routines;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 public sealed record RoutineBlockRequest(string Id, string Name, string Start, string End, string? CategoryId = null);
 

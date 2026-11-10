@@ -7,7 +7,7 @@ import { TasksGateway } from './tasks-gateway';
 const TASKS_URL = '/api/tasks';
 const COMPLETIONS_URL = '/api/task-completions';
 
-/** Tasks and their completions stored by the Budgeter API. */
+/** Tasks and their completions stored by the Orbit API. */
 @Injectable()
 export class HttpTasksGateway extends TasksGateway {
   private readonly httpClient = inject(HttpClient);

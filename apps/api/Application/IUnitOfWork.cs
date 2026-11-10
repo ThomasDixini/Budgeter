@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Application;
+namespace Orbit.Api.Application;
 
 /// <summary>
 /// Port that runs several repository writes as one: either all of them are stored or none is, so a

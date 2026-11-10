@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Categories;
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Application.Categories;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Application.Goals;
+namespace Orbit.Api.Application.Goals;
 
 /// <summary>
 /// Sets a goal on an existing category; retrying with the same id and definition returns the stored

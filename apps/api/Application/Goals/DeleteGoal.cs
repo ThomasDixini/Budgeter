@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain;
+using Orbit.Api.Domain;
 
-namespace Budgeter.Api.Application.Goals;
+namespace Orbit.Api.Application.Goals;
 
 /// <summary>Deletes a goal and its progress; deleting one already gone succeeds, so retries are harmless.</summary>
 public sealed class DeleteGoal(IGoalRepository goals)

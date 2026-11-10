@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Endpoints;
+namespace Orbit.Api.Endpoints;
 
 /// <summary>The latest price typed for an investment: cents for one unit and the day it is from.</summary>
 public sealed record PriceBody(long Cents, DateOnly On)

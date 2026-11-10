@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Budgeter.Api.Domain.Goals;
+namespace Orbit.Api.Domain.Goals;
 
 /// <summary>
 /// How an objective is marked achieved in the progress log. A mark belongs to one period of the

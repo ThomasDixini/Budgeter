@@ -1,5 +1,5 @@
-// The E2E suite points the dev server at its own API instance through BUDGETER_API_URL.
-const apiUrl = process.env['BUDGETER_API_URL'] ?? 'http://localhost:5099';
+// The E2E suite points the dev server at its own API instance through ORBIT_API_URL.
+const apiUrl = process.env['ORBIT_API_URL'] ?? 'http://localhost:5099';
 
 export default {
   '/api': {

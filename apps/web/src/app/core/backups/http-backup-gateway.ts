@@ -8,7 +8,7 @@ const BACKUP_URL = '/api/backup';
 const RESTORE_URL = '/api/backup/restore';
 const SQLITE_HEADERS = new HttpHeaders({ 'Content-Type': 'application/vnd.sqlite3' });
 
-/** The backup of the Budgeter API: its whole SQLite database. */
+/** The backup of the Orbit API: its whole SQLite database. */
 @Injectable()
 export class HttpBackupGateway extends BackupGateway {
   private readonly httpClient = inject(HttpClient);

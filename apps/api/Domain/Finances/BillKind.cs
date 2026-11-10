@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>Which way a bill moves money: a payable goes out when settled, a receivable comes in.</summary>
 public enum BillKind

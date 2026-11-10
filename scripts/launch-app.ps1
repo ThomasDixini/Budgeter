@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-Starts Budgeter like a desktop app: runs the API and the web app in the background and opens it in the
+Starts Orbit like a desktop app: runs the API and the web app in the background and opens it in the
 default browser. The servers keep running afterwards (scripts\stop-app.ps1 stops them); opening it again
 reuses them.
 
@@ -12,11 +12,11 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 $apiUrl = 'http://localhost:5099'
 $webUrl = 'http://localhost:4200'
-$appData = Join-Path $env:LOCALAPPDATA 'Budgeter'
+$appData = Join-Path $env:LOCALAPPDATA 'Orbit'
 $logDir = Join-Path $appData 'logs'
 $startupTimeoutSeconds = 240
 $apiProject = Join-Path $root 'apps\api'
-$apiDll = Join-Path $apiProject 'bin\Release\net10.0\Budgeter.Api.dll'
+$apiDll = Join-Path $apiProject 'bin\Release\net10.0\Orbit.Api.dll'
 $splash = $null
 
 # A hidden script has no message loop, so the splash only paints while the waiting loops call this.
@@ -33,7 +33,7 @@ function Show-Splash {
     $form.ShowInTaskbar = $false
     $form.Size = New-Object System.Drawing.Size 360, 150
     $form.BackColor = [System.Drawing.ColorTranslator]::FromHtml('#050507')
-    $form.Controls.Add((New-SplashLabel 'Budgeter' 22 24 ([System.Drawing.FontStyle]::Bold)))
+    $form.Controls.Add((New-SplashLabel 'Orbit' 22 24 ([System.Drawing.FontStyle]::Bold)))
     $form.Controls.Add((New-SplashLabel 'Starting...' 11 76 ([System.Drawing.FontStyle]::Regular)))
     $bar = New-Object System.Windows.Forms.ProgressBar
     $bar.Style = 'Marquee'
@@ -114,7 +114,7 @@ function Build-Api {
     if ($build.ExitCode -ne 0) { throw "The API build failed (exit $($build.ExitCode)); see $logDir" }
 }
 
-# Run from the project folder, as `dotnet run` does, so the relative database path stays apps\api\budgeter.db.
+# Run from the project folder, as `dotnet run` does, so the relative database path stays apps\api\orbit.db.
 function Start-Api {
     Build-Api
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
@@ -142,7 +142,7 @@ function Stop-Tree($Process) {
 
 function Show-Failure([string] $Message) {
     Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show($Message, 'Budgeter', 'OK', 'Error') | Out-Null
+    [System.Windows.Forms.MessageBox]::Show($Message, 'Orbit', 'OK', 'Error') | Out-Null
 }
 
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null

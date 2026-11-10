@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 public sealed record SaveTradeCommand(
     string Id, string InvestmentId, DateOnly Date, TradeKind Kind, long QuantityThousandths, long UnitPriceCents);

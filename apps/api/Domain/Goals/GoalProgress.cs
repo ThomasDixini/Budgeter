@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Goals;
+namespace Orbit.Api.Domain.Goals;
 
 /// <summary>How the entries of a goal's current period add up.</summary>
 public static class GoalProgress

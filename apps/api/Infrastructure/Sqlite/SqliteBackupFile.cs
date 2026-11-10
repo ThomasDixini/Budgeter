@@ -1,9 +1,9 @@
-using Budgeter.Api.Application.Backups;
+using Orbit.Api.Application.Backups;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
-/// <summary>Opens a file offered for restore once it proves to be an intact Budgeter database.</summary>
+/// <summary>Opens a file offered for restore once it proves to be an intact Orbit database.</summary>
 internal static class SqliteBackupFile
 {
     private static readonly byte[] SqliteHeader = "SQLite format 3\0"u8.ToArray();
@@ -20,14 +20,14 @@ internal static class SqliteBackupFile
         try
         {
             await connection.OpenAsync(cancellationToken);
-            await RequireBudgeterDatabaseAsync(connection, cancellationToken);
+            await RequireOrbitDatabaseAsync(connection, cancellationToken);
             return connection;
         }
         catch (Exception error) when (error is SqliteException or InvalidBackupException)
         {
             await connection.DisposeAsync();
             throw error as InvalidBackupException
-                ?? new InvalidBackupException($"Expected a readable Budgeter backup, received a damaged SQLite file: {error.Message}");
+                ?? new InvalidBackupException($"Expected a readable Orbit backup, received a damaged SQLite file: {error.Message}");
         }
     }
 
@@ -38,16 +38,16 @@ internal static class SqliteBackupFile
         var read = await file.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, cancellationToken);
         if (read == header.Length && header.AsSpan().SequenceEqual(SqliteHeader)) return;
         throw new InvalidBackupException(
-            $"Expected a Budgeter backup (a SQLite .db file), received a {file.Length}-byte file that is not a SQLite database");
+            $"Expected an Orbit backup (a SQLite .db file), received a {file.Length}-byte file that is not a SQLite database");
     }
 
-    private static async Task RequireBudgeterDatabaseAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    private static async Task RequireOrbitDatabaseAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
         var applicationId = await PragmaAsync(connection, "application_id", cancellationToken);
         if (applicationId != SqliteSchema.ApplicationId)
         {
             throw new InvalidBackupException(
-                $"Expected a Budgeter backup (application_id {SqliteSchema.ApplicationId}), received a SQLite database with application_id {applicationId}");
+                $"Expected an Orbit backup (application_id {SqliteSchema.ApplicationId}), received a SQLite database with application_id {applicationId}");
         }
         await RequireKnownVersionAsync(connection, cancellationToken);
         await RequireIntactAsync(connection, cancellationToken);
@@ -59,7 +59,7 @@ internal static class SqliteBackupFile
         var version = await PragmaAsync(connection, "user_version", cancellationToken);
         if (version <= SqliteMigrations.LatestVersion) return;
         throw new InvalidBackupException(
-            $"Expected a backup of schema version {SqliteMigrations.LatestVersion} or older, received version {version} from a newer Budgeter");
+            $"Expected a backup of schema version {SqliteMigrations.LatestVersion} or older, received version {version} from a newer Orbit");
     }
 
     private static async Task RequireIntactAsync(SqliteConnection connection, CancellationToken cancellationToken)

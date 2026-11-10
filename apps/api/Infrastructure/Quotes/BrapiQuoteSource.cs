@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Infrastructure.Quotes;
+namespace Orbit.Api.Infrastructure.Quotes;
 
 /// <summary>
 /// Closing prices of B3 symbols from brapi.dev. It asks for the daily history and keeps the last close of

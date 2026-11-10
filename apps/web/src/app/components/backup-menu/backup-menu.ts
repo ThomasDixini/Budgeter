@@ -7,7 +7,7 @@ import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { describeFailure } from '../../core/notices/notice-error-handler';
 import { UserNotices } from '../../core/notices/user-notices';
 
-export const NOT_A_BACKUP_NOTICE = 'That file is not a Budgeter backup. Nothing was changed.';
+export const NOT_A_BACKUP_NOTICE = 'That file is not an Orbit backup. Nothing was changed.';
 
 /**
  * A header menu to download a copy of all the data and to put one back. A restore replaces every

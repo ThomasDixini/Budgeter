@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain;
+namespace Orbit.Api.Domain;
 
 /// <summary>
 /// Raised when input breaks a business rule; the message names the offending value and the expected shape.

@@ -1,9 +1,9 @@
 using System.Globalization;
-using Budgeter.Api.Application.Routines;
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Application.Routines;
+using Orbit.Api.Domain.Routines;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// The routine rotation stored in <c>routine_rotation</c> (its start, one row) and its steps in

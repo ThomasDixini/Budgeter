@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 /// <summary>How a new bill repeats: the kind of recurrence and the total number of occurrences.</summary>
 public sealed record BillRecurrenceCommand(BillRecurrence Kind, int Count);

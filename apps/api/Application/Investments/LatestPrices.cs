@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 /// <summary>The latest traded price of a symbol, in cents, and the day it is from.</summary>
 public sealed record LatestQuote(string Symbol, long Cents, DateOnly Day);

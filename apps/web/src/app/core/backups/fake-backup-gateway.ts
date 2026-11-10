@@ -17,7 +17,7 @@ export class FakeBackupGateway extends BackupGateway {
 
   constructor(
     private readonly stored: BackupDownload = {
-      fileName: 'budgeter-backup-2026-11-09-153000.db',
+      fileName: 'orbit-backup-2026-11-09-153000.db',
       content: new Blob(['SQLite format 3']),
     },
   ) {

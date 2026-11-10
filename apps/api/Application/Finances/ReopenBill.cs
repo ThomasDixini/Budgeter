@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Finances;
+using Orbit.Api.Domain.Finances;
 
-namespace Budgeter.Api.Application.Finances;
+namespace Orbit.Api.Application.Finances;
 
 /// <summary>Undoes a settlement: the bill is open again and the transaction it created is removed.</summary>
 public sealed class ReopenBill(IBillRepository bills, DeleteTransaction deleteTransaction, IUnitOfWork unitOfWork)

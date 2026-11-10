@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Application.Goals;
+namespace Orbit.Api.Application.Goals;
 
 /// <summary>Lists every goal with the progress of its current period, in creation order.</summary>
 public sealed class ListGoals(IGoalRepository goals)

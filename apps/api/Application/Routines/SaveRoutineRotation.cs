@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 public sealed record RotationStepCommand(string RoutineId, int Weeks);
 

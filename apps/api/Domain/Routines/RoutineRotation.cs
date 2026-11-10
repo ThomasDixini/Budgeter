@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Routines;
+namespace Orbit.Api.Domain.Routines;
 
 /// <summary>
 /// Which routine is followed week by week, as a cycle that repeats: e.g. "Normal" for two weeks,

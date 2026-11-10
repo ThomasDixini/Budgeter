@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 /// <summary>Port to the storage of blocks completed or skipped per day.</summary>
 public interface IBlockOutcomeRepository

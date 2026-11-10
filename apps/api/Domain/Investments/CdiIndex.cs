@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Investments;
+namespace Orbit.Api.Domain.Investments;
 
 /// <summary>The CDI rate of one business day, as a percentage (0.0545 is 0.0545% for the day).</summary>
 public sealed record CdiRate(DateOnly Date, decimal DailyPercent);

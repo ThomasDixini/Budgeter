@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Finances;
+namespace Orbit.Api.Domain.Finances;
 
 /// <summary>
 /// One billing period of a credit card: purchases dated from <see cref="StartsOn"/> up to the day before

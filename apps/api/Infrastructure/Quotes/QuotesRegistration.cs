@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Investments;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Application.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Infrastructure.Quotes;
+namespace Orbit.Api.Infrastructure.Quotes;
 
 /// <summary>A source that publishes nothing, for when fetching quotes is switched off (<c>Quotes:Enabled=false</c>).</summary>
 public sealed class NoQuoteSource : IQuoteSource

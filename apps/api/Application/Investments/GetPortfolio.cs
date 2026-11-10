@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Budgeter.Api.Domain.Investments;
+using Orbit.Api.Domain.Investments;
 
-namespace Budgeter.Api.Application.Investments;
+namespace Orbit.Api.Application.Investments;
 
 /// <summary>The portfolio with the trades and proventos behind it, for the page to list.</summary>
 public sealed record PortfolioSnapshot(

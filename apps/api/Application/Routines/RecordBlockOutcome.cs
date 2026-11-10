@@ -1,7 +1,7 @@
-using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Application.Goals;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 public sealed record RecordBlockOutcomeCommand(
     string RoutineId, string BlockId, DateOnly Date, BlockOutcomeKind Kind, string At);

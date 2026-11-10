@@ -1,5 +1,5 @@
 /** Where the choice of showing made-up data is kept between visits. */
-export const DEMO_STORAGE_KEY = 'budgeter.demo';
+export const DEMO_STORAGE_KEY = 'orbit.demo';
 
 /**
  * Whether the screens show made-up (demo) data instead of the person's own. Off unless it was

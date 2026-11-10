@@ -1,7 +1,7 @@
-using Budgeter.Api.Domain;
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Domain;
+using Orbit.Api.Domain.Goals;
 
-namespace Budgeter.Api.Application.Goals;
+namespace Orbit.Api.Application.Goals;
 
 public sealed record SetGoalAchievementCommand(string GoalId, DateOnly Day, bool IsAchieved);
 

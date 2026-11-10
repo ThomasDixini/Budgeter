@@ -1,6 +1,6 @@
-using Budgeter.Api.Domain.Routines;
+using Orbit.Api.Domain.Routines;
 
-namespace Budgeter.Api.Application.Routines;
+namespace Orbit.Api.Application.Routines;
 
 /// <summary>Lists every routine in creation order.</summary>
 public sealed class ListRoutines(IRoutineRepository routines)

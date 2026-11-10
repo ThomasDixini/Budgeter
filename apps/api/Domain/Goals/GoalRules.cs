@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Goals;
+namespace Orbit.Api.Domain.Goals;
 
 /// <summary>Business rules a goal definition must satisfy.</summary>
 internal static class GoalRules

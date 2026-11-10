@@ -1,4 +1,4 @@
-namespace Budgeter.Api.Domain.Goals;
+namespace Orbit.Api.Domain.Goals;
 
 /// <summary>The days, both included, whose progress counts toward a goal's current period.</summary>
 public readonly record struct GoalWindow(DateOnly Start, DateOnly End)

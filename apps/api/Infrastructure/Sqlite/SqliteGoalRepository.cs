@@ -1,9 +1,9 @@
 using System.Globalization;
-using Budgeter.Api.Application.Goals;
-using Budgeter.Api.Domain.Goals;
+using Orbit.Api.Application.Goals;
+using Orbit.Api.Domain.Goals;
 using Microsoft.Data.Sqlite;
 
-namespace Budgeter.Api.Infrastructure.Sqlite;
+namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Goals stored in the <c>goals</c> table (enums as lower-case names). A goal's progress is not stored
