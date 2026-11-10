@@ -1,0 +1,53 @@
+:host {
+  display: contents;
+}
+
+.dome {
+  position: absolute;
+  left: 50%;
+  bottom: -170px;
+  z-index: 4;
+  width: 240px;
+  height: 240px;
+  margin-left: -120px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02) 40%);
+  backdrop-filter: blur(20px);
+  border: var(--border-hairline) solid var(--color-border);
+}
+
+.dome-slot {
+  position: absolute;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: var(--border-hairline) solid var(--color-border);
+  color: var(--color-text-soft);
+}
+
+.dome-slot.side {
+  top: 29px;
+  width: 36px;
+  height: 36px;
+}
+
+.dome-slot.left {
+  left: 41px;
+}
+
+.dome-slot.right {
+  left: 163px;
+}
+
+.dome-slot.center {
+  left: 100px;
+  top: 5px;
+  width: 40px;
+  height: 40px;
+  color: var(--color-text);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.12);
+}

@@ -12,57 +12,6 @@
   color: var(--color-text);
 }
 
-.stars {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.55), transparent 60%),
-    radial-gradient(1px 1px at 28% 42%, rgba(255, 255, 255, 0.35), transparent 60%),
-    radial-gradient(1px 1px at 47% 12%, rgba(255, 255, 255, 0.4), transparent 60%),
-    radial-gradient(1px 1px at 66% 30%, rgba(255, 255, 255, 0.5), transparent 60%),
-    radial-gradient(1px 1px at 84% 16%, rgba(255, 255, 255, 0.35), transparent 60%),
-    radial-gradient(1px 1px at 91% 48%, rgba(255, 255, 255, 0.45), transparent 60%),
-    radial-gradient(1px 1px at 7% 60%, rgba(255, 255, 255, 0.3), transparent 60%),
-    radial-gradient(1px 1px at 75% 58%, rgba(255, 255, 255, 0.3), transparent 60%);
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-}
-
-.blob-mint {
-  left: -280px;
-  bottom: -220px;
-  width: 860px;
-  height: 860px;
-  background: radial-gradient(circle, rgba(var(--color-mint-rgb), 0.18), transparent 65%);
-}
-
-.blob-violet {
-  right: -300px;
-  top: -200px;
-  width: 900px;
-  height: 900px;
-  background: radial-gradient(circle, rgba(var(--color-violet-deep-rgb), 0.22), transparent 65%);
-}
-
-/* The big dark disc whose top edge reads as a planet horizon, as on the landing page. */
-.horizon {
-  position: absolute;
-  left: 50%;
-  top: calc(100% - 120px);
-  width: 2600px;
-  height: 2600px;
-  margin-left: -1300px;
-  border-radius: 50%;
-  background: var(--color-bg);
-  box-shadow:
-    0 -1px 0 rgba(160, 230, 220, 0.4),
-    0 -24px 90px rgba(var(--color-mint-rgb), 0.12),
-    0 -40px 160px rgba(var(--color-violet-deep-rgb), 0.14);
-}
-
 .top-bar {
   position: relative;
   z-index: 5;
@@ -542,56 +491,6 @@ h2 {
   border-radius: var(--radius-pill);
   background: transparent;
   font-size: 14px;
-}
-
-.dome {
-  position: absolute;
-  left: 50%;
-  bottom: -170px;
-  z-index: 4;
-  width: 240px;
-  height: 240px;
-  margin-left: -120px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02) 40%);
-  backdrop-filter: blur(20px);
-  border: var(--border-hairline) solid var(--color-border);
-}
-
-.dome-slot {
-  position: absolute;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: var(--border-hairline) solid var(--color-border);
-  color: var(--color-text-soft);
-}
-
-.dome-slot.side {
-  top: 29px;
-  width: 36px;
-  height: 36px;
-}
-
-.dome-slot.left {
-  left: 41px;
-}
-
-.dome-slot.right {
-  left: 163px;
-}
-
-.dome-slot.center {
-  left: 100px;
-  top: 5px;
-  width: 40px;
-  height: 40px;
-  color: var(--color-text);
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.12);
 }
 
 a:focus-visible,

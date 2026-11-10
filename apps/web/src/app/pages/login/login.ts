@@ -13,6 +13,8 @@ import {
 import { fieldValue } from '../../core/forms/field-value';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { ModuleIcon } from '../../components/module-icon/module-icon';
+import { LoginBackdrop } from './login-backdrop/login-backdrop';
+import { LoginDome } from './login-dome/login-dome';
 import { ACCESS_COPY, STRENGTH_COLORS, STRENGTH_LABELS } from './login-copy';
 
 /** Where a person lands once signed in: the first module. */
@@ -24,7 +26,7 @@ const EMPTY_BAR = 'rgba(255, 255, 255, 0.08)';
 /** Sign-in screen: signs in, creates an account or asks for a new password, one mode at a time. */
 @Component({
   selector: 'app-login',
-  imports: [RouterLink, TranslatePipe, ModuleIcon],
+  imports: [RouterLink, TranslatePipe, ModuleIcon, LoginBackdrop, LoginDome],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
