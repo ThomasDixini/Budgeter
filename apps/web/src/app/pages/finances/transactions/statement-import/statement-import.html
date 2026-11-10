@@ -20,7 +20,7 @@
     <label class="ui-field">
       {{ 'Import into' | t }}
       <select class="ui-input" name="account" (change)="pickAccount(valueOf($event))">
-        @for (account of bankAccounts(); track account.id) {
+        @for (account of targets(); track account.id) {
           <option [value]="account.id" [selected]="account.id === accountId()">
             {{ account.name | t }}
           </option>
@@ -28,6 +28,16 @@
       </select>
     </label>
   </div>
+
+  @if (isCardFile()) {
+    <p class="ui-muted hint">
+      @if (cards().length === 0) {
+        {{ 'This file is a card invoice. Add a credit card first to import it.' | t }}
+      } @else {
+        {{ 'This file is a card invoice: its lines go to the card you pick.' | t }}
+      }
+    </p>
+  }
 
   @if (isReading()) {
     <p class="ui-muted" role="status">{{ 'Reading the file…' | t }}</p>

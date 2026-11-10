@@ -67,6 +67,16 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
     'Escolha o CSV que o banco exportou. Nada é salvo até você confirmar.',
   'Statement file': 'Arquivo do extrato',
   'Import into': 'Importar na conta',
+  'This file is a card invoice. Add a credit card first to import it.':
+    'Este arquivo é uma fatura de cartão. Cadastre um cartão de crédito antes de importar.',
+  'This file is a card invoice: its lines go to the card you pick.':
+    'Este arquivo é uma fatura de cartão: as linhas vão para o cartão escolhido.',
+  'Line {number}: expected 3 columns, received {received}.':
+    'Linha {number}: esperava 3 colunas, mas recebi {received}.',
+  'Line {number}: expected a date like 2026-10-31, received "{value}".':
+    'Linha {number}: esperava uma data como 2026-10-31, mas recebi "{value}".',
+  'Line {number}: expected an amount like 59,90 or - 3.519,76, received "{value}".':
+    'Linha {number}: esperava um valor como 59,90 ou - 3.519,76, mas recebi "{value}".',
   'Reading the file…': 'Lendo o arquivo…',
   'Some lines could not be read and were left out:':
     'Algumas linhas não puderam ser lidas e ficaram de fora:',
