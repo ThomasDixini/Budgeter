@@ -374,4 +374,20 @@ describe('StatementImport', () => {
 
     expect(texts(fixture, '.lines .ui-tag')).toEqual(['Already imported', 'Invoice payment']);
   });
+
+  it('imports a card invoice file into the card, leaving the payment received out', async () => {
+    const { fixture, gateway } = render();
+    const invoice = [
+      'date,title,amount',
+      '2026-10-24,Bar do Vitinho,"30,00"',
+      '2026-10-19,Pagamento recebido,"- 3.519,76"',
+    ].join('\n');
+
+    await choose(fixture, invoice);
+    await confirm(fixture);
+
+    expect(
+      gateway.saved.map((saved) => [saved.accountId, saved.amountCents, saved.description]),
+    ).toEqual([['credit-card', -3000, 'Bar do Vitinho']]);
+  });
 });

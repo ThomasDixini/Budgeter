@@ -2,6 +2,7 @@ import { Component, LOCALE_ID, computed, inject, input, output, signal } from '@
 import { shortDateLabel } from '../../../../core/calendar/date-label';
 import { Account, FinanceCategory } from '../../../../core/finances/finance-references';
 import { formatBalance, formatSignedMoney } from '../../../../core/finances/money';
+import { isCardInvoice, parseCardInvoice } from '../../../../core/finances/card-invoice-import';
 import {
   StatementRow,
   parseStatement,
@@ -51,7 +52,7 @@ const MEMORY_MONTHS = 6;
 })
 export class StatementImport {
   readonly categories = input.required<readonly FinanceCategory[]>();
-  /** Only bank accounts are offered: a card's purchases come from its own statement. */
+  /** Bank accounts take a bank statement and credit cards take a card invoice file. */
   readonly accounts = input.required<readonly Account[]>();
   readonly defaultAccountId = input<string>();
   readonly dismiss = output();
@@ -75,12 +76,20 @@ export class StatementImport {
   protected readonly cards = computed(() =>
     this.accounts().filter((account) => account.kind === 'creditCard'),
   );
-  protected readonly accountId = computed(
-    () =>
-      this.chosenAccountId() ??
-      this.bankAccounts().find((account) => account.id === this.defaultAccountId())?.id ??
-      this.bankAccounts()[0]?.id,
+  /** Whether the file is a card invoice: its lines are purchases on a card, not movements of a bank account. */
+  protected readonly isCardFile = signal(false);
+  /** Where the lines can go: a card for an invoice file, a bank account for a bank statement. */
+  protected readonly targets = computed(() =>
+    this.isCardFile() ? this.cards() : this.bankAccounts(),
   );
+  protected readonly accountId = computed(() => {
+    const targets = this.targets();
+    const wanted = [this.chosenAccountId(), this.defaultAccountId()];
+    return (
+      wanted.map((id) => targets.find((account) => account.id === id)).find(Boolean)?.id ??
+      targets[0]?.id
+    );
+  });
   protected readonly shownProblems = computed(() => this.problems().slice(0, PROBLEMS_SHOWN));
   protected readonly hiddenProblems = computed(() => this.problems().length - PROBLEMS_SHOWN);
   protected readonly selected = computed(() => this.lines().filter((line) => line.isIncluded));
@@ -185,7 +194,9 @@ export class StatementImport {
   }
 
   private async showStatement(text: string): Promise<void> {
-    const statement = parseStatement(text);
+    const isCard = isCardInvoice(text);
+    this.isCardFile.set(isCard);
+    const statement = isCard ? parseCardInvoice(text) : parseStatement(text);
     this.problems.set(statement.problems);
     if (statement.rows.length === 0) return;
     const months = statementMonths(statement.rows);

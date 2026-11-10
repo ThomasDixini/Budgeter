@@ -60,6 +60,8 @@ import { InvestmentsGateway } from './core/finances/investments-gateway';
 import { HttpBillsGateway } from './core/finances/http-bills-gateway';
 import { BackupGateway } from './core/backups/backup-gateway';
 import { HttpBackupGateway } from './core/backups/http-backup-gateway';
+import { AuthGateway } from './core/auth/auth-gateway';
+import { UnconnectedAuthGateway } from './core/auth/unconnected-auth-gateway';
 
 // A link with ?demo=on (or off) switches the made-up data before the gateways are chosen.
 applyDemoFromAddress(globalThis.location?.search ?? '');
@@ -110,6 +112,8 @@ export const appConfig: ApplicationConfig = {
       useClass: isDemo ? DemoInvestmentsGateway : HttpInvestmentsGateway,
     },
     { provide: BackupGateway, useClass: HttpBackupGateway },
+    // No auth backend yet: every request is accepted until one is built.
+    { provide: AuthGateway, useClass: UnconnectedAuthGateway },
     ...(isDemo
       ? [
           {

@@ -1,0 +1,40 @@
+<nav class="wheel-nav" [attr.aria-label]="'Modules' | t">
+  <div class="halo" aria-hidden="true"></div>
+  <div class="dome" aria-hidden="true"></div>
+
+  <div class="dome-controls">
+    <button
+      class="half half-left"
+      type="button"
+      [attr.aria-label]="'Spin left (previous module)' | t"
+      (click)="rotate.emit(-1)"
+    ></button>
+    <button
+      class="half half-right"
+      type="button"
+      [attr.aria-label]="'Spin right (next module)' | t"
+      (click)="rotate.emit(1)"
+    ></button>
+  </div>
+
+  <div class="track" aria-hidden="true">
+    <div class="spinner" [style.transform]="'rotate(' + spin() + 'deg)'">
+      @for (slot of slots(); track $index) {
+        <div class="arm" [style.transform]="'rotate(' + slot.angle + 'deg) translateY(-150px)'">
+          <div class="upright" [style.transform]="'rotate(' + slot.uprightAngle + 'deg)'">
+            <div
+              class="slot"
+              [class.is-active]="slot.isActive"
+              [class.is-visible]="slot.isVisible"
+              [style.--slot-accent-rgb]="accentRgbVariable(slot.module.accent)"
+            >
+              <app-module-icon [kind]="slot.module.kind" [size]="26" />
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <p class="active-name">{{ activeName() | t }}</p>
+</nav>

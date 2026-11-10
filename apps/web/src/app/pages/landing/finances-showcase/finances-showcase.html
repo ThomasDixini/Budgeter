@@ -1,0 +1,140 @@
+<section class="showcase" aria-labelledby="finances-title">
+  <div class="glow" aria-hidden="true"></div>
+  <div class="inner">
+    <div
+      class="preview"
+      role="img"
+      [attr.aria-label]="'Preview of the income split and investments' | t"
+    >
+      <div class="preview-head">
+        <span class="preview-title">{{ 'Income split' | t }}</span>
+        <span class="distributed">✓ 100% {{ 'distributed' | t }}</span>
+      </div>
+      <div class="bar">
+        @for (share of shares; track share.name) {
+          <div class="segment" [style.flex]="share.percent" [style.background]="share.color">
+            @if (share.percent >= 10) {
+              {{ share.percent }}%
+            }
+          </div>
+        }
+      </div>
+      <ul class="legend">
+        @for (share of shares; track share.name) {
+          <li><span class="swatch" [style.background]="share.color"></span>{{ share.name | t }}</li>
+        }
+      </ul>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <span>{{ 'Investments' | t }} · 12 {{ 'months' | t }}</span>
+          <span class="chart-legend">
+            <span class="chart-key"
+              ><span class="key-line portfolio"></span>{{ 'Portfolio' | t }}</span
+            >
+            <span class="chart-key"><span class="key-line cdi"></span>CDI</span>
+          </span>
+        </div>
+        <svg viewBox="0 0 400 120" class="chart" aria-hidden="true">
+          <defs>
+            <linearGradient id="landing-portfolio-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#9d7bf0" stop-opacity="0.28"></stop>
+              <stop offset="1" stop-color="#9d7bf0" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+          <line
+            x1="0"
+            y1="110"
+            x2="400"
+            y2="110"
+            stroke="rgba(255,255,255,0.18)"
+            stroke-width="0.5"
+          ></line>
+          <line
+            x1="0"
+            y1="60"
+            x2="400"
+            y2="60"
+            stroke="rgba(255,255,255,0.07)"
+            stroke-width="0.5"
+          ></line>
+          <line
+            x1="0"
+            y1="10"
+            x2="400"
+            y2="10"
+            stroke="rgba(255,255,255,0.07)"
+            stroke-width="0.5"
+          ></line>
+          <path
+            d="M0 106 L36 100 L72 98 L109 92 L145 94 L182 84 L218 78 L254 80 L291 66 L327 58 L363 52 L400 38 L400 110 L0 110 Z"
+            fill="url(#landing-portfolio-fill)"
+          ></path>
+          <path
+            d="M0 108 L400 74"
+            fill="none"
+            stroke="#8a8a94"
+            stroke-width="1.5"
+            stroke-dasharray="5 5"
+          ></path>
+          <path
+            d="M0 106 L36 100 L72 98 L109 92 L145 94 L182 84 L218 78 L254 80 L291 66 L327 58 L363 52 L400 38"
+            fill="none"
+            stroke="#9d7bf0"
+            stroke-width="2"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          ></path>
+          <circle cx="400" cy="38" r="4" fill="#9d7bf0" stroke="#0b0b0f" stroke-width="2"></circle>
+        </svg>
+      </div>
+
+      <div class="totals">
+        <div class="total">
+          <div class="muted">{{ 'Received' | t }}</div>
+          <div class="amount">11,514</div>
+        </div>
+        <div class="total">
+          <div class="muted">{{ 'Spent' | t }}</div>
+          <div class="amount">7,382</div>
+        </div>
+        <div class="total">
+          <div class="muted">{{ 'Balance' | t }}</div>
+          <div class="amount">+4,132</div>
+        </div>
+      </div>
+      <span class="note">{{ 'Illustrative values' | t }}</span>
+    </div>
+
+    <div class="copy">
+      <span class="eyebrow">{{ 'Module' | t }} · {{ 'Finances' | t }}</span>
+      <h2 id="finances-title">{{ 'See where every real goes, and how much it earns.' | t }}</h2>
+      <p class="lead">
+        {{
+          'Decide how to split your income, for example 50% fixed expenses, 30% investments and 10% studies, and compare what was planned with what really happened. Accounts, cards, bills and investments live in the same panel.'
+            | t
+        }}
+      </p>
+      <ul class="points">
+        @for (point of points; track point) {
+          <li>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12l5 5L20 7"></path>
+            </svg>
+            {{ point | t }}
+          </li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,58 @@
+<section class="hero" aria-labelledby="hero-title" [style.--module-accent-rgb]="accentRgb()">
+  <div class="stars" aria-hidden="true"></div>
+  <div class="blob blob-mint" aria-hidden="true"></div>
+  <div class="blob blob-violet" aria-hidden="true"></div>
+  <div class="horizon" aria-hidden="true"></div>
+
+  <header class="top-bar">
+    <a class="brand" routerLink="/">Orbit</a>
+    <nav class="sections" [attr.aria-label]="'Sections' | t">
+      <a href="#routines">{{ 'Routines & Goals' | t }}</a>
+      <a href="#finances">{{ 'Finances' | t }}</a>
+      <a href="#features">{{ 'Features' | t }}</a>
+      <a href="#how-it-works">{{ 'How it works' | t }}</a>
+    </nav>
+    <div class="end">
+      <app-language-switcher />
+      <a class="sign-in" [routerLink]="loginRoute">{{ 'Sign in' | t }}</a>
+    </div>
+  </header>
+
+  <div class="content">
+    <span class="badge">
+      <span class="dot" aria-hidden="true"></span>
+      {{ 'One app, several modules of your life' | t }}
+    </span>
+    <h1 id="hero-title">
+      <span class="mint">{{ 'Your routine' | t }}</span> {{ 'and' | t }}
+      <span class="violet">{{ 'your money' | t }}</span
+      >,<br />{{ 'spinning in the same place.' | t }}
+    </h1>
+    <p class="lead">
+      {{
+        'Split the day into blocks, turn what matters into goals and follow spending, investments and net worth. All in one app, and you switch module with a spin.'
+          | t
+      }}
+    </p>
+    <div class="actions">
+      <a class="primary" [routerLink]="loginRoute">{{ 'Sign in' | t }}</a>
+      <a class="ghost" href="#how-it-works">{{ 'See how it works' | t }}</a>
+    </div>
+
+    <div class="module-card" aria-live="polite" [style.--card-accent]="accent()">
+      <span class="module-icon" aria-hidden="true">
+        <app-module-icon [kind]="activeModule().kind" [size]="22" />
+      </span>
+      <span class="module-text">
+        <span class="module-name">{{ activeModule().name | t }}</span>
+        <span class="module-description">{{ activeModule().description | t }}</span>
+      </span>
+      @if (openRoute(); as route) {
+        <a class="open-module" [routerLink]="route">{{ 'Open module' | t }}</a>
+      }
+    </div>
+    <span class="hint">{{ 'Try it: click the sides of the wheel to spin' | t }}</span>
+  </div>
+
+  <app-module-wheel-nav [modules]="modules" [rotation]="rotation()" (rotate)="rotateBy($event)" />
+</section>

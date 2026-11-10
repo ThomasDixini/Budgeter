@@ -1,8 +1,10 @@
 import { Routes } from '@angular/router';
-import { Home } from './pages/home/home';
+import { Landing } from './pages/landing/landing';
+import { Login } from './pages/login/login';
 
 export const routes: Routes = [
-  { path: '', component: Home },
+  { path: '', component: Landing, title: 'Orbit' },
+  { path: 'login', component: Login, title: 'Sign in · Orbit' },
   {
     path: 'routines',
     loadChildren: () =>

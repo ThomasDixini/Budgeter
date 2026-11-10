@@ -1,5 +1,5 @@
 import { Page, expect, test } from '@playwright/test';
-import { HomePage } from './pages/home.page';
+import { LandingPage } from './pages/landing.page';
 import { RoutinesPage } from './pages/routines.page';
 import {
   completeBlock,
@@ -35,11 +35,11 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('entering the module', () => {
-  test('Open module on the home wheel lands on Today', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto();
+  test('Open module on the landing wheel lands on Today', async ({ page }) => {
+    const landing = new LandingPage(page);
+    await landing.goto();
 
-    await home.openModuleLink.click();
+    await landing.openModuleLink.click();
 
     await expect(page).toHaveURL('/routines');
     await expect(routines.currentTab).toHaveText('Today');

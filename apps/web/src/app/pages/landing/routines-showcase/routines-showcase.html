@@ -1,0 +1,86 @@
+<section class="showcase" aria-labelledby="routines-title">
+  <div class="glow" aria-hidden="true"></div>
+  <div class="inner">
+    <div class="copy">
+      <span class="eyebrow">{{ 'Module' | t }} · {{ 'Routines & Goals' | t }}</span>
+      <h2 id="routines-title">{{ 'Split the day your way. Every block becomes progress.' | t }}</h2>
+      <p class="lead">
+        {{
+          'Build your routine by hours: work from 8 to 12, then lunch, study, networking. Give each block a category you created, and each category gets its own goals.'
+            | t
+        }}
+      </p>
+      <ul class="points">
+        @for (point of points; track point) {
+          <li>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12l5 5L20 7"></path>
+            </svg>
+            {{ point | t }}
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="preview" role="img" [attr.aria-label]="'Preview of the Today screen' | t">
+      <div class="preview-head">
+        <span class="preview-title">{{ 'Day timeline' | t }}</span>
+        <span class="muted">{{ 'Weekdays' | t }} · 08:00 – 17:00</span>
+      </div>
+      <div class="timeline">
+        <span class="time">08:00</span>
+        <div class="block tall">
+          <div class="block-name">{{ 'Work' | t }}</div>
+          <div class="muted small">08:00 – 12:00</div>
+        </div>
+        <span class="time">12:00</span>
+        <div class="block short">
+          <div class="block-name">{{ 'Lunch' | t }}</div>
+        </div>
+        <span class="time now">13:30</span>
+        <div class="block current">
+          <div>
+            <div class="block-name">{{ 'C# study' | t }}</div>
+            <div class="muted small">13:30 – 15:00</div>
+          </div>
+          <div class="tags">
+            <span class="tag now-tag">{{ 'Now' | t }}</span>
+            <span class="tag sky">{{ 'Study' | t }}</span>
+          </div>
+        </div>
+        <span class="time">15:00</span>
+        <div class="block networking">
+          <div>
+            <div class="block-name">{{ 'Networking' | t }}</div>
+            <div class="muted small">15:00 – 17:00</div>
+          </div>
+          <span class="tag orchid">{{ 'Networking' | t }}</span>
+        </div>
+      </div>
+      <div class="goal">
+        <div class="goal-head">
+          <span>{{ 'Study' | t }} · {{ 'Frequency' | t }} · {{ 'Weekly' | t }}</span>
+          <span class="goal-count">3 / 5</span>
+        </div>
+        <div class="goal-name">{{ 'Study C# 5 times a week' | t }}</div>
+        <div class="dots">
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot filled"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
