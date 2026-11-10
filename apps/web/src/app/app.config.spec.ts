@@ -5,7 +5,8 @@ import { Router } from '@angular/router';
 import { appConfig } from './app.config';
 import { routes } from './app.routes';
 import { APP_MODULES } from './core/modules/module-catalog';
-import { Home } from './pages/home/home';
+import { Landing } from './pages/landing/landing';
+import { Login } from './pages/login/login';
 
 describe('appConfig', () => {
   let httpTesting: HttpTestingController;
@@ -31,11 +32,19 @@ describe('appConfig', () => {
 });
 
 describe('routes', () => {
-  it('serves the home page at the root path', () => {
-    expect(routes.find((route) => route.path === '')?.component).toBe(Home);
+  it('serves the landing page at the root path', () => {
+    expect(routes.find((route) => route.path === '')?.component).toBe(Landing);
   });
 
-  it('redirects unknown paths to the home page', () => {
+  it('has no /modules route', () => {
+    expect(routes.some((route) => route.path === 'modules')).toBe(false);
+  });
+
+  it('serves the sign-in placeholder at /login', () => {
+    expect(routes.find((route) => route.path === 'login')?.component).toBe(Login);
+  });
+
+  it('redirects unknown paths to the landing page', () => {
     expect(routes.find((route) => route.path === '**')?.redirectTo).toBe('');
   });
 

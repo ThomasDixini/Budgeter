@@ -1,4 +1,5 @@
 import { PT_BR_FINANCES } from './pt-br-finances';
+import { PT_BR_LANDING } from './pt-br-landing';
 import { PT_BR_ROUTINES } from './pt-br-routines';
 import { PT_BR_SAMPLES } from './pt-br-samples';
 import { PT_BR_SENTENCES } from './pt-br-sentences';
@@ -9,6 +10,7 @@ import { PT_BR_SENTENCES } from './pt-br-sentences';
  */
 export const PT_BR: Readonly<Record<string, string>> = {
   ...PT_BR_FINANCES,
+  ...PT_BR_LANDING,
   ...PT_BR_ROUTINES,
   ...PT_BR_SAMPLES,
   ...PT_BR_SENTENCES,
@@ -20,7 +22,6 @@ export const PT_BR: Readonly<Record<string, string>> = {
   'Switch module': 'Trocar de módulo',
   'Previous module: {name}': 'Módulo anterior: {name}',
   'Next module: {name}': 'Próximo módulo: {name}',
-  'Choose a module': 'Escolher um módulo',
   Close: 'Fechar',
   Dismiss: 'Dispensar',
   Demo: 'Demo',
@@ -28,8 +29,6 @@ export const PT_BR: Readonly<Record<string, string>> = {
   'Showing made-up data. Click to use yours.':
     'Mostrando dados fictícios. Clique para usar os seus.',
   Modules: 'Módulos',
-  'Choose one': 'Escolha um',
-  'All modules': 'Todos os módulos',
   'Open module': 'Abrir módulo',
   'Module {position} of {total}': 'Módulo {position} de {total}',
   'Spin left (previous module)': 'Girar à esquerda (módulo anterior)',

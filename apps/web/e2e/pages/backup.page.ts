@@ -18,9 +18,9 @@ export class BackupMenuPage {
     this.notice = page.getByRole('alert');
   }
 
-  /** Opens the home screen and the menu. */
+  /** Opens a module screen and the menu. */
   async open(): Promise<void> {
-    await this.page.goto('/');
+    await this.page.goto('/routines');
     await this.toggle.click();
   }
 

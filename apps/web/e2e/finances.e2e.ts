@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { FinancesPage } from './pages/finances.page';
-import { HomePage } from './pages/home.page';
+import { LandingPage } from './pages/landing.page';
 import { createTransaction, isoDayOf, ownMonth } from './support/finances-api';
 
 let finances: FinancesPage;
@@ -9,12 +9,12 @@ test.beforeEach(async ({ page }) => {
   finances = new FinancesPage(page);
 });
 
-test('Open module on the home wheel lands on the Overview', async ({ page }) => {
-  const home = new HomePage(page);
-  await home.goto();
-  await home.spinRight();
+test('Open module on the landing wheel lands on the Overview', async ({ page }) => {
+  const landing = new LandingPage(page);
+  await landing.goto();
+  await landing.spinRight();
 
-  await home.openModuleLink.click();
+  await landing.openModuleLink.click();
 
   await expect(page).toHaveURL(/\/finances\/overview$/);
   await expect(finances.title).toHaveText('Overview');

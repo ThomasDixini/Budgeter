@@ -35,16 +35,6 @@ describe('ModuleWheelNav', () => {
     expect(steps).toEqual([1]);
   });
 
-  it('asks to open the picker from the all-modules button', () => {
-    const fixture = createWheel(0);
-    let opened = false;
-    fixture.componentInstance.openPicker.subscribe(() => (opened = true));
-
-    click(fixture, '.all-modules');
-
-    expect(opened).toBe(true);
-  });
-
   it('names the module facing up', () => {
     const fixture = createWheel(1);
 
