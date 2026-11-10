@@ -18,7 +18,7 @@ test.describe('landing page', () => {
     await landing.signInLinks.first().click();
 
     await expect(page).toHaveURL('/login');
-    await page.getByRole('link', { name: 'Back to start' }).click();
+    await page.getByRole('link', { name: 'Back to the site' }).click();
     await expect(page).toHaveURL('/');
   });
 
