@@ -13,14 +13,13 @@ public sealed class SqliteMonthEndPriceStoreTests : IAsyncLifetime, IDisposable
 
     public SqliteMonthEndPriceStoreTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _prices = new SqliteMonthEndPriceStore(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

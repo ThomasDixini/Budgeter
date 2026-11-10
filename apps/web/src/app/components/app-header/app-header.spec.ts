@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { fakeSession } from '../../core/auth/fake-auth-gateway';
+import { SessionStore } from '../../core/auth/session-store';
 import { provideFakeBackupGateway } from '../../core/backups/fake-backup-gateway';
 import { DEMO_STORAGE_KEY } from '../../core/finances/demo/demo-mode';
 import { AppHeader } from './app-header';
@@ -18,25 +20,42 @@ describe('AppHeader', () => {
     expect(brand?.getAttribute('href')).toBe('/');
   });
 
-  it('offers a labelled profile button', () => {
-    const fixture = TestBed.createComponent(AppHeader);
-    fixture.detectChanges();
+  describe('when someone is signed in', () => {
+    beforeEach(() => TestBed.inject(SessionStore).start(fakeSession('Ana'), false));
+    afterEach(() => TestBed.inject(SessionStore).end());
 
-    const profile = (fixture.nativeElement as HTMLElement).querySelector('.profile');
+    it('offers a labelled sign-out button naming the person', () => {
+      const fixture = TestBed.createComponent(AppHeader);
+      fixture.detectChanges();
 
-    expect(profile?.getAttribute('aria-label')).toBe('Profile');
+      const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+        '.profile',
+      );
+
+      expect([button?.getAttribute('aria-label'), button?.title]).toEqual([
+        'Sign out',
+        'Ana · Sign out',
+      ]);
+    });
+
+    it('signs out and returns to the landing page', async () => {
+      const router = TestBed.inject(Router);
+      const navigation = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+      const fixture = TestBed.createComponent(AppHeader);
+      fixture.detectChanges();
+
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.profile')?.click();
+
+      expect(TestBed.inject(SessionStore).isSignedIn()).toBe(false);
+      expect(navigation).toHaveBeenCalledWith('/');
+    });
   });
 
-  // The button leads nowhere yet (there are no accounts), so it must not look clickable.
-  it('keeps the profile button disabled until accounts exist', () => {
+  it('has no sign-out button when no one is signed in', () => {
     const fixture = TestBed.createComponent(AppHeader);
     fixture.detectChanges();
 
-    const profile = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      '.profile',
-    );
-
-    expect([profile?.disabled, profile?.title]).toEqual([true, 'Coming soon']);
+    expect((fixture.nativeElement as HTMLElement).querySelector('.profile')).toBeNull();
   });
 
   it('offers the backup of the data', () => {

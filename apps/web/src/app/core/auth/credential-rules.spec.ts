@@ -52,13 +52,7 @@ describe('accessFormErrors', () => {
     expect(accessFormErrors('signup', { ...filled, password: 'short' }).password).toBe(true);
   });
 
-  it('needs only a valid e-mail to reset a password', () => {
-    const errors = accessFormErrors('reset', { name: '', email: 'ana@mail.com', password: '' });
-
-    expect(hasErrors(errors)).toBe(false);
-  });
-
   it('flags an invalid e-mail in every mode', () => {
-    expect(accessFormErrors('reset', { ...filled, email: 'ana' }).email).toBe(true);
+    expect(accessFormErrors('login', { ...filled, email: 'ana' }).email).toBe(true);
   });
 });

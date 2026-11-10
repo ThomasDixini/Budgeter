@@ -146,11 +146,8 @@ public sealed class SqliteGoalStorageTests : GoalStorageContract, IDisposable
 
     public override async Task InitializeAsync()
     {
-        var connections = new SqliteConnectionFactory(_database.ConnectionString);
-        await using (var connection = await connections.OpenAsync(CancellationToken.None))
-        {
-            await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
-        }
+        var connections = TestUsers.FactoryFor(_database);
+        await TestUsers.CreateSchemaAsync(connections);
         await new SqliteCategoryRepository(connections)
             .AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
         (Goals, Ledger) = (new SqliteGoalRepository(connections), new SqliteGoalProgressLedger(connections));

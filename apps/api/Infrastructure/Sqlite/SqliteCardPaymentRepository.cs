@@ -20,11 +20,11 @@ public sealed class SqliteCardPaymentRepository(SqliteConnectionFactory connecti
             lease.Connection,
             """
             SELECT id, card_id, from_account_id, date, amount_cents FROM card_payments
-            WHERE date >= $from AND date < $until ORDER BY date DESC, rowid DESC
+            WHERE user_id = $user AND date >= $from AND date < $until ORDER BY date DESC, rowid DESC
             """,
             ToPayment,
             cancellationToken,
-            ("$from", ToText(month.FirstDay)), ("$until", ToText(month.NextFirstDay)));
+            ("$user", connections.UserId), ("$from", ToText(month.FirstDay)), ("$until", ToText(month.NextFirstDay)));
     }
 
     public async Task SaveAsync(CardPayment payment, CancellationToken cancellationToken)
@@ -34,14 +34,14 @@ public sealed class SqliteCardPaymentRepository(SqliteConnectionFactory connecti
         await SqliteCommands.ExecuteAsync(
             lease.Connection,
             """
-            INSERT INTO card_payments (id, card_id, from_account_id, date, amount_cents)
-            VALUES ($id, $cardId, $fromAccountId, $date, $amountCents)
-            ON CONFLICT (id) DO UPDATE SET
+            INSERT INTO card_payments (user_id, id, card_id, from_account_id, date, amount_cents)
+            VALUES ($user, $id, $cardId, $fromAccountId, $date, $amountCents)
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 card_id = excluded.card_id, from_account_id = excluded.from_account_id,
                 date = excluded.date, amount_cents = excluded.amount_cents
             """,
             cancellationToken,
-            ("$id", payment.Id), ("$cardId", payment.CardId), ("$fromAccountId", payment.FromAccountId),
+            ("$user", connections.UserId), ("$id", payment.Id), ("$cardId", payment.CardId), ("$fromAccountId", payment.FromAccountId),
             ("$date", ToText(payment.Date)), ("$amountCents", payment.AmountCents));
     }
 
@@ -49,7 +49,10 @@ public sealed class SqliteCardPaymentRepository(SqliteConnectionFactory connecti
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         await SqliteCommands.ExecuteAsync(
-            lease.Connection, "DELETE FROM card_payments WHERE id = $id", cancellationToken, ("$id", paymentId));
+            lease.Connection,
+            "DELETE FROM card_payments WHERE user_id = $user AND id = $id",
+            cancellationToken,
+            ("$user", connections.UserId), ("$id", paymentId));
     }
 
     public Task<long> SumPaidFromAsync(string accountId, DateOnly until, CancellationToken cancellationToken) =>
@@ -63,10 +66,10 @@ public sealed class SqliteCardPaymentRepository(SqliteConnectionFactory connecti
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var found = await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT EXISTS (SELECT 1 FROM card_payments WHERE card_id = $id OR from_account_id = $id)",
+            "SELECT EXISTS (SELECT 1 FROM card_payments WHERE user_id = $user AND (card_id = $id OR from_account_id = $id))",
             reader => reader.GetBoolean(0),
             cancellationToken,
-            ("$id", accountId));
+            ("$user", connections.UserId), ("$id", accountId));
         return found[0];
     }
 
@@ -76,10 +79,10 @@ public sealed class SqliteCardPaymentRepository(SqliteConnectionFactory connecti
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var sums = await SqliteCommands.QueryAsync(
             lease.Connection,
-            $"SELECT COALESCE(SUM(amount_cents), 0) FROM card_payments WHERE {accountColumn} = $id AND date < $until",
+            $"SELECT COALESCE(SUM(amount_cents), 0) FROM card_payments WHERE user_id = $user AND {accountColumn} = $id AND date < $until",
             reader => reader.GetInt64(0),
             cancellationToken,
-            ("$id", accountId), ("$until", ToText(until)));
+            ("$user", connections.UserId), ("$id", accountId), ("$until", ToText(until)));
         return sums[0];
     }
 

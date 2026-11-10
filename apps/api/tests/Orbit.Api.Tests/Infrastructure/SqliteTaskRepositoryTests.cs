@@ -14,14 +14,13 @@ public sealed class SqliteTaskRepositoryTests : IAsyncLifetime, IDisposable
 
     public SqliteTaskRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _tasks = new SqliteTaskRepository(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
         await new SqliteCategoryRepository(_connections)
             .AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
     }
@@ -90,11 +89,11 @@ public sealed class SqliteTaskRepositoryTests : IAsyncLifetime, IDisposable
     public async Task SampleSeed_InsertsTasksOnlyIntoAnEmptyTable()
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SampleCategorySeed.ApplyAsync(connection, CancellationToken.None);
-        await SampleTaskSeed.ApplyAsync(connection, CancellationToken.None);
+        await SampleCategorySeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
+        await SampleTaskSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
         await _tasks.DeleteAsync("t1", CancellationToken.None);
 
-        await SampleTaskSeed.ApplyAsync(connection, CancellationToken.None);
+        await SampleTaskSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
 
         (await _tasks.ListAsync(CancellationToken.None)).Count.ShouldBe(4);
     }

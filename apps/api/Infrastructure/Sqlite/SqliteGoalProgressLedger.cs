@@ -19,11 +19,11 @@ public sealed class SqliteGoalProgressLedger(SqliteConnectionFactory connections
         await SqliteCommands.ExecuteAsync(
             connection,
             """
-            INSERT OR IGNORE INTO goal_progress (event_id, goal_id, date, amount, source, source_ref)
-            VALUES ($eventId, $goalId, $date, $amount, $source, $sourceRef)
+            INSERT OR IGNORE INTO goal_progress (user_id, event_id, goal_id, date, amount, source, source_ref)
+            VALUES ($user, $eventId, $goalId, $date, $amount, $source, $sourceRef)
             """,
             cancellationToken,
-            ("$eventId", entry.EventId), ("$goalId", entry.GoalId), ("$date", ToText(entry.Date)),
+            ("$user", connections.UserId), ("$eventId", entry.EventId), ("$goalId", entry.GoalId), ("$date", ToText(entry.Date)),
             ("$amount", entry.Amount), ("$source", entry.Source.ToString().ToLowerInvariant()),
             ("$sourceRef", entry.SourceRef));
     }
@@ -36,10 +36,10 @@ public sealed class SqliteGoalProgressLedger(SqliteConnectionFactory connections
             connection,
             """
             DELETE FROM goal_progress
-            WHERE goal_id = $goalId AND source_ref = $achievement AND date >= $start AND date <= $end
+            WHERE user_id = $user AND goal_id = $goalId AND source_ref = $achievement AND date >= $start AND date <= $end
             """,
             cancellationToken,
-            ("$goalId", goalId), ("$achievement", GoalAchievement.SourceRef),
+            ("$user", connections.UserId), ("$goalId", goalId), ("$achievement", GoalAchievement.SourceRef),
             ("$start", ToText(window.Start)), ("$end", ToText(window.End)));
     }
 
@@ -50,9 +50,10 @@ public sealed class SqliteGoalProgressLedger(SqliteConnectionFactory connections
         var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
-            "DELETE FROM goal_progress WHERE source = $source AND source_ref = $sourceRef AND date = $date",
+            "DELETE FROM goal_progress WHERE user_id = $user AND source = $source AND source_ref = $sourceRef AND date = $date",
             cancellationToken,
-            ("$source", source.ToString().ToLowerInvariant()), ("$sourceRef", sourceRef), ("$date", ToText(day)));
+            ("$user", connections.UserId), ("$source", source.ToString().ToLowerInvariant()),
+            ("$sourceRef", sourceRef), ("$date", ToText(day)));
     }
 
     private static string ToText(DateOnly day) => day.ToString(DateFormat, CultureInfo.InvariantCulture);

@@ -12,13 +12,15 @@ public sealed class FinanceStarterSeedTests : IAsyncLifetime, IDisposable
 
     public FinanceStarterSeedTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
     }
 
     public async Task InitializeAsync()
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.InsertAsync(connection, TestUsers.DefaultId);
+        await TestUsers.InsertAsync(connection, TestUsers.OtherId);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -28,7 +30,7 @@ public sealed class FinanceStarterSeedTests : IAsyncLifetime, IDisposable
     private async Task StartAsync()
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await FinanceStarterSeed.ApplyOnceAsync(connection, CancellationToken.None);
+        await FinanceStarterSeed.ApplyOnceAsync(connection, TestUsers.DefaultId, CancellationToken.None);
     }
 
     private async Task<long> CountAsync(string table)
@@ -76,7 +78,7 @@ public sealed class FinanceStarterSeedTests : IAsyncLifetime, IDisposable
     {
         await using (var connection = await _connections.OpenAsync(CancellationToken.None))
         {
-            await SqliteCommands.ExecuteAsync(connection, "INSERT INTO sample_seed (id) VALUES (1)", CancellationToken.None);
+            await SqliteCommands.ExecuteAsync(connection, "INSERT INTO sample_seed (user_id) VALUES ($user)", CancellationToken.None, ("$user", TestUsers.DefaultId));
         }
 
         await StartAsync();
@@ -90,11 +92,57 @@ public sealed class FinanceStarterSeedTests : IAsyncLifetime, IDisposable
         await StartAsync();
         await using (var connection = await _connections.OpenAsync(CancellationToken.None))
         {
-            await SqliteCommands.ExecuteAsync(connection, "DELETE FROM accounts WHERE id = 'credit-card'", CancellationToken.None);
+            await SqliteCommands.ExecuteAsync(connection, "DELETE FROM accounts WHERE user_id = $user AND id = 'credit-card'", CancellationToken.None, ("$user", TestUsers.DefaultId));
         }
 
         await StartAsync();
 
         (await CountAsync("accounts")).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task EachUser_GetsTheirOwnStarterSet()
+    {
+        await StartAsync();
+        await FinanceTestSeeds.ApplyAsync(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+
+        var mine = await new SqliteAccountRepository(_connections).ListAsync(CancellationToken.None);
+        var theirs = await new SqliteAccountRepository(TestUsers.FactoryFor(_database, TestUsers.OtherId)).ListAsync(CancellationToken.None);
+
+        (mine.Count, theirs.Count, await CountAsync("accounts"), await CountAsync("finance_categories"))
+            .ShouldBe((2, 2, 4L, 22L));
+    }
+
+    [Fact]
+    public async Task SeedingASecondUser_StillRunsAfterTheFirstWasMarked()
+    {
+        await StartAsync();
+
+        await FinanceTestSeeds.ApplyAsync(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+
+        (await CountAsync("finance_seed")).ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task AStarterItemOneUserDeleted_StaysInTheOtherUsersSet()
+    {
+        await StartAsync();
+        var others = TestUsers.FactoryFor(_database, TestUsers.OtherId);
+        await FinanceTestSeeds.ApplyAsync(others);
+
+        await new SqliteAccountRepository(others).DeleteAsync("credit-card", CancellationToken.None);
+
+        var mine = await new SqliteAccountRepository(_connections).ListAsync(CancellationToken.None);
+        mine.Select(account => account.Id).ShouldBe(["checking-account", "credit-card"]);
+    }
+}
+
+/// <summary>Gives a user of the spec's database the finance starter set, as sign-up does.</summary>
+internal static class FinanceTestSeeds
+{
+    public static async Task ApplyAsync(SqliteConnectionFactory connections)
+    {
+        await using var connection = await connections.OpenAsync(CancellationToken.None);
+        await FinanceStarterSeed.ApplyOnceAsync(connection, connections.UserId, CancellationToken.None);
     }
 }

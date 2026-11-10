@@ -9,6 +9,7 @@ using Orbit.Api.Application.Investments;
 using Orbit.Api.Application.Routines;
 using Orbit.Api.Application.Tasks;
 using Orbit.Api.Endpoints;
+using Orbit.Api.Infrastructure.Auth;
 using Orbit.Api.Infrastructure.Cdi;
 using Orbit.Api.Infrastructure.Quotes;
 using Orbit.Api.Infrastructure.Sqlite;
@@ -35,6 +36,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
+builder.Services.AddOrbitAuth(
+    builder.Environment.IsDevelopment(), Path.Combine(builder.Environment.ContentRootPath, "auth-dev.key"));
 builder.Services.AddSqlitePersistence();
 builder.Services.AddCdiRateSource(builder.Configuration);
 builder.Services.AddQuoteSource(builder.Configuration);
@@ -96,9 +99,13 @@ builder.Services.AddScoped<RestoreBackup>();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 // Answers once the database is ready (the initializer runs before the server listens), for whatever
 // waits on the API to start: the E2E runner today, a serverless platform later.
-app.MapGet("/health", () => Results.NoContent());
+app.MapGet("/health", () => Results.NoContent()).AllowAnonymous();
+app.MapAuthEndpoints();
+// Everything else belongs to a signed-in user; the fallback policy rejects requests without a valid token.
 app.MapCategoryEndpoints();
 app.MapGoalEndpoints();
 app.MapRoutineEndpoints();

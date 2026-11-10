@@ -22,11 +22,11 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
             lease.Connection,
             """
             SELECT id, date, description, category_id, account_id, amount_cents FROM transactions
-            WHERE date >= $from AND date < $until ORDER BY date DESC, rowid DESC
+            WHERE user_id = $user AND date >= $from AND date < $until ORDER BY date DESC, rowid DESC
             """,
             ToTransaction,
             cancellationToken,
-            ("$from", ToText(month.FirstDay)), ("$until", ToText(month.NextFirstDay)));
+            ("$user", connections.UserId), ("$from", ToText(month.FirstDay)), ("$until", ToText(month.NextFirstDay)));
     }
 
     public async Task SaveAsync(MoneyTransaction transaction, CancellationToken cancellationToken)
@@ -36,14 +36,14 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
         await SqliteCommands.ExecuteAsync(
             lease.Connection,
             """
-            INSERT INTO transactions (id, date, description, category_id, account_id, amount_cents)
-            VALUES ($id, $date, $description, $categoryId, $accountId, $amountCents)
-            ON CONFLICT (id) DO UPDATE SET
+            INSERT INTO transactions (user_id, id, date, description, category_id, account_id, amount_cents)
+            VALUES ($user, $id, $date, $description, $categoryId, $accountId, $amountCents)
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 date = excluded.date, description = excluded.description, category_id = excluded.category_id,
                 account_id = excluded.account_id, amount_cents = excluded.amount_cents
             """,
             cancellationToken,
-            ("$id", transaction.Id), ("$date", ToText(transaction.Date)), ("$description", transaction.Description),
+            ("$user", connections.UserId), ("$id", transaction.Id), ("$date", ToText(transaction.Date)), ("$description", transaction.Description),
             ("$categoryId", transaction.CategoryId), ("$accountId", transaction.AccountId),
             ("$amountCents", transaction.AmountCents));
     }
@@ -52,7 +52,10 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         await SqliteCommands.ExecuteAsync(
-            lease.Connection, "DELETE FROM transactions WHERE id = $id", cancellationToken, ("$id", transactionId));
+            lease.Connection,
+            "DELETE FROM transactions WHERE user_id = $user AND id = $id",
+            cancellationToken,
+            ("$user", connections.UserId), ("$id", transactionId));
     }
 
     public async Task<long> SumAsync(string accountId, DateOnly from, DateOnly until, CancellationToken cancellationToken)
@@ -62,11 +65,11 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
             lease.Connection,
             """
             SELECT COALESCE(SUM(amount_cents), 0) FROM transactions
-            WHERE account_id = $accountId AND date >= $from AND date < $until
+            WHERE user_id = $user AND account_id = $accountId AND date >= $from AND date < $until
             """,
             reader => reader.GetInt64(0),
             cancellationToken,
-            ("$accountId", accountId), ("$from", ToText(from)), ("$until", ToText(until)));
+            ("$user", connections.UserId), ("$accountId", accountId), ("$from", ToText(from)), ("$until", ToText(until)));
         return sums[0];
     }
 
@@ -75,10 +78,10 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var found = await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT EXISTS (SELECT 1 FROM transactions WHERE account_id = $accountId)",
+            "SELECT EXISTS (SELECT 1 FROM transactions WHERE user_id = $user AND account_id = $accountId)",
             reader => reader.GetBoolean(0),
             cancellationToken,
-            ("$accountId", accountId));
+            ("$user", connections.UserId), ("$accountId", accountId));
         return found[0];
     }
 
@@ -87,10 +90,10 @@ public sealed class SqliteMoneyTransactionRepository(SqliteConnectionFactory con
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var found = await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT EXISTS (SELECT 1 FROM transactions WHERE category_id = $categoryId)",
+            "SELECT EXISTS (SELECT 1 FROM transactions WHERE user_id = $user AND category_id = $categoryId)",
             reader => reader.GetBoolean(0),
             cancellationToken,
-            ("$categoryId", categoryId));
+            ("$user", connections.UserId), ("$categoryId", categoryId));
         return found[0];
     }
 

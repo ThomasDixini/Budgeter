@@ -13,14 +13,13 @@ public sealed class SampleDataTests : IAsyncLifetime, IDisposable
 
     public SampleDataTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _categories = new SqliteCategoryRepository(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -31,7 +30,7 @@ public sealed class SampleDataTests : IAsyncLifetime, IDisposable
     private async Task StartAsync()
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SampleData.ApplyOnceAsync(connection, CancellationToken.None);
+        await SampleData.ApplyOnceAsync(connection, TestUsers.DefaultId, CancellationToken.None);
     }
 
     [Fact]
@@ -77,5 +76,33 @@ public sealed class SampleDataTests : IAsyncLifetime, IDisposable
         await StartAsync();
 
         (await _categories.ListAsync(CancellationToken.None)).Select(category => category.Id).ShouldBe(["languages"]);
+    }
+
+    [Fact]
+    public async Task EachUserIsSeededOnItsOwn_WhateverTheOthersMarkerSays()
+    {
+        await StartAsync();
+        await using var connection = await _connections.OpenAsync(CancellationToken.None);
+
+        await SampleData.ApplyOnceAsync(connection, TestUsers.OtherId, CancellationToken.None);
+
+        var other = TestUsers.FactoryFor(_database, TestUsers.OtherId);
+        (await new SqliteCategoryRepository(other).ListAsync(CancellationToken.None)).Count.ShouldBe(4);
+        (await new SqliteRoutineRepository(other).ListAsync(CancellationToken.None)).Count.ShouldBe(2);
+        (await new SqliteTaskRepository(other).ListAsync(CancellationToken.None)).Count.ShouldBe(5);
+        (await _categories.ListAsync(CancellationToken.None)).Count.ShouldBe(4);
+    }
+
+    [Fact]
+    public async Task AUserWithDataOfItsOwn_DoesNotKeepAnotherUserFromBeingSeeded()
+    {
+        var other = TestUsers.FactoryFor(_database, TestUsers.OtherId);
+        await new SqliteCategoryRepository(other)
+            .AddAsync(Category.Create("languages", "Languages", "#86EFAC"), CancellationToken.None);
+
+        await StartAsync();
+
+        (await _categories.ListAsync(CancellationToken.None)).Count.ShouldBe(4);
+        (await new SqliteCategoryRepository(other).ListAsync(CancellationToken.None)).Single().Id.ShouldBe("languages");
     }
 }

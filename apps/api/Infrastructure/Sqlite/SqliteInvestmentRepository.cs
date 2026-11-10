@@ -20,9 +20,10 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await using var lease = await connections.LeaseAsync(cancellationToken);
         return await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT id, name, kind, price_cents, priced_on FROM investments ORDER BY rowid",
+            "SELECT id, name, kind, price_cents, priced_on FROM investments WHERE user_id = $user ORDER BY rowid",
             ToInvestment,
-            cancellationToken);
+            cancellationToken,
+            ("$user", connections.UserId));
     }
 
     public async Task<Investment?> FindAsync(string id, CancellationToken cancellationToken)
@@ -30,10 +31,10 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var found = await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT id, name, kind, price_cents, priced_on FROM investments WHERE id = $id",
+            "SELECT id, name, kind, price_cents, priced_on FROM investments WHERE user_id = $user AND id = $id",
             ToInvestment,
             cancellationToken,
-            ("$id", id));
+            ("$id", id), ("$user", connections.UserId));
         return found.SingleOrDefault();
     }
 
@@ -44,14 +45,14 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await SqliteCommands.ExecuteAsync(
             lease.Connection,
             """
-            INSERT INTO investments (id, name, kind, price_cents, priced_on)
-            VALUES ($id, $name, $kind, $priceCents, $pricedOn)
-            ON CONFLICT (id) DO UPDATE SET
+            INSERT INTO investments (user_id, id, name, kind, price_cents, priced_on)
+            VALUES ($user, $id, $name, $kind, $priceCents, $pricedOn)
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 name = excluded.name, kind = excluded.kind,
                 price_cents = excluded.price_cents, priced_on = excluded.priced_on
             """,
             cancellationToken,
-            ("$id", investment.Id), ("$name", investment.Name), ("$kind", investment.Kind.ToString()),
+            ("$user", connections.UserId), ("$id", investment.Id), ("$name", investment.Name), ("$kind", investment.Kind.ToString()),
             ("$priceCents", investment.Price?.Cents),
             ("$pricedOn", investment.Price is { } price ? ToText(price.On) : null));
     }
@@ -60,7 +61,8 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         await SqliteCommands.ExecuteAsync(
-            lease.Connection, "DELETE FROM investments WHERE id = $id", cancellationToken, ("$id", investmentId));
+            lease.Connection, "DELETE FROM investments WHERE user_id = $user AND id = $id", cancellationToken,
+            ("$id", investmentId), ("$user", connections.UserId));
     }
 
     public async Task<bool> HasActivityAsync(string investmentId, CancellationToken cancellationToken)
@@ -69,12 +71,12 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         var found = await SqliteCommands.QueryAsync(
             lease.Connection,
             """
-            SELECT EXISTS (SELECT 1 FROM investment_trades WHERE investment_id = $id)
-                OR EXISTS (SELECT 1 FROM investment_incomes WHERE investment_id = $id)
+            SELECT EXISTS (SELECT 1 FROM investment_trades WHERE user_id = $user AND investment_id = $id)
+                OR EXISTS (SELECT 1 FROM investment_incomes WHERE user_id = $user AND investment_id = $id)
             """,
             reader => reader.GetBoolean(0),
             cancellationToken,
-            ("$id", investmentId));
+            ("$id", investmentId), ("$user", connections.UserId));
         return found[0];
     }
 
@@ -83,9 +85,10 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await using var lease = await connections.LeaseAsync(cancellationToken);
         return await SqliteCommands.QueryAsync(
             lease.Connection,
-            $"SELECT {TradeColumns} FROM investment_trades ORDER BY date, rowid",
+            $"SELECT {TradeColumns} FROM investment_trades WHERE user_id = $user ORDER BY date, rowid",
             ToTrade,
-            cancellationToken);
+            cancellationToken,
+            ("$user", connections.UserId));
     }
 
     public async Task<InvestmentTrade?> FindTradeAsync(string id, CancellationToken cancellationToken)
@@ -93,10 +96,10 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var found = await SqliteCommands.QueryAsync(
             lease.Connection,
-            $"SELECT {TradeColumns} FROM investment_trades WHERE id = $id",
+            $"SELECT {TradeColumns} FROM investment_trades WHERE user_id = $user AND id = $id",
             ToTrade,
             cancellationToken,
-            ("$id", id));
+            ("$id", id), ("$user", connections.UserId));
         return found.SingleOrDefault();
     }
 
@@ -106,14 +109,14 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await SqliteCommands.ExecuteAsync(
             lease.Connection,
             """
-            INSERT INTO investment_trades (id, investment_id, date, kind, quantity_thousandths, unit_price_cents)
-            VALUES ($id, $investmentId, $date, $kind, $quantity, $unitPrice)
-            ON CONFLICT (id) DO UPDATE SET
+            INSERT INTO investment_trades (user_id, id, investment_id, date, kind, quantity_thousandths, unit_price_cents)
+            VALUES ($user, $id, $investmentId, $date, $kind, $quantity, $unitPrice)
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 investment_id = excluded.investment_id, date = excluded.date, kind = excluded.kind,
                 quantity_thousandths = excluded.quantity_thousandths, unit_price_cents = excluded.unit_price_cents
             """,
             cancellationToken,
-            ("$id", trade.Id), ("$investmentId", trade.InvestmentId), ("$date", ToText(trade.Date)),
+            ("$user", connections.UserId), ("$id", trade.Id), ("$investmentId", trade.InvestmentId), ("$date", ToText(trade.Date)),
             ("$kind", trade.Kind.ToString()), ("$quantity", trade.QuantityThousandths), ("$unitPrice", trade.UnitPriceCents));
     }
 
@@ -121,7 +124,8 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         await SqliteCommands.ExecuteAsync(
-            lease.Connection, "DELETE FROM investment_trades WHERE id = $id", cancellationToken, ("$id", tradeId));
+            lease.Connection, "DELETE FROM investment_trades WHERE user_id = $user AND id = $id", cancellationToken,
+            ("$id", tradeId), ("$user", connections.UserId));
     }
 
     public async Task<IReadOnlyList<InvestmentIncome>> ListIncomesAsync(CancellationToken cancellationToken)
@@ -129,9 +133,10 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await using var lease = await connections.LeaseAsync(cancellationToken);
         return await SqliteCommands.QueryAsync(
             lease.Connection,
-            $"SELECT {IncomeColumns} FROM investment_incomes ORDER BY date DESC, rowid DESC",
+            $"SELECT {IncomeColumns} FROM investment_incomes WHERE user_id = $user ORDER BY date DESC, rowid DESC",
             ToIncome,
-            cancellationToken);
+            cancellationToken,
+            ("$user", connections.UserId));
     }
 
     public async Task SaveIncomeAsync(InvestmentIncome income, CancellationToken cancellationToken)
@@ -140,14 +145,14 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
         await SqliteCommands.ExecuteAsync(
             lease.Connection,
             """
-            INSERT INTO investment_incomes (id, investment_id, date, kind, amount_cents)
-            VALUES ($id, $investmentId, $date, $kind, $amountCents)
-            ON CONFLICT (id) DO UPDATE SET
+            INSERT INTO investment_incomes (user_id, id, investment_id, date, kind, amount_cents)
+            VALUES ($user, $id, $investmentId, $date, $kind, $amountCents)
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 investment_id = excluded.investment_id, date = excluded.date, kind = excluded.kind,
                 amount_cents = excluded.amount_cents
             """,
             cancellationToken,
-            ("$id", income.Id), ("$investmentId", income.InvestmentId), ("$date", ToText(income.Date)),
+            ("$user", connections.UserId), ("$id", income.Id), ("$investmentId", income.InvestmentId), ("$date", ToText(income.Date)),
             ("$kind", income.Kind.ToString()), ("$amountCents", income.AmountCents));
     }
 
@@ -155,7 +160,8 @@ public sealed class SqliteInvestmentRepository(SqliteConnectionFactory connectio
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         await SqliteCommands.ExecuteAsync(
-            lease.Connection, "DELETE FROM investment_incomes WHERE id = $id", cancellationToken, ("$id", incomeId));
+            lease.Connection, "DELETE FROM investment_incomes WHERE user_id = $user AND id = $id", cancellationToken,
+            ("$id", incomeId), ("$user", connections.UserId));
     }
 
     private static Investment ToInvestment(SqliteDataReader reader)

@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Orbit.Api.Application.Backups;
 using Orbit.Api.Domain.Categories;
 using Orbit.Api.Infrastructure.Sqlite;
@@ -5,26 +6,31 @@ using Shouldly;
 
 namespace Orbit.Api.Tests.Infrastructure;
 
-/// <summary>The whole SQLite file goes out in a snapshot and comes back in a restore.</summary>
+/// <summary>One account's data goes out in a snapshot and comes back in a restore, and nobody else's does.</summary>
 public sealed class SqliteDatabaseBackupTests : IAsyncLifetime, IDisposable
 {
     private readonly TemporarySqliteDatabase _database = new();
     private readonly TemporarySqliteDatabase _otherDatabase = new();
     private readonly SqliteConnectionFactory _connections;
+    private readonly SqliteConnectionFactory _otherUsersConnections;
     private readonly SqliteCategoryRepository _categories;
+    private readonly SqliteCategoryRepository _otherUsersCategories;
     private readonly SqliteDatabaseBackup _backup;
 
     public SqliteDatabaseBackupTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
+        _otherUsersConnections = TestUsers.FactoryFor(_database, TestUsers.OtherId);
         _categories = new SqliteCategoryRepository(_connections);
+        _otherUsersCategories = new SqliteCategoryRepository(_otherUsersConnections);
         _backup = new SqliteDatabaseBackup(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await EnsureCreatedAsync(_connections);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
         await _categories.AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
+        await _otherUsersCategories.AddAsync(Category.Create("secret", "Secret", "#FCA5A5"), CancellationToken.None);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -45,6 +51,51 @@ public sealed class SqliteDatabaseBackupTests : IAsyncLifetime, IDisposable
         await _backup.RestoreAsync(new MemoryStream(snapshot), CancellationToken.None);
 
         (await CategoryIdsAsync()).ShouldBe(["study"]);
+    }
+
+    [Fact]
+    public async Task Snapshot_HoldsOnlyTheSignedInUsersRecords()
+    {
+        var snapshot = await SnapshotBytesAsync();
+
+        var text = System.Text.Encoding.UTF8.GetString(snapshot);
+
+        text.ShouldContain("Study");
+        text.ShouldNotContain("Secret");
+    }
+
+    [Fact]
+    public async Task Snapshot_HoldsNoEmailOrPasswordHash()
+    {
+        var snapshot = await SnapshotBytesAsync();
+
+        var text = System.Text.Encoding.UTF8.GetString(snapshot);
+
+        text.ShouldNotContain($"{TestUsers.DefaultId}@test.local");
+        text.ShouldNotContain($"{TestUsers.OtherId}@test.local");
+    }
+
+    [Fact]
+    public async Task Restore_ChangesNothingForTheOtherUsers()
+    {
+        var snapshot = await SnapshotBytesAsync();
+        await _categories.DeleteAsync("study", CancellationToken.None);
+
+        await _backup.RestoreAsync(new MemoryStream(snapshot), CancellationToken.None);
+
+        (await _otherUsersCategories.ListAsync(CancellationToken.None)).Select(category => category.Id)
+            .ShouldBe(["secret"]);
+    }
+
+    [Fact]
+    public async Task Restore_ASnapshotOfAnotherAccountFillsTheSignedInOne()
+    {
+        var snapshot = await SnapshotBytesAsync(new SqliteDatabaseBackup(_otherUsersConnections));
+
+        await _backup.RestoreAsync(new MemoryStream(snapshot), CancellationToken.None);
+
+        (await CategoryIdsAsync()).ShouldBe(["secret"]);
+        (await _otherUsersCategories.ListAsync(CancellationToken.None)).Count.ShouldBe(1);
     }
 
     [Fact]
@@ -83,7 +134,7 @@ public sealed class SqliteDatabaseBackupTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task Restore_BackupOfANewerVersionIsRejectedNamingItsVersion()
     {
-        var newer = SqliteMigrations.LatestVersion + 1;
+        var newer = SqliteSchema.CurrentVersion + 1;
         await RunOnOtherDatabaseAsync(
             $"CREATE TABLE notes (id TEXT); PRAGMA application_id = {SqliteSchema.ApplicationId}; PRAGMA user_version = {newer};");
         var fromNewerVersion = await OtherDatabaseBytesAsync();
@@ -105,22 +156,46 @@ public sealed class SqliteDatabaseBackupTests : IAsyncLifetime, IDisposable
         (await CategoryIdsAsync()).ShouldBe(["study"]);
     }
 
-    // Tables added after the backup was taken (a new module, say) are created again on restore.
     [Fact]
-    public async Task Restore_OlderBackupGetsTheTablesAddedSince()
+    public async Task Restore_ABackupWithSeveralAccountsIsRejectedAndChangesNothing()
     {
         await RunOnOtherDatabaseAsync(
-            $"CREATE TABLE categories (id TEXT PRIMARY KEY, name TEXT NOT NULL, color TEXT NOT NULL); PRAGMA application_id = {SqliteSchema.ApplicationId};");
+            $"""
+            PRAGMA application_id = {SqliteSchema.ApplicationId};
+            CREATE TABLE categories (user_id TEXT, id TEXT, name TEXT, color TEXT);
+            INSERT INTO categories VALUES ('a', 'x', 'X', '#000000'), ('b', 'y', 'Y', '#000000');
+            PRAGMA user_version = {SqliteSchema.CurrentVersion};
+            """);
+
+        var severalAccounts = await OtherDatabaseBytesAsync();
+
+        await Should.ThrowAsync<InvalidBackupException>(
+            () => _backup.RestoreAsync(new MemoryStream(severalAccounts), CancellationToken.None));
+
+        (await CategoryIdsAsync()).ShouldBe(["study"]);
+    }
+
+    // A file taken before accounts existed has no owner column: its rows become the signed-in user's, and
+    // what it lacks (tables added since) is created again.
+    [Fact]
+    public async Task Restore_ABackupFromBeforeAccountsBecomesTheSignedInUsersData()
+    {
+        await RunOnOtherDatabaseAsync(
+            $"""
+            CREATE TABLE categories (id TEXT PRIMARY KEY, name TEXT NOT NULL, color TEXT NOT NULL);
+            INSERT INTO categories VALUES ('old', 'Old', '#7DD3FC');
+            PRAGMA application_id = {SqliteSchema.ApplicationId};
+            """);
 
         await _backup.RestoreAsync(new MemoryStream(await OtherDatabaseBytesAsync()), CancellationToken.None);
 
-        (await CategoryIdsAsync()).ShouldBeEmpty();
+        (await CategoryIdsAsync()).ShouldBe(["old"]);
         (await new SqliteRoutineRepository(_connections).ListAsync(CancellationToken.None)).ShouldBeEmpty();
     }
 
-    private async Task<byte[]> SnapshotBytesAsync()
+    private async Task<byte[]> SnapshotBytesAsync(SqliteDatabaseBackup? from = null)
     {
-        await using var snapshot = await _backup.OpenSnapshotAsync(CancellationToken.None);
+        await using var snapshot = await (from ?? _backup).OpenSnapshotAsync(CancellationToken.None);
         using var copy = new MemoryStream();
         await snapshot.CopyToAsync(copy);
         return copy.ToArray();
@@ -131,21 +206,15 @@ public sealed class SqliteDatabaseBackupTests : IAsyncLifetime, IDisposable
 
     private async Task RunOnOtherDatabaseAsync(string sql)
     {
-        await using var connection = await new SqliteConnectionFactory(_otherDatabase.ConnectionString)
+        await using var connection = await TestUsers.FactoryFor(_otherDatabase)
             .OpenAsync(CancellationToken.None);
         await SqliteCommands.ExecuteAsync(connection, sql, CancellationToken.None);
     }
 
     private async Task<byte[]> OtherDatabaseBytesAsync()
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        SqliteConnection.ClearAllPools();
         var path = _otherDatabase.ConnectionString["Data Source=".Length..];
         return await File.ReadAllBytesAsync(path);
-    }
-
-    private static async Task EnsureCreatedAsync(SqliteConnectionFactory connections)
-    {
-        await using var connection = await connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
     }
 }

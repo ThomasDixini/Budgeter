@@ -6,6 +6,7 @@ using Orbit.Api.Application.Goals;
 using Orbit.Api.Application.Investments;
 using Orbit.Api.Application.Routines;
 using Orbit.Api.Application.Tasks;
+using Orbit.Api.Application.Users;
 
 namespace Orbit.Api.Infrastructure.Sqlite;
 
@@ -21,8 +22,11 @@ public static class SqlitePersistenceRegistration
     {
         // Resolved lazily so configuration overrides added after registration (e.g. by tests) still apply.
         services.AddSingleton(provider => SqliteOptions.FromConfiguration(provider.GetRequiredService<IConfiguration>()));
-        services.AddSingleton(provider =>
-            new SqliteConnectionFactory(provider.GetRequiredService<SqliteOptions>().ConnectionString));
+        services.AddSingleton(provider => new SqliteConnectionFactory(
+            provider.GetRequiredService<SqliteOptions>().ConnectionString,
+            provider.GetRequiredService<ICurrentUser>()));
+        services.AddSingleton<IUserRepository, SqliteUserRepository>();
+        services.AddSingleton<IUserProvisioner, SqliteUserProvisioner>();
         services.AddSingleton<IUnitOfWork, SqliteUnitOfWork>();
         services.AddSingleton<ICategoryRepository, SqliteCategoryRepository>();
         services.AddSingleton<IGoalRepository, SqliteGoalRepository>();

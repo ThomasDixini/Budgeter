@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/test';
 import { createTransaction, isoDayOf, ownMonth, uniqueName } from './support/finances-api';
 
 /*

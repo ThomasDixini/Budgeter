@@ -14,7 +14,7 @@ public sealed class SqliteBillRepositoryTests : IAsyncLifetime, IDisposable
 
     public SqliteBillRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _bills = new SqliteBillRepository(_connections);
     }
 
@@ -22,7 +22,9 @@ public sealed class SqliteBillRepositoryTests : IAsyncLifetime, IDisposable
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
-        await FinanceStarterSeed.ApplyOnceAsync(connection, CancellationToken.None);
+        await TestUsers.InsertAsync(connection, TestUsers.DefaultId);
+        await TestUsers.InsertAsync(connection, TestUsers.OtherId);
+        await FinanceStarterSeed.ApplyOnceAsync(connection, TestUsers.DefaultId, CancellationToken.None);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -106,5 +108,58 @@ public sealed class SqliteBillRepositoryTests : IAsyncLifetime, IDisposable
         await _bills.DeleteAsync("b1", CancellationToken.None);
 
         (used, other, await _bills.AnyInCategoryAsync("housing", CancellationToken.None)).ShouldBe((true, false, false));
+    }
+
+    private async Task<SqliteBillRepository> OtherUsersBillsAsync()
+    {
+        var others = TestUsers.FactoryFor(_database, TestUsers.OtherId);
+        await FinanceTestSeeds.ApplyAsync(others);
+        return new SqliteBillRepository(others);
+    }
+
+    [Fact]
+    public async Task TwoUsers_StoreTheSameBillIdWithoutSeeingEachOther()
+    {
+        var others = await OtherUsersBillsAsync();
+        await _bills.SaveAsync(NewBill("b1", 11, 1), CancellationToken.None);
+        await others.SaveAsync(Orbit.Api.Domain.Finances.Bill.Create("b1", BillKind.Payable, "Theirs", "food", 700, new DateOnly(2026, 11, 2)), CancellationToken.None);
+
+        var mine = await _bills.FindAsync("b1", CancellationToken.None);
+        var theirs = await others.FindAsync("b1", CancellationToken.None);
+
+        (mine!.Description, theirs!.Description).ShouldBe(("Rent", "Theirs"));
+    }
+
+    [Fact]
+    public async Task Lists_NeverIncludeAnotherUsersBills()
+    {
+        var others = await OtherUsersBillsAsync();
+        await others.SaveAsync(NewBill("open", 11, 1), CancellationToken.None);
+        await others.SaveAsync(NewBill("paid", 10, 1).Settle(new DateOnly(2026, 10, 2), "checking-account"), CancellationToken.None);
+
+        var open = await _bills.ListOpenDueBeforeAsync(new DateOnly(2027, 1, 1), CancellationToken.None);
+        var settled = await _bills.ListSettledSinceAsync(new DateOnly(2026, 1, 1), CancellationToken.None);
+
+        (open.Count, settled.Count).ShouldBe((0, 0));
+    }
+
+    [Fact]
+    public async Task AnyInCategory_IgnoresAnotherUsersBills()
+    {
+        var others = await OtherUsersBillsAsync();
+        await others.SaveAsync(NewBill("b1", 11, 1), CancellationToken.None);
+
+        (await _bills.AnyInCategoryAsync("housing", CancellationToken.None)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Delete_NeverRemovesAnotherUsersBill()
+    {
+        var others = await OtherUsersBillsAsync();
+        await others.SaveAsync(NewBill("b1", 11, 1), CancellationToken.None);
+
+        await _bills.DeleteAsync("b1", CancellationToken.None);
+
+        (await others.FindAsync("b1", CancellationToken.None)).ShouldNotBeNull();
     }
 }

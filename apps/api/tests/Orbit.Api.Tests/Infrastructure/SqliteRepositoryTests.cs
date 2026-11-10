@@ -15,15 +15,14 @@ public sealed class SqliteRepositoryTests : IAsyncLifetime, IDisposable
 
     public SqliteRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _categories = new SqliteCategoryRepository(_connections);
         _goals = new SqliteGoalRepository(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
         await _categories.AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
     }
 
@@ -73,8 +72,8 @@ public sealed class SqliteRepositoryTests : IAsyncLifetime, IDisposable
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
 
-        await SampleCategorySeed.ApplyAsync(connection, CancellationToken.None);
-        await SampleCategorySeed.ApplyAsync(connection, CancellationToken.None);
+        await SampleCategorySeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
+        await SampleCategorySeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
 
         (await _categories.ListAsync(CancellationToken.None)).Count.ShouldBe(4);
     }

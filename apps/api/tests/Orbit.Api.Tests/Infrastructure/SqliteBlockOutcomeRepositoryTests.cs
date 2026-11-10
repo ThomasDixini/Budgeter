@@ -15,15 +15,14 @@ public sealed class SqliteBlockOutcomeRepositoryTests : IAsyncLifetime, IDisposa
 
     public SqliteBlockOutcomeRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _outcomes = new SqliteBlockOutcomeRepository(_connections);
         _routines = new SqliteRoutineRepository(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
         await new SqliteCategoryRepository(_connections)
             .AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
         await _routines.SaveAsync(Routines.Weekdays(), CancellationToken.None);

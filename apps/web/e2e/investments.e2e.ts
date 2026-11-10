@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/test';
 import { InvestmentsPage } from './pages/investments.page';
 import { ownMonth, uniqueName } from './support/finances-api';
 

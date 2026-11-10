@@ -81,3 +81,6 @@ TestResults/
 *.db
 *.db-shm
 *.db-wal
+
+# Signing key the API makes for itself in Development
+auth-dev.key

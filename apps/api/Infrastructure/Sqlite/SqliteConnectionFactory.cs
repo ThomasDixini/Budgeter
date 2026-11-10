@@ -1,13 +1,18 @@
 using Microsoft.Data.Sqlite;
+using Orbit.Api.Application;
 
 namespace Orbit.Api.Infrastructure.Sqlite;
 
 /// <summary>
 /// Opens SQLite connections with foreign keys enforced. While a unit of work runs, repositories are
-/// lent its connection, so their statements join its transaction.
+/// lent its connection, so their statements join its transaction. It also tells repositories whose records
+/// they may touch: every query of a user's table filters on <see cref="UserId"/>.
 /// </summary>
-public sealed class SqliteConnectionFactory(string connectionString)
+public sealed class SqliteConnectionFactory(string connectionString, ICurrentUser currentUser)
 {
+    /// <summary>The owner of the records the running request reads and writes.</summary>
+    public string UserId => currentUser.Id;
+
     // Flows with the async calls of one request only, so concurrent requests never share it.
     private readonly AsyncLocal<SqliteConnection?> _unitOfWorkConnection = new();
 
