@@ -1,0 +1,158 @@
+<form
+  class="sinking-fund-form ui-enter"
+  [attr.aria-label]="(isEditing() ? 'Edit sinking fund' : 'New sinking fund') | t"
+  (submit)="submit($event)"
+  (keydown.escape)="cancelled.emit()"
+>
+  <h3 class="heading">{{ (isEditing() ? 'Edit sinking fund' : 'New sinking fund') | t }}</h3>
+
+  <div class="fields">
+    <label class="ui-field description">
+      {{ 'Description' | t }}
+      <input
+        class="ui-input"
+        name="description"
+        type="text"
+        autocomplete="off"
+        [maxLength]="maxDescriptionLength"
+        [value]="description()"
+        (input)="description.set(valueOf($event))"
+      />
+    </label>
+
+    <label class="ui-field">
+      {{ 'Category' | t }}
+      <select class="ui-input" name="category" (change)="categoryId.set(valueOf($event))">
+        <option value="" disabled [selected]="categoryId() === ''">
+          {{ 'Choose a category' | t }}
+        </option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id" [selected]="category.id === categoryId()">
+            {{ category.name | t }}
+          </option>
+        }
+      </select>
+    </label>
+
+    <label class="ui-field">
+      {{ 'Cost per cycle (R$)' | t }}
+      <input
+        class="ui-input"
+        name="amount"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        placeholder="0.00"
+        [value]="amount()"
+        [attr.aria-invalid]="amountError() !== undefined"
+        [attr.aria-describedby]="amountError() === undefined ? null : 'fund-amount-error'"
+        (input)="amount.set(valueOf($event))"
+      />
+      @if (amountError(); as error) {
+        <span id="fund-amount-error" class="error">{{ error | t }}</span>
+      }
+    </label>
+
+    <label class="ui-field">
+      {{ 'Repeats' | t }}
+      <select class="ui-input" name="kind" (change)="chooseKind(valueOf($event))">
+        @for (option of kindOptions; track option.value) {
+          <option [value]="option.value" [selected]="option.value === kind()">
+            {{ option.label | t }}
+          </option>
+        }
+      </select>
+    </label>
+
+    @if (isEveryMonths()) {
+      <label class="ui-field">
+        {{ 'Every (months)' | t }}
+        <input
+          class="ui-input"
+          name="intervalMonths"
+          type="number"
+          inputmode="numeric"
+          [min]="minInterval"
+          [max]="maxInterval"
+          [value]="intervalMonths()"
+          [attr.aria-invalid]="intervalError() !== undefined"
+          [attr.aria-describedby]="intervalError() === undefined ? null : 'fund-interval-error'"
+          (input)="intervalMonths.set(valueOf($event))"
+        />
+        @if (intervalError(); as error) {
+          <span id="fund-interval-error" class="error">
+            {{ error | t: { min: minInterval, max: maxInterval } }}
+          </span>
+        }
+      </label>
+
+      <label class="ui-field">
+        {{ 'Next due date' | t }}
+        <input
+          class="ui-input"
+          name="nextDueDate"
+          type="date"
+          [min]="today()"
+          [value]="nextDueDate()"
+          [attr.aria-invalid]="dueDateError() !== undefined"
+          [attr.aria-describedby]="dueDateError() === undefined ? null : 'fund-due-error'"
+          (change)="nextDueDate.set(valueOf($event))"
+        />
+        @if (dueDateError(); as error) {
+          <span id="fund-due-error" class="error">{{ error | t }}</span>
+        }
+      </label>
+    } @else {
+      <label class="ui-field">
+        {{ 'Month of the year (1-12)' | t }}
+        <input
+          class="ui-input"
+          name="month"
+          type="number"
+          inputmode="numeric"
+          [min]="minMonth"
+          [max]="maxMonth"
+          [value]="month()"
+          [attr.aria-invalid]="monthError() !== undefined"
+          [attr.aria-describedby]="monthError() === undefined ? null : 'fund-month-error'"
+          (input)="month.set(valueOf($event))"
+        />
+        @if (monthError(); as error) {
+          <span id="fund-month-error" class="error">
+            {{ error | t: { min: minMonth, max: maxMonth } }}
+          </span>
+        }
+      </label>
+
+      <label class="ui-field">
+        {{ 'Day of the month' | t }}
+        <input
+          class="ui-input"
+          name="day"
+          type="number"
+          inputmode="numeric"
+          [min]="minDay"
+          [max]="maxDay"
+          [value]="day()"
+          [attr.aria-invalid]="dayError() !== undefined"
+          [attr.aria-describedby]="dayError() === undefined ? null : 'fund-day-error'"
+          (input)="day.set(valueOf($event))"
+        />
+        @if (dayError(); as error) {
+          <span id="fund-day-error" class="error">
+            {{ error | t: { min: minDay, max: maxDay } }}
+          </span>
+        }
+      </label>
+    }
+  </div>
+
+  <div class="actions">
+    <button class="ui-button-ghost" type="button" (click)="cancelled.emit()">
+      {{ 'Cancel' | t }}
+    </button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ 'Save' | t }}
+    </button>
+  </div>
+</form>

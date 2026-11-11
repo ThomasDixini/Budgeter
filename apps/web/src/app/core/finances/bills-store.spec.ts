@@ -10,7 +10,7 @@ import { Bill, BillDraft, BillsAgenda } from './bills';
 import { BillsGateway } from './bills-gateway';
 import { BillsStore } from './bills-store';
 import { FakeAccountStatementsGateway } from './fake-account-statements-gateway';
-import { FakeBillsGateway } from './fake-bills-gateway';
+import { FakeBillsGateway, SAMPLE_BILLS } from './fake-bills-gateway';
 import { FakeFinanceReferencesGateway } from './fake-finances-gateways';
 import { FinanceReferencesGateway } from './transactions-gateway';
 
@@ -114,6 +114,28 @@ describe('BillsStore loading', () => {
       false,
       true,
     ]);
+  });
+
+  it('asks for the agenda again and shows the bills created meanwhile', () => {
+    const gateway = new FakeBillsGateway();
+    const { store } = createStore(gateway);
+    const created: Bill = { ...SAMPLE_BILLS[0], id: 'ipva-bill', description: 'IPVA' };
+
+    gateway.agendaToServe = { ...gateway.agendaToServe, bills: [...SAMPLE_BILLS, created] };
+    store.refreshAgenda();
+
+    expect(gateway.askedDays).toEqual(['2026-11-03', '2026-11-03']);
+    expect(keys(store.groups().overdue)).toContain('bill:ipva-bill');
+  });
+
+  it('keeps the bills on screen when the agenda cannot be read again', () => {
+    const gateway = new FakeBillsGateway();
+    const { store } = createStore(gateway);
+
+    gateway.failure = new Error('offline');
+    store.refreshAgenda();
+
+    expect(keys(store.groups().overdue)).toEqual(['bill:rent']);
   });
 });
 

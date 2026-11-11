@@ -86,6 +86,10 @@ builder.Services.AddScoped<SaveBill>();
 builder.Services.AddScoped<DeleteBill>();
 builder.Services.AddScoped<SettleBill>();
 builder.Services.AddScoped<ReopenBill>();
+builder.Services.AddScoped<ListSinkingFunds>();
+builder.Services.AddScoped<SaveSinkingFund>();
+builder.Services.AddScoped<DeleteSinkingFund>();
+builder.Services.AddScoped<RollSinkingFunds>();
 builder.Services.AddScoped<MonthEndPrices>();
 builder.Services.AddScoped<LatestPrices>();
 builder.Services.AddScoped<GetPortfolio>();
@@ -100,7 +104,6 @@ builder.Services.AddScoped<ExportBackup>();
 builder.Services.AddScoped<RestoreBackup>();
 
 var app = builder.Build();
-
 
 app.UseExceptionHandler();
 app.UseAuthentication();
@@ -121,6 +124,7 @@ app.MapAccountEndpoints();
 app.MapTransactionEndpoints();
 app.MapCardPaymentEndpoints();
 app.MapBillEndpoints();
+app.MapSinkingFundEndpoints();
 app.MapInvestmentEndpoints();
 app.MapIncomeSplitEndpoints();
 app.MapBackupEndpoints();
