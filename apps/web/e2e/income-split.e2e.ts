@@ -24,7 +24,11 @@ test.beforeEach(async ({ page }) => {
 test('the Income split tab opens the page', async ({ page }) => {
   await page.goto('/finances/transactions');
 
-  await page.getByRole('link', { name: 'Income split' }).click();
+  // Scoped to the tabs: the Transactions setup hint links to the same page.
+  await page
+    .getByRole('navigation', { name: 'Module sections' })
+    .getByRole('link', { name: 'Income split' })
+    .click();
 
   await expect(page).toHaveURL(/\/finances\/income-split$/);
   await expect(split.title).toHaveText('Income split');
