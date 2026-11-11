@@ -35,15 +35,3 @@ internal sealed class FakeTokenIssuer : ITokenIssuer
     public AccessToken Issue(User user, bool remember) =>
         new($"token-of-{user.Id}-{(remember ? "long" : "short")}", DateTimeOffset.UnixEpoch);
 }
-
-/// <summary>Records the users that were given their starter records.</summary>
-internal sealed class RecordingUserProvisioner : IUserProvisioner
-{
-    public List<string> Provisioned { get; } = [];
-
-    public Task ProvisionAsync(string userId, CancellationToken cancellationToken)
-    {
-        Provisioned.Add(userId);
-        return Task.CompletedTask;
-    }
-}

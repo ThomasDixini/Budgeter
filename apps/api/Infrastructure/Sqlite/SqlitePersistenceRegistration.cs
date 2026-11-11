@@ -26,7 +26,6 @@ public static class SqlitePersistenceRegistration
             provider.GetRequiredService<SqliteOptions>().ConnectionString,
             provider.GetRequiredService<ICurrentUser>()));
         services.AddSingleton<IUserRepository, SqliteUserRepository>();
-        services.AddSingleton<IUserProvisioner, SqliteUserProvisioner>();
         services.AddSingleton<IUnitOfWork, SqliteUnitOfWork>();
         services.AddSingleton<ICategoryRepository, SqliteCategoryRepository>();
         services.AddSingleton<IGoalRepository, SqliteGoalRepository>();

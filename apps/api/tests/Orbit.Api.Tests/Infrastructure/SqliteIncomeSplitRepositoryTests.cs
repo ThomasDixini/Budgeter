@@ -23,7 +23,7 @@ public sealed class SqliteIncomeSplitRepositoryTests : IAsyncLifetime, IDisposab
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
         await TestUsers.InsertAsync(connection, TestUsers.DefaultId);
         await TestUsers.InsertAsync(connection, TestUsers.OtherId);
-        await FinanceStarterSeed.ApplyOnceAsync(connection, TestUsers.DefaultId, CancellationToken.None);
+        await FinanceStarterSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -115,7 +115,7 @@ public sealed class SqliteIncomeSplitRepositoryTests : IAsyncLifetime, IDisposab
         new(TestUsers.FactoryFor(_database, TestUsers.OtherId));
 
     private async Task SeedOtherUserAsync() =>
-        await FinanceTestSeeds.ApplyAsync(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+        await FinanceStarterSeed.ApplyAsync(TestUsers.FactoryFor(_database, TestUsers.OtherId));
 
     [Fact]
     public async Task TwoUsers_KeepTheirOwnPlansWithTheSamePartIds()

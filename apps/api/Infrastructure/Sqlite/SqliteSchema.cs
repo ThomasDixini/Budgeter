@@ -27,10 +27,10 @@ internal static class SqliteSchema
     public static readonly string[] UserTables =
     [
         "categories", "goals", "goal_progress", "routines", "routine_blocks", "routine_rotation",
-        "routine_rotation_steps", "tasks", "task_completions", "block_outcomes", "sample_seed",
+        "routine_rotation_steps", "tasks", "task_completions", "block_outcomes",
         "finance_categories", "accounts", "transactions", "card_payments", "bills", "investments",
         "investment_trades", "investment_incomes", "income_split", "income_split_parts",
-        "income_split_categories", "finance_seed",
+        "income_split_categories",
     ];
 
     private const string CreateTables = """
@@ -144,10 +144,6 @@ internal static class SqliteSchema
             FOREIGN KEY (user_id, routine_id) REFERENCES routines (user_id, id) ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS ix_block_outcomes_date ON block_outcomes (user_id, date);
-        CREATE TABLE IF NOT EXISTS sample_seed (
-            user_id TEXT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
-            applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
         CREATE TABLE IF NOT EXISTS finance_categories (
             user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
             id TEXT NOT NULL,
@@ -275,10 +271,6 @@ internal static class SqliteSchema
             FOREIGN KEY (user_id, part_id) REFERENCES income_split_parts (user_id, id) ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS ix_income_split_categories_part ON income_split_categories (user_id, part_id);
-        CREATE TABLE IF NOT EXISTS finance_seed (
-            user_id TEXT PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
-            applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
         """;
 
     /// <summary>

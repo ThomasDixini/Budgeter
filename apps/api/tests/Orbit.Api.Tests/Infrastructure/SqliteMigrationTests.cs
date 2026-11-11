@@ -173,6 +173,17 @@ public sealed class SqliteMigrationTests : IDisposable
     }
 
     [Fact]
+    public async Task TheOldStarterMarkers_AreDropped_BecauseNewAccountsStartEmpty()
+    {
+        await CreateOldDatabaseAsync();
+
+        await MigrateAsync();
+
+        (await CountAsync(
+            "SELECT COUNT(*) FROM sqlite_master WHERE name IN ('sample_seed', 'finance_seed')")).ShouldBe(0);
+    }
+
+    [Fact]
     public async Task TheFirstAccount_TakesOverTheOldRecordsAndTheSecondOneStartsEmpty()
     {
         await CreateOldDatabaseAsync();

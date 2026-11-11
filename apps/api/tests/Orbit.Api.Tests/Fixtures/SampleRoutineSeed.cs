@@ -37,7 +37,7 @@ internal static class SampleRoutineSeed
             ("$user", userId));
         if (counts[0] > 0) return;
 
-        // Runs inside the transaction of SampleData.ApplyOnceAsync, so no transaction of its own.
+        // Runs inside the transaction of SampleData.ApplyAsync, so no transaction of its own.
         foreach (var routine in Routines)
         {
             await SqliteRoutineRepository.WriteAsync(connection, userId, routine, cancellationToken);

@@ -57,6 +57,7 @@ internal static class SqliteMultiUserMigration
         SqliteConnection connection, string createTables, CancellationToken cancellationToken)
     {
         await using var transaction = connection.BeginTransaction(deferred: false);
+        await DropStarterMarkersAsync(connection, cancellationToken);
         var existing = await ExistingTablesAsync(connection, cancellationToken);
         await SetAsideAsync(connection, existing, cancellationToken);
         await SqliteCommands.ExecuteAsync(connection, createTables, cancellationToken);
@@ -66,6 +67,13 @@ internal static class SqliteMultiUserMigration
         await SqliteCommands.ExecuteAsync(
             connection, $"PRAGMA user_version = {SqliteSchema.CurrentVersion}", cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+    }
+
+    // Accounts start empty, so the markers that kept the old starter data from coming back have no use.
+    private static async Task DropStarterMarkersAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        await SqliteCommands.ExecuteAsync(connection, "DROP TABLE IF EXISTS sample_seed", cancellationToken);
+        await SqliteCommands.ExecuteAsync(connection, "DROP TABLE IF EXISTS finance_seed", cancellationToken);
     }
 
     private static async Task<IReadOnlyList<string>> ExistingTablesAsync(

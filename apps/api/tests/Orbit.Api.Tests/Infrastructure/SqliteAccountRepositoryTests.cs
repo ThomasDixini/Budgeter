@@ -77,7 +77,7 @@ public sealed class SqliteAccountRepositoryTests : IAsyncLifetime, IDisposable
     {
         await using (var connection = await _connections.OpenAsync(CancellationToken.None))
         {
-            await FinanceStarterSeed.ApplyOnceAsync(connection, TestUsers.DefaultId, CancellationToken.None);
+            await FinanceStarterSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
         }
         var transactions = new SqliteMoneyTransactionRepository(_connections);
         await transactions.SaveAsync(

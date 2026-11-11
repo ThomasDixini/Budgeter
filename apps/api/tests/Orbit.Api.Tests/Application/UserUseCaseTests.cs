@@ -9,7 +9,6 @@ namespace Orbit.Api.Tests.Application;
 public sealed class UserUseCaseTests
 {
     private readonly InMemoryUserRepository _users = new();
-    private readonly RecordingUserProvisioner _provisioner = new();
     private readonly RegisterUser _register;
     private readonly SignIn _signIn;
 
@@ -17,7 +16,7 @@ public sealed class UserUseCaseTests
     {
         var hasher = new FakePasswordHasher();
         var tokens = new FakeTokenIssuer();
-        _register = new RegisterUser(_users, hasher, _provisioner, tokens);
+        _register = new RegisterUser(_users, hasher, tokens);
         _signIn = new SignIn(_users, hasher, tokens);
     }
 
@@ -35,11 +34,10 @@ public sealed class UserUseCaseTests
     }
 
     [Fact]
-    public async Task Register_GivesTheNewAccountItsStarterRecordsAndASession()
+    public async Task Register_ReturnsASessionForTheNewAccount()
     {
         var session = await RegisterAnaAsync();
 
-        _provisioner.Provisioned.ShouldBe([session.User.Id]);
         session.Token.Value.ShouldBe($"token-of-{session.User.Id}-short");
     }
 
@@ -50,7 +48,7 @@ public sealed class UserUseCaseTests
 
         await Should.ThrowAsync<ConflictException>(() => RegisterAnaAsync());
 
-        _provisioner.Provisioned.Count.ShouldBe(1);
+        _users.Users.Count.ShouldBe(1);
     }
 
     [Theory]

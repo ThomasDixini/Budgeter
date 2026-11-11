@@ -205,17 +205,21 @@ public sealed class AuthEndpointsTests : IDisposable
         (await ana.GetFromJsonAsync<CategoryResponse[]>("/categories"))!.Single().Name.ShouldBe("Study");
     }
 
-    [Fact]
-    public async Task EachNewAccount_StartsWithItsOwnFinanceCategories()
+    [Theory]
+    [InlineData("/categories")]
+    [InlineData("/goals")]
+    [InlineData("/routines")]
+    [InlineData("/tasks")]
+    [InlineData("/finance-categories")]
+    [InlineData("/accounts")]
+    [InlineData("/investments")]
+    public async Task ANewAccount_StartsWithNothingInAnyModule(string route)
     {
-        var ana = _factory.CreateClientFor("ana@mail.com");
-        var bia = _factory.CreateClientFor("bia@mail.com");
+        var fresh = _factory.CreateEmptyClientFor("fresh@mail.com");
 
-        var fromAna = await ana.GetStringAsync("/finance-categories");
-        var fromBia = await bia.GetStringAsync("/finance-categories");
+        var body = await fresh.GetStringAsync($"{route}?month=2026-11&date=2026-11-10");
 
-        fromAna.ShouldContain("housing");
-        fromBia.ShouldBe(fromAna);
+        body.ShouldNotContain("\"id\"");
     }
 
     private static string Mint(SecurityKey key, DateTime expires) =>

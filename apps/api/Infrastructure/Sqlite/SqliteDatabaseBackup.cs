@@ -112,7 +112,6 @@ public sealed class SqliteDatabaseBackup(SqliteConnectionFactory connections) : 
             await SqliteUserRows.CopyAllAsync(destination, BackupSchema, owner, userId, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
-        await FinanceStarterSeed.ApplyOnceAsync(destination, userId, cancellationToken);
     }
 
     // The file holds one owner (checked before), or none when it predates accounts: then every row is read.

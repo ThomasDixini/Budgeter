@@ -7,11 +7,10 @@ public sealed record RegisterUserCommand(string Name, string Email, string Passw
 /// <summary>What a client gets once signed in: the token to send from now on, and who it is for.</summary>
 public sealed record Session(User User, AccessToken Token);
 
-/// <summary>Creates an account, gives it its starter records and signs it in.</summary>
+/// <summary>Creates an account and signs it in. A new account starts with no records at all.</summary>
 public sealed class RegisterUser(
     IUserRepository users,
     IPasswordHasher hasher,
-    IUserProvisioner provisioner,
     ITokenIssuer tokens)
 {
     /// <summary>
@@ -25,7 +24,6 @@ public sealed class RegisterUser(
         var hash = hasher.Hash(PasswordPolicy.Require(command.Password));
         var user = await users.AddAsync(draft, hash, cancellationToken)
             ?? throw new ConflictException($"Expected an e-mail with no account yet, received \"{draft.Email}\"");
-        await provisioner.ProvisionAsync(user.Id, cancellationToken);
         return new Session(user, tokens.Issue(user, remember: false));
     }
 }
