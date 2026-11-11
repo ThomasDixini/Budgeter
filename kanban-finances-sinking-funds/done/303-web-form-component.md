@@ -1,7 +1,7 @@
 ---
 id: 303
 title: Web SinkingFundForm component
-status: in-progress
+status: done
 wave: 3
 depends_on: [102, 103]
 priority: high
@@ -42,9 +42,9 @@ Selector `app-sinking-fund-form`; inputs `fund: SinkingFund | null` (null = new)
 | Edit of a fixedDate fund | month/day prefilled, no due date field |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] Keyboard operable; every input has a label.
-- [ ] Works at phone width without sideways scrolling.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] Keyboard operable; every input has a label.
+- [x] Works at phone width without sideways scrolling.
 
 ## Out of scope
 The list (302), the store and page wiring (401), translations (103).

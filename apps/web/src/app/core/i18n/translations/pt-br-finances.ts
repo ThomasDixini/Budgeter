@@ -222,6 +222,7 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
   'Every year on a fixed date': 'Todo ano em data fixa',
   'Every (months)': 'A cada (meses)',
   'Next due date': 'Próximo vencimento',
+  'Pick a date that is today or later.': 'Escolha uma data de hoje em diante.',
   'Month of the year (1-12)': 'Mês do ano (1-12)',
   'Day of the month': 'Dia do mês',
 
