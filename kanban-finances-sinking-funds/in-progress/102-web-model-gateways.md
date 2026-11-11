@@ -1,7 +1,7 @@
 ---
 id: 102
 title: Web model, gateway port, HTTP and fake gateways
-status: backlog
+status: in-progress
 wave: 1
 depends_on: []
 priority: high

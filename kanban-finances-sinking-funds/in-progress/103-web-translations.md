@@ -1,7 +1,7 @@
 ---
 id: 103
 title: Web PT-BR translations for sinking funds
-status: backlog
+status: in-progress
 wave: 1
 depends_on: []
 priority: medium
