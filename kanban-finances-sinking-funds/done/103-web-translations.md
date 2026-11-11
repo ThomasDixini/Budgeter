@@ -1,7 +1,7 @@
 ---
 id: 103
 title: Web PT-BR translations for sinking funds
-status: in-progress
+status: done
 wave: 1
 depends_on: []
 priority: medium
@@ -24,8 +24,8 @@ The Angular app is in English (the key is the English text) with Brazilian Portu
 3. Do not translate anything already present; if a key already exists with a different meaning, STOP and report.
 
 ## Acceptance criteria
-- [ ] All 19 keys exist once each, verified with `grep` for each.
-- [ ] `npm run lint`, `npx prettier --check .` and `npx ng test --no-watch` pass in `apps/web` (a spec checks translation coverage/placeholders).
+- [x] All 19 keys exist once each, verified with `grep` for each.
+- [x] `npm run lint`, `npx prettier --check .` and `npx ng test --no-watch` pass in `apps/web` (a spec checks translation coverage/placeholders).
 
 ## Out of scope
 Any component or template; the English texts need no file.

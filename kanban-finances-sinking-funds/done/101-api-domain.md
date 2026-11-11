@@ -1,7 +1,7 @@
 ---
 id: 101
 title: API domain - SinkingFund, schedule maths, repository port
-status: in-progress
+status: done
 wave: 1
 depends_on: []
 priority: high
@@ -58,10 +58,10 @@ Exactly as in BOARD.md "Server types" (copy them): `SinkingFundScheduleKind`, `S
 | Id longer than 48 chars | `DomainRuleException` naming the id and the limit |
 
 ## Acceptance criteria
-- [ ] `dotnet build Orbit.slnx` has 0 warnings; `dotnet test Orbit.slnx` passes including the new tests.
-- [ ] `dotnet format Orbit.slnx --verify-no-changes` is clean.
-- [ ] The public signatures match BOARD.md exactly.
-- [ ] Every function is 4–20 lines and no file passes 500 lines.
+- [x] `dotnet build Orbit.slnx` has 0 warnings; `dotnet test Orbit.slnx` passes including the new tests.
+- [x] `dotnet format Orbit.slnx --verify-no-changes` is clean.
+- [x] The public signatures match BOARD.md exactly.
+- [x] Every function is 4–20 lines and no file passes 500 lines.
 
 ## Out of scope
 SQLite, use cases, endpoints, DI registration, any web code, the in-memory repository fake (task 201).

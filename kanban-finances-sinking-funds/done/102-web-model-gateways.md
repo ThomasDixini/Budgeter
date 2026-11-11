@@ -1,7 +1,7 @@
 ---
 id: 102
 title: Web model, gateway port, HTTP and fake gateways
-status: in-progress
+status: done
 wave: 1
 depends_on: []
 priority: high
@@ -39,9 +39,9 @@ Types and the `SinkingFundsGateway` abstract class exactly as in BOARD.md "Web t
 6. `app.config.ts`: add `{ provide: SinkingFundsGateway, useClass: HttpSinkingFundsGateway }` next to the `BillsGateway` provider (keep imports sorted as the file does). Task 204 later turns it into the demo switch.
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .` and `npx ng test --no-watch` pass in `apps/web`.
-- [ ] The HTTP spec covers list, save, delete and roll requests.
-- [ ] Types and the gateway signatures match BOARD.md exactly.
+- [x] `npm run lint`, `npx prettier --check .` and `npx ng test --no-watch` pass in `apps/web`.
+- [x] The HTTP spec covers list, save, delete and roll requests.
+- [x] Types and the gateway signatures match BOARD.md exactly.
 
 ## Out of scope
 The store (203), demo gateway (204), UI, translations, any API code.
