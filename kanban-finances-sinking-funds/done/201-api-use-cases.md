@@ -1,7 +1,7 @@
 ---
 id: 201
 title: API use cases - save, delete, list, roll
-status: in-progress
+status: done
 wave: 2
 depends_on: [101]
 priority: high
@@ -55,9 +55,9 @@ The use case classes, commands and records of BOARD.md "Server types" (task 201 
 | Roll fails halfway | whole unit of work fails (single `RunAsync`) |
 
 ## Acceptance criteria
-- [ ] `dotnet build Orbit.slnx` 0 warnings; `dotnet test Orbit.slnx` passes; `dotnet format Orbit.slnx --verify-no-changes` clean.
-- [ ] Every scenario in the test plan above has a test.
-- [ ] Functions 4–20 lines, files < 500 lines.
+- [x] `dotnet build Orbit.slnx` 0 warnings; `dotnet test Orbit.slnx` passes; `dotnet format Orbit.slnx --verify-no-changes` clean.
+- [x] Every scenario in the test plan above has a test.
+- [x] Functions 4–20 lines, files < 500 lines.
 
 ## Out of scope
 SQLite, endpoints, `Program.cs` DI registration (task 301).
