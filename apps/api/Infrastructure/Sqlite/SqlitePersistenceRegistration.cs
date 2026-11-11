@@ -40,6 +40,7 @@ public static class SqlitePersistenceRegistration
         services.AddSingleton<ICardPaymentRepository, SqliteCardPaymentRepository>();
         services.AddSingleton<IIncomeSplitRepository, SqliteIncomeSplitRepository>();
         services.AddSingleton<IBillRepository, SqliteBillRepository>();
+        services.AddSingleton<ISinkingFundRepository, SqliteSinkingFundRepository>();
         services.AddSingleton<IInvestmentRepository, SqliteInvestmentRepository>();
         services.AddSingleton<ICdiRateStore, SqliteCdiRateStore>();
         services.AddSingleton<IMonthEndPriceStore, SqliteMonthEndPriceStore>();

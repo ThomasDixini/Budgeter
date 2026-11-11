@@ -164,4 +164,33 @@
       {{ 'Nothing to pay or receive. Add a bill to keep track of its due date.' | t }}
     </p>
   }
+
+  <div class="funds">
+    @if (fundsLoadFailed()) {
+      <app-load-failed message="Could not load the sinking funds." (retry)="reloadFunds()" />
+    } @else if (fundsLoaded()) {
+      <app-sinking-fund-list
+        [funds]="funds()"
+        [totalMonthlyCents]="fundsTotalCents()"
+        [categories]="categories()"
+        (add)="openFundForm({ kind: 'new' })"
+        (edit)="openFundForm({ kind: 'edit', fund: $event })"
+        (remove)="removeFund($event)"
+      />
+    }
+
+    @if (fundsActionFailed()) {
+      <p class="ui-muted" role="alert">{{ 'Could not save the sinking fund.' | t }}</p>
+    }
+
+    @if (fundPanel(); as fundForm) {
+      <app-sinking-fund-form
+        [fund]="fundForm.kind === 'edit' ? fundForm.fund : null"
+        [categories]="categories()"
+        [today]="today"
+        (saved)="saveFund($event)"
+        (cancelled)="openFundForm(null)"
+      />
+    }
+  </div>
 </div>

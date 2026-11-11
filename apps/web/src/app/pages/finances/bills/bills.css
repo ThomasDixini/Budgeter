@@ -82,3 +82,13 @@
     overflow-wrap: anywhere;
   }
 }
+
+.funds {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.funds p {
+  margin: 0;
+}

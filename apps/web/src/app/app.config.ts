@@ -58,6 +58,9 @@ import { BillsGateway } from './core/finances/bills-gateway';
 import { HttpInvestmentsGateway } from './core/finances/http-investments-gateway';
 import { InvestmentsGateway } from './core/finances/investments-gateway';
 import { HttpBillsGateway } from './core/finances/http-bills-gateway';
+import { DemoSinkingFundsGateway } from './core/finances/demo/demo-sinking-funds';
+import { HttpSinkingFundsGateway } from './core/finances/http-sinking-funds-gateway';
+import { SinkingFundsGateway } from './core/finances/sinking-funds-gateway';
 import { BackupGateway } from './core/backups/backup-gateway';
 import { HttpBackupGateway } from './core/backups/http-backup-gateway';
 import { AuthGateway } from './core/auth/auth-gateway';
@@ -108,6 +111,10 @@ export const appConfig: ApplicationConfig = {
       useClass: isDemo ? DemoIncomeSplitGateway : HttpIncomeSplitGateway,
     },
     { provide: BillsGateway, useClass: isDemo ? DemoBillsGateway : HttpBillsGateway },
+    {
+      provide: SinkingFundsGateway,
+      useClass: isDemo ? DemoSinkingFundsGateway : HttpSinkingFundsGateway,
+    },
     {
       provide: InvestmentsGateway,
       useClass: isDemo ? DemoInvestmentsGateway : HttpInvestmentsGateway,

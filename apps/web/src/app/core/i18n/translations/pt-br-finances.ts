@@ -203,6 +203,29 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
   'Mark as {verb}': 'Marcar como {verb}',
   'Add an account to record the movement on.': 'Adicione uma conta para registrar a movimentação.',
 
+  // Sinking funds
+  'Sinking funds': 'Fundos de reserva',
+  'New sinking fund': 'Novo fundo de reserva',
+  'Edit sinking fund': 'Editar fundo de reserva',
+  'No sinking funds yet. Add one for a bill you pay from time to time, like a yearly tax.':
+    'Nenhum fundo de reserva ainda. Crie um para uma conta paga de tempos em tempos, como um imposto anual.',
+  'Set aside {amountCents} per month': 'Guardar {amountCents} por mês',
+  'Total to set aside per month: {amountCents}': 'Total a guardar por mês: {amountCents}',
+  'Saved so far {savedCents} of {amountCents}': 'Guardado até agora {savedCents} de {amountCents}',
+  'Falls due {date}': 'Vence em {date}',
+  'Delete sinking fund {description}': 'Excluir fundo de reserva {description}',
+  'Could not load the sinking funds.': 'Não foi possível carregar os fundos de reserva.',
+  'Could not save the sinking fund.': 'Não foi possível salvar o fundo de reserva.',
+  'Cost per cycle (R$)': 'Custo por ciclo (R$)',
+  Repeats: 'Repete',
+  'Every few months': 'A cada alguns meses',
+  'Every year on a fixed date': 'Todo ano em data fixa',
+  'Every (months)': 'A cada (meses)',
+  'Next due date': 'Próximo vencimento',
+  'Pick a date that is today or later.': 'Escolha uma data de hoje em diante.',
+  'Month of the year (1-12)': 'Mês do ano (1-12)',
+  'Day of the month': 'Dia do mês',
+
   // Income split
   'Used by transactions and by the parts above': 'Usadas nas transações e nas partes acima',
   'To record transactions, first add a bank account or card in':

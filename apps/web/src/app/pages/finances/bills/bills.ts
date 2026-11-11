@@ -1,4 +1,4 @@
-import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
+import { Component, LOCALE_ID, computed, effect, inject, signal, untracked } from '@angular/core';
 import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { CardPaymentDraft } from '../../../core/finances/account-statement';
@@ -16,9 +16,13 @@ import {
 import { BillsStore } from '../../../core/finances/bills-store';
 import { namesById } from '../../../core/finances/finance-references';
 import { formatMoney } from '../../../core/finances/money';
+import { SinkingFund, SinkingFundDraft } from '../../../core/finances/sinking-funds';
+import { SinkingFundsStore } from '../../../core/finances/sinking-funds-store';
 import { BillForm } from './bill-form/bill-form';
 import { BillGroup } from './bill-group/bill-group';
 import { SettleForm } from './settle-form/settle-form';
+import { SinkingFundForm } from './sinking-funds/sinking-fund-form';
+import { SinkingFundList } from './sinking-funds/sinking-fund-list';
 import { PaymentForm } from '../accounts/payment-form/payment-form';
 import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 
@@ -32,21 +36,40 @@ type Panel =
 
 const CLOSED: Panel = { kind: 'closed' };
 
+/** The sinking fund form open below the funds, if any. */
+type FundPanel =
+  { readonly kind: 'new' } | { readonly kind: 'edit'; readonly fund: SinkingFund } | null;
+
 /**
  * To pay & receive: bills and card invoices by due date (overdue, due in the next days, later) and the
  * ones settled recently. Adds, edits and deletes bills, marks them paid or received, and pays card
- * invoices from a bank account.
+ * invoices from a bank account. Also lists the sinking funds that set money aside for bills paid from time
+ * to time.
  */
 @Component({
   selector: 'app-finances-bills',
-  imports: [TranslatePipe, PageHeading, LoadFailed, BillForm, SettleForm, PaymentForm, BillGroup],
-  providers: [BillsStore],
+  imports: [
+    TranslatePipe,
+    PageHeading,
+    LoadFailed,
+    BillForm,
+    SettleForm,
+    PaymentForm,
+    BillGroup,
+    SinkingFundList,
+    SinkingFundForm,
+  ],
+  providers: [BillsStore, SinkingFundsStore],
   templateUrl: './bills.html',
   styleUrl: './bills.css',
 })
 export class Bills {
   private readonly store = inject(BillsStore);
+  private readonly sinkingFunds = inject(SinkingFundsStore);
   private readonly locale = inject(LOCALE_ID);
+  /** The funds on screen when a save was sent; the form closes once the list is replaced after it. */
+  private readonly fundsAtSave = signal<readonly SinkingFund[] | null>(null);
+  private hasRefreshedAfterRoll = false;
 
   protected readonly today = this.store.today;
   protected readonly groups = this.store.groups;
@@ -55,6 +78,12 @@ export class Bills {
   protected readonly isLoaded = this.store.isLoaded;
   protected readonly hasLoadFailed = this.store.hasLoadFailed;
   protected readonly panel = signal<Panel>(CLOSED);
+  protected readonly funds = this.sinkingFunds.funds;
+  protected readonly fundsTotalCents = this.sinkingFunds.totalMonthlyCents;
+  protected readonly fundsLoaded = this.sinkingFunds.isLoaded;
+  protected readonly fundsLoadFailed = this.sinkingFunds.hasLoadFailed;
+  protected readonly fundsActionFailed = this.sinkingFunds.hasActionFailed;
+  protected readonly fundPanel = signal<FundPanel>(null);
 
   protected readonly categoryNames = computed(() => namesById(this.categories()));
   protected readonly accountNames = computed(() => namesById(this.accounts()));
@@ -84,6 +113,11 @@ export class Bills {
       ? this.accounts().find((account) => account.id === panel.invoice.cardId)
       : undefined;
   });
+
+  constructor() {
+    effect(() => this.refreshAgendaOnceBillsWereRolled());
+    effect(() => this.closeFundFormAfterSave());
+  }
 
   protected open(panel: Panel): void {
     this.panel.set(panel);
@@ -137,6 +171,43 @@ export class Bills {
 
   protected reload(): void {
     this.store.reload();
+  }
+
+  protected reloadFunds(): void {
+    this.sinkingFunds.reload();
+  }
+
+  protected openFundForm(panel: FundPanel): void {
+    this.fundsAtSave.set(null);
+    this.fundPanel.set(panel);
+  }
+
+  /**
+   * Sends the form's fund. The form stays open until the refreshed list arrives, so a failed save
+   * does not lose what was typed.
+   * @example this.saveFund({ id: null, draft: { description: 'IPVA', categoryId: 'transport', amountCents: 120000, schedule: { kind: 'fixedDate', month: 1, day: 15 } } })
+   */
+  protected saveFund(saved: { id: string | null; draft: SinkingFundDraft }): void {
+    this.fundsAtSave.set(this.funds());
+    this.sinkingFunds.save(saved.draft, saved.id ?? undefined);
+  }
+
+  protected removeFund(fund: SinkingFund): void {
+    this.sinkingFunds.remove(fund.id);
+  }
+
+  // The roll creates bills on the server after the agenda may already have loaded.
+  private refreshAgendaOnceBillsWereRolled(): void {
+    if (this.hasRefreshedAfterRoll || this.sinkingFunds.rolledBills().length === 0) return;
+    this.hasRefreshedAfterRoll = true;
+    this.store.refreshAgenda();
+  }
+
+  // A saved list is always a new array, so a changed list after a save means the save went through.
+  private closeFundFormAfterSave(): void {
+    const awaited = this.fundsAtSave();
+    if (awaited === null || this.funds() === awaited) return;
+    untracked(() => this.openFundForm(null));
   }
 
   private billOfPanel(): Bill | undefined {

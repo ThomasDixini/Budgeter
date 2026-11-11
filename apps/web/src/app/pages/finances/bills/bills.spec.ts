@@ -6,8 +6,13 @@ import { FixedClock } from '../../../core/calendar/fixed-clock';
 import { AccountStatementsGateway } from '../../../core/finances/account-statements-gateway';
 import { BillsGateway } from '../../../core/finances/bills-gateway';
 import { FakeAccountStatementsGateway } from '../../../core/finances/fake-account-statements-gateway';
-import { FakeBillsGateway } from '../../../core/finances/fake-bills-gateway';
+import { FakeBillsGateway, SAMPLE_BILLS } from '../../../core/finances/fake-bills-gateway';
 import { FakeFinanceReferencesGateway } from '../../../core/finances/fake-finances-gateways';
+import {
+  FakeSinkingFundsGateway,
+  SAMPLE_SINKING_FUND,
+} from '../../../core/finances/fake-sinking-funds-gateway';
+import { SinkingFundsGateway } from '../../../core/finances/sinking-funds-gateway';
 import { FinanceReferencesGateway } from '../../../core/finances/transactions-gateway';
 import { IdGenerator } from '../../../core/ids/id-generator';
 import { SequentialIdGenerator } from '../../../core/ids/sequential-id-generator';
@@ -27,15 +32,17 @@ interface Rendered {
   fixture: ComponentFixture<Bills>;
   bills: FakeBillsGateway;
   statements: FakeAccountStatementsGateway;
+  funds: FakeSinkingFundsGateway;
 }
 
-function render(bills = new FakeBillsGateway()): Rendered {
+function render(bills = new FakeBillsGateway(), funds = new FakeSinkingFundsGateway()): Rendered {
   const statements = new FakeAccountStatementsGateway();
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
       { provide: BillsGateway, useValue: bills },
       { provide: AccountStatementsGateway, useValue: statements },
+      { provide: SinkingFundsGateway, useValue: funds },
       { provide: FinanceReferencesGateway, useValue: new FakeFinanceReferencesGateway() },
       { provide: Clock, useValue: new FixedClock(NOW) },
       { provide: IdGenerator, useValue: new SequentialIdGenerator() },
@@ -44,7 +51,7 @@ function render(bills = new FakeBillsGateway()): Rendered {
   });
   const fixture = TestBed.createComponent(Bills);
   fixture.detectChanges();
-  return { fixture, bills, statements };
+  return { fixture, bills, statements, funds };
 }
 
 function element(fixture: ComponentFixture<Bills>): HTMLElement {
@@ -126,7 +133,7 @@ describe('To pay & receive page', () => {
   it('says where each bill stands and the place of an installment in its series', () => {
     const { fixture } = render();
 
-    expect([texts(fixture, '.detail'), texts(fixture, '.series')]).toEqual([
+    expect([texts(fixture, 'app-bill-group .detail'), texts(fixture, '.series')]).toEqual([
       [
         'Food · Overdue by 4 days (Oct 30)',
         'Salary · Due in 2 days (Nov 5)',
@@ -254,6 +261,119 @@ describe('To pay & receive page', () => {
 
     expect(texts(fixture, 'app-load-failed')).toEqual([
       expect.stringContaining("Couldn't load your bills."),
+    ]);
+  });
+});
+
+/** A fund whose category exists among the sample categories, so the form can save it unchanged. */
+const FOOD_FUND = { ...SAMPLE_SINKING_FUND, categoryId: 'food' };
+
+function fundsGateway(): FakeSinkingFundsGateway {
+  const funds = new FakeSinkingFundsGateway();
+  funds.overviewToServe = { funds: [FOOD_FUND], totalMonthlyCents: 10000 };
+  return funds;
+}
+
+function fillNewFund(fixture: ComponentFixture<Bills>): void {
+  clickButton(fixture, 'New sinking fund');
+  fill(fixture, 'input[name="description"]', 'Insurance');
+  fill(fixture, 'select[name="category"]', 'food');
+  fill(fixture, 'input[name="amount"]', '1200');
+  fill(fixture, 'select[name="kind"]', 'fixedDate');
+  fill(fixture, 'input[name="month"]', '3');
+  fill(fixture, 'input[name="day"]', '10');
+}
+
+describe('To pay & receive page sinking funds', () => {
+  it('lists the sinking funds below the bills', () => {
+    const { fixture } = render(new FakeBillsGateway(), fundsGateway());
+
+    expect(texts(fixture, 'app-sinking-fund-list .description')).toEqual(['IPVA']);
+  });
+
+  it('saves a new fund with a generated id and closes the form', () => {
+    const { fixture, funds } = render(new FakeBillsGateway(), fundsGateway());
+
+    fillNewFund(fixture);
+    // The API answers the refresh with the stored list, a new array like any response.
+    funds.overviewToServe = {
+      funds: [FOOD_FUND, { ...FOOD_FUND, id: 'id-1' }],
+      totalMonthlyCents: 20000,
+    };
+    submit(fixture, 'New sinking fund');
+
+    expect(funds.saved).toEqual([
+      {
+        id: 'id-1',
+        today: '2026-11-03',
+        draft: {
+          description: 'Insurance',
+          categoryId: 'food',
+          amountCents: 120000,
+          schedule: { kind: 'fixedDate', month: 3, day: 10 },
+        },
+      },
+    ]);
+    fixture.detectChanges();
+    expect(element(fixture).querySelector('app-sinking-fund-form')).toBeNull();
+  });
+
+  it('keeps the form open and says so when the fund cannot be saved', () => {
+    const funds = fundsGateway();
+    const { fixture } = render(new FakeBillsGateway(), funds);
+
+    fillNewFund(fixture);
+    funds.failure = new Error('offline');
+    submit(fixture, 'New sinking fund');
+
+    expect(element(fixture).querySelector('app-sinking-fund-form')).not.toBeNull();
+    expect(texts(fixture, '[role="alert"]')).toEqual(['Could not save the sinking fund.']);
+  });
+
+  it('edits a fund under its own id', () => {
+    const { fixture, funds } = render(new FakeBillsGateway(), fundsGateway());
+
+    clickButton(fixture, 'Edit IPVA');
+    fill(fixture, 'input[name="amount"]', '1300');
+    submit(fixture, 'Edit sinking fund');
+
+    expect([funds.saved[0].id, funds.saved[0].draft.amountCents]).toEqual(['ipva', 130000]);
+  });
+
+  it('deletes a fund', () => {
+    const { fixture, funds } = render(new FakeBillsGateway(), fundsGateway());
+
+    clickButton(fixture, 'Delete sinking fund IPVA');
+
+    expect(funds.deleted).toEqual(['ipva']);
+  });
+
+  it('reads the bills again once when the roll created some', () => {
+    const funds = fundsGateway();
+    funds.billsToRoll = [SAMPLE_BILLS[0]];
+    const bills = new FakeBillsGateway();
+
+    const { fixture } = render(bills, funds);
+    fixture.detectChanges();
+
+    expect(bills.askedDays).toEqual(['2026-11-03', '2026-11-03']);
+  });
+
+  it('does not read the bills again when the roll created none', () => {
+    const bills = new FakeBillsGateway();
+
+    render(bills, fundsGateway());
+
+    expect(bills.askedDays).toEqual(['2026-11-03']);
+  });
+
+  it('offers to try again when the funds do not load', () => {
+    const funds = fundsGateway();
+    funds.failure = new Error('offline');
+    const { fixture } = render(new FakeBillsGateway(), funds);
+
+    expect(texts(fixture, 'app-load-failed')).toEqual([
+      expect.stringContaining('Could not load the sinking funds.'),
     ]);
   });
 });

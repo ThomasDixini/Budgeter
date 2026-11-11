@@ -74,6 +74,15 @@ export class BillsStore {
   }
 
   /**
+   * Reads the agenda again, for bills created on the server behind this store's back (such as the ones
+   * a sinking fund roll adds). The bills on screen stay until the new answer arrives.
+   * @example store.refreshAgenda()
+   */
+  refreshAgenda(): void {
+    this.loadAgenda();
+  }
+
+  /**
    * Adds a bill. A repeating one shows its first occurrence at once and the others once stored.
    * @example store.add({ kind: 'payable', description: 'Rent', categoryId: 'housing', amountCents: 150000, dueDate: '2026-11-05' })
    */
