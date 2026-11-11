@@ -1,7 +1,7 @@
 ---
 id: 203
 title: Web SinkingFundsStore
-status: backlog
+status: in-progress
 wave: 2
 depends_on: [102]
 priority: high

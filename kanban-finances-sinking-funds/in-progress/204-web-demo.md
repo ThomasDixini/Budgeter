@@ -1,7 +1,7 @@
 ---
 id: 204
 title: Web demo gateway and binding
-status: backlog
+status: in-progress
 wave: 2
 depends_on: [102]
 priority: medium
