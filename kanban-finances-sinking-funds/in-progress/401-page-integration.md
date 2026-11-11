@@ -1,7 +1,7 @@
 ---
 id: 401
 title: Integrate sinking funds into the To pay & receive page
-status: backlog
+status: in-progress
 wave: 4
 depends_on: [203, 204, 302, 303]
 priority: high
