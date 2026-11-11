@@ -1,7 +1,7 @@
 ---
 id: 501
 title: E2E test for sinking funds and TODO tick
-status: in-progress
+status: done
 wave: 5
 depends_on: [301, 401]
 priority: medium
@@ -35,8 +35,8 @@ Lesson from this branch's history: a new hint on Transactions linked to other pa
 4. Run the whole E2E suite once (`npx playwright test` in `apps/web`) to confirm nothing else broke.
 
 ## Acceptance criteria
-- [ ] `npm run e2e:typecheck`, `npx prettier --check .` and `npm run lint` pass; the new spec passes on desktop and mobile projects; the full suite stays green.
-- [ ] The new spec uses its own slot/month and unique names.
+- [x] `npm run e2e:typecheck`, `npx prettier --check .` and `npm run lint` pass; the new spec passes on desktop and mobile projects; the full suite stays green.
+- [x] The new spec uses its own slot/month and unique names.
 
 ## Out of scope
 Application code changes (report instead).

@@ -13,7 +13,7 @@
 ## To pay & receive
 - [x] Cards
 - [x] Filter
-- [ ] Sinking funds for recurring bills that are paid from time to time (example: IPVA once a year, dog grooming of $100 every 2 months): set aside money during the period and see how much has been saved so far toward each one
+- [x] Sinking funds for recurring bills that are paid from time to time (example: IPVA once a year, dog grooming of $100 every 2 months): set aside money during the period and see how much has been saved so far toward each one
 
 ## Investments
 - [x] Filter
