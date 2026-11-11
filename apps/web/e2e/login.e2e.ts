@@ -24,7 +24,7 @@ test.describe('closed modules', () => {
 });
 
 test.describe('creating an account', () => {
-  test('signs up, enters the app and finds starter finance data of its own', async ({ page }) => {
+  test('signs up and enters the app', async ({ page }) => {
     await page.goto('/login');
     await page.getByRole('tab', { name: 'Create account' }).click();
 
@@ -35,6 +35,9 @@ test.describe('creating an account', () => {
     await page.getByRole('link', { name: 'Enter the app' }).click();
 
     await expect(page).toHaveURL('/routines');
+    // A new account starts with nothing: no routine, no task, no category.
+    await expect(page.getByText('Nothing for today.')).toBeVisible();
+    await expect(page.getByText('No routine runs today.')).toBeVisible();
   });
 
   test('refuses an e-mail that already has an account', async ({ page }) => {

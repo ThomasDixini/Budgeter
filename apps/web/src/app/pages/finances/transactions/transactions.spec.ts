@@ -1,6 +1,9 @@
 import { ErrorHandler } from '@angular/core';
+import { Observable, of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Clock } from '../../../core/calendar/clock';
+import { Account, FinanceCategory } from '../../../core/finances/finance-references';
 import { FixedClock } from '../../../core/calendar/fixed-clock';
 import {
   FakeFinanceReferencesGateway,
@@ -24,11 +27,26 @@ class SilentErrorHandler extends ErrorHandler {
   }
 }
 
-function render(gateway = new FakeTransactionsGateway()): ComponentFixture<Transactions> {
+/** An account that has not added a bank account or a category yet. */
+class EmptyReferencesGateway extends FakeFinanceReferencesGateway {
+  override categories(): Observable<readonly FinanceCategory[]> {
+    return of([]);
+  }
+
+  override accounts(): Observable<readonly Account[]> {
+    return of([]);
+  }
+}
+
+function render(
+  gateway = new FakeTransactionsGateway(),
+  references: FinanceReferencesGateway = new FakeFinanceReferencesGateway(),
+): ComponentFixture<Transactions> {
   TestBed.configureTestingModule({
     providers: [
+      provideRouter([]),
       { provide: TransactionsGateway, useValue: gateway },
-      { provide: FinanceReferencesGateway, useValue: new FakeFinanceReferencesGateway() },
+      { provide: FinanceReferencesGateway, useValue: references },
       { provide: Clock, useValue: new FixedClock(HALLOWEEN) },
       { provide: IdGenerator, useValue: new SequentialIdGenerator() },
       { provide: ErrorHandler, useClass: SilentErrorHandler },
@@ -68,6 +86,25 @@ function search(fixture: ComponentFixture<Transactions>, query: string): void {
 }
 
 describe('Transactions page', () => {
+  it('tells where to start when there is no account or category yet, and records nothing', () => {
+    const fixture = render(new FakeTransactionsGateway(), new EmptyReferencesGateway());
+
+    const hint = element(fixture).querySelector('.setup-hint');
+    const links = Array.from(hint?.querySelectorAll('a') ?? [], (link) =>
+      link.getAttribute('href'),
+    );
+    const newTransaction = element(fixture).querySelector<HTMLButtonElement>('.ui-button-primary');
+
+    expect(links).toEqual(['/finances/accounts', '/finances/income-split']);
+    expect(newTransaction?.disabled).toBe(true);
+  });
+
+  it('shows no start hint once there is an account and a category', () => {
+    const fixture = render();
+
+    expect(element(fixture).querySelector('.setup-hint')).toBeNull();
+  });
+
   it('heads the page with the month shown', () => {
     const fixture = render();
 

@@ -29,3 +29,7 @@
   font-size: 14px;
   color: var(--color-text-muted);
 }
+
+.setup-hint a {
+  color: var(--color-mint);
+}

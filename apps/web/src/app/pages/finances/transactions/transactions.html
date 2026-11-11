@@ -66,6 +66,16 @@
     </button>
   </app-page-heading>
 
+  @if (!canRecord()) {
+    <p class="setup-hint ui-muted" role="status">
+      {{ 'To record transactions, first add a bank account or card in' | t }}
+      <a routerLink="/finances/accounts">{{ 'Banks & Cards' | t }}</a>
+      {{ 'and a category in' | t }}
+      <a routerLink="/finances/income-split">{{ 'Income split' | t }}</a
+      >.
+    </p>
+  }
+
   @if (savedElsewhere(); as message) {
     <p class="saved-elsewhere ui-muted" role="status">{{ message | t }}</p>
   }
