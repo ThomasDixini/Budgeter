@@ -20,7 +20,7 @@
             <span class="description" [attr.title]="fund.description">{{ fund.description }}</span>
             <span class="detail">
               @if (categoryName(fund); as category) {
-                {{ category }} ·
+                {{ category | t }} ·
               }
               {{ 'Falls due {date}' | t: { date: dueDate(fund) } }}
             </span>

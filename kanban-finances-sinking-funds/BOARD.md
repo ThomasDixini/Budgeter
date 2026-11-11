@@ -158,7 +158,6 @@ Components (tasks 302/303): `SinkingFundList` (`app-sinking-fund-list`; inputs `
 ## Backlog
 | ID | Wave | Task | Priority | Estimate | Depends on |
 |----|------|------|----------|----------|------------|
-| 401 | 4 | Integrate into the To pay & receive page | high | M | 203, 204, 302, 303 |
 | 501 | 5 | E2E test and TODO tick | medium | S | 301, 401 |
 
 ## In progress
@@ -177,3 +176,4 @@ _(empty)_
 | 301 | API endpoints, DI registration, endpoint tests |
 | 302 | Web SinkingFundList component |
 | 303 | Web SinkingFundForm component |
+| 401 | Integrate into the To pay & receive page |

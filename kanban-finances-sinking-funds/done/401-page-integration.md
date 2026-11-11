@@ -1,7 +1,7 @@
 ---
 id: 401
 title: Integrate sinking funds into the To pay & receive page
-status: in-progress
+status: done
 wave: 4
 depends_on: [203, 204, 302, 303]
 priority: high
@@ -46,9 +46,9 @@ A roll creates bills on the server *after* `BillsStore` may already have loaded 
 | No funds | empty state from the list component |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] `bills.ts` stays under 500 lines (extract a helper if needed within the files you own).
-- [ ] The page works in DEMO mode (`?demo=on`): funds show with the demo gateway; verify in the browser pane.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] `bills.ts` stays under 500 lines (extract a helper if needed within the files you own).
+- [x] The page works in DEMO mode (`?demo=on`): funds show with the demo gateway; verify in the browser pane.
 
 ## Out of scope
 E2E tests (501), API changes, changes to the list/form components (report a needed change instead).
