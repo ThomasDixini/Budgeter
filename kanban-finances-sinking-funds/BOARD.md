@@ -158,10 +158,6 @@ Components (tasks 302/303): `SinkingFundList` (`app-sinking-fund-list`; inputs `
 ## Backlog
 | ID | Wave | Task | Priority | Estimate | Depends on |
 |----|------|------|----------|----------|------------|
-| 201 | 2 | API use cases: save, delete, list, roll (+ in-memory fake) | high | M | 101 |
-| 202 | 2 | SQLite table and repository | high | M | 101 |
-| 203 | 2 | Web SinkingFundsStore | high | S | 102 |
-| 204 | 2 | Web demo gateway and binding | medium | S | 102 |
 | 301 | 3 | API endpoints, DI registration, endpoint tests | high | M | 201, 202 |
 | 302 | 3 | Web SinkingFundList component | high | M | 102, 103 |
 | 303 | 3 | Web SinkingFundForm component | high | M | 102, 103 |
@@ -177,3 +173,7 @@ _(empty)_
 | 101 | API domain: SinkingFund, schedule maths, repository port |
 | 102 | Web model, gateway port, HTTP + fake gateways |
 | 103 | Web PT-BR translations |
+| 201 | API use cases: save, delete, list, roll |
+| 202 | SQLite table and repository |
+| 203 | Web SinkingFundsStore |
+| 204 | Web demo gateway and binding |
