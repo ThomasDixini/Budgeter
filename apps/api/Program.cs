@@ -11,6 +11,7 @@ using Orbit.Api.Application.Tasks;
 using Orbit.Api.Endpoints;
 using Orbit.Api.Infrastructure.Auth;
 using Orbit.Api.Infrastructure.Cdi;
+using Orbit.Api.Infrastructure.Hosting;
 using Orbit.Api.Infrastructure.Quotes;
 using Orbit.Api.Infrastructure.Sqlite;
 
@@ -35,6 +36,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.RespectRequiredConstructorParameters = true;
 });
 builder.Services.AddProblemDetails();
+// A published build carries the web app in wwwroot; see BundledWebApp.
+builder.Services.AddBundledWebApp();
 builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
 builder.Services.AddOrbitAuth(
     builder.Environment.IsDevelopment(), Path.Combine(builder.Environment.ContentRootPath, "auth-dev.key"));
@@ -83,6 +86,10 @@ builder.Services.AddScoped<SaveBill>();
 builder.Services.AddScoped<DeleteBill>();
 builder.Services.AddScoped<SettleBill>();
 builder.Services.AddScoped<ReopenBill>();
+builder.Services.AddScoped<ListSinkingFunds>();
+builder.Services.AddScoped<SaveSinkingFund>();
+builder.Services.AddScoped<DeleteSinkingFund>();
+builder.Services.AddScoped<RollSinkingFunds>();
 builder.Services.AddScoped<MonthEndPrices>();
 builder.Services.AddScoped<LatestPrices>();
 builder.Services.AddScoped<GetPortfolio>();
@@ -97,6 +104,7 @@ builder.Services.AddScoped<ExportBackup>();
 builder.Services.AddScoped<RestoreBackup>();
 
 var app = builder.Build();
+
 
 app.UseExceptionHandler();
 app.UseAuthentication();
@@ -117,6 +125,7 @@ app.MapAccountEndpoints();
 app.MapTransactionEndpoints();
 app.MapCardPaymentEndpoints();
 app.MapBillEndpoints();
+app.MapSinkingFundEndpoints();
 app.MapInvestmentEndpoints();
 app.MapIncomeSplitEndpoints();
 app.MapBackupEndpoints();

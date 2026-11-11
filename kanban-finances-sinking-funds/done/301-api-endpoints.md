@@ -1,7 +1,7 @@
 ---
 id: 301
 title: API endpoints, DI registration, endpoint tests
-status: in-progress
+status: done
 wave: 3
 depends_on: [201, 202]
 priority: high
@@ -38,8 +38,8 @@ Use cases (`SaveSinkingFund`, `DeleteSinkingFund`, `ListSinkingFunds`, `RollSink
 | `everyMonths` without `nextDueDate` | 400 naming the missing field |
 
 ## Acceptance criteria
-- [ ] `dotnet build`, `dotnet test Orbit.Api.Tests` (all), `dotnet format --verify-no-changes` pass.
-- [ ] JSON matches BOARD.md exactly (property names and enum strings).
+- [x] `dotnet build`, `dotnet test Orbit.Api.Tests` (all), `dotnet format --verify-no-changes` pass.
+- [x] JSON matches BOARD.md exactly (property names and enum strings).
 
 ## Out of scope
 Domain, use cases, SQLite and web changes.
