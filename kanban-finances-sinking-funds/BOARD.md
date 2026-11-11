@@ -121,7 +121,7 @@ Components (tasks 302/303): `SinkingFundList` (`app-sinking-fund-list`; inputs `
 | Set aside {amountCents} per month | Guardar {amountCents} por mês |
 | Total to set aside per month: {amountCents} | Total a guardar por mês: {amountCents} |
 | Saved so far {savedCents} of {amountCents} | Guardado até agora {savedCents} de {amountCents} |
-| Due {date} | Vence em {date} |
+| Falls due {date} | Vence em {date} |
 | Delete sinking fund {description} | Excluir fundo de reserva {description} |
 | Could not load the sinking funds. | Não foi possível carregar os fundos de reserva. |
 | Could not save the sinking fund. | Não foi possível salvar o fundo de reserva. |
@@ -158,9 +158,6 @@ Components (tasks 302/303): `SinkingFundList` (`app-sinking-fund-list`; inputs `
 ## Backlog
 | ID | Wave | Task | Priority | Estimate | Depends on |
 |----|------|------|----------|----------|------------|
-| 101 | 1 | API domain: SinkingFund, schedule maths, repository port | high | M | – |
-| 102 | 1 | Web model, gateway port, HTTP + fake gateways | high | S | – |
-| 103 | 1 | Web PT-BR translations | medium | XS | – |
 | 201 | 2 | API use cases: save, delete, list, roll (+ in-memory fake) | high | M | 101 |
 | 202 | 2 | SQLite table and repository | high | M | 101 |
 | 203 | 2 | Web SinkingFundsStore | high | S | 102 |
@@ -175,4 +172,8 @@ Components (tasks 302/303): `SinkingFundList` (`app-sinking-fund-list`; inputs `
 _(empty)_
 
 ## Done
-_(empty)_
+| ID | Task |
+|----|------|
+| 101 | API domain: SinkingFund, schedule maths, repository port |
+| 102 | Web model, gateway port, HTTP + fake gateways |
+| 103 | Web PT-BR translations |
