@@ -28,7 +28,7 @@ internal static class SqliteSchema
     [
         "categories", "goals", "goal_progress", "routines", "routine_blocks", "routine_rotation",
         "routine_rotation_steps", "tasks", "task_completions", "block_outcomes",
-        "finance_categories", "accounts", "transactions", "card_payments", "bills", "investments",
+        "finance_categories", "accounts", "transactions", "card_payments", "bills", "sinking_funds", "investments",
         "investment_trades", "investment_incomes", "income_split", "income_split_parts",
         "income_split_categories",
     ];
@@ -206,6 +206,21 @@ internal static class SqliteSchema
         );
         CREATE INDEX IF NOT EXISTS ix_bills_due_date ON bills (user_id, due_date);
         CREATE INDEX IF NOT EXISTS ix_bills_settled_on ON bills (user_id, settled_on);
+        CREATE TABLE IF NOT EXISTS sinking_funds (
+            user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+            id TEXT NOT NULL,
+            description TEXT NOT NULL,
+            category_id TEXT NOT NULL,
+            amount_cents INTEGER NOT NULL,
+            schedule_kind TEXT NOT NULL,
+            interval_months INTEGER NOT NULL,
+            fixed_month INTEGER NULL,
+            due_day INTEGER NOT NULL,
+            next_due_date TEXT NOT NULL,
+            PRIMARY KEY (user_id, id),
+            FOREIGN KEY (user_id, category_id) REFERENCES finance_categories (user_id, id)
+        );
+        CREATE INDEX IF NOT EXISTS ix_sinking_funds_next_due_date ON sinking_funds (user_id, next_due_date);
         CREATE TABLE IF NOT EXISTS investments (
             user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
             id TEXT NOT NULL,

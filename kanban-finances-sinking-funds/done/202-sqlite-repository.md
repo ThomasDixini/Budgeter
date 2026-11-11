@@ -1,7 +1,7 @@
 ---
 id: 202
 title: SQLite table and repository for sinking funds
-status: in-progress
+status: done
 wave: 2
 depends_on: [101]
 priority: high
@@ -55,8 +55,8 @@ CREATE INDEX IF NOT EXISTS ix_sinking_funds_next_due_date ON sinking_funds (user
 | Unknown schedule kind text in a row | `InvalidOperationException` naming the value and the expected kinds |
 
 ## Acceptance criteria
-- [ ] `dotnet build`, `dotnet test Orbit.slnx` and `dotnet format --verify-no-changes` pass.
-- [ ] A database created before this change gains the table on startup (covered by a test that opens an existing database file).
+- [x] `dotnet build`, `dotnet test Orbit.slnx` and `dotnet format --verify-no-changes` pass.
+- [x] A database created before this change gains the table on startup (covered by a test that opens an existing database file).
 
 ## Out of scope
 Use cases, endpoints, Program.cs, any web code. Do not touch `DeleteFinanceCategory` (blocking category deletion for funds is not in the PRD).
