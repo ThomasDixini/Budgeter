@@ -1,7 +1,7 @@
 ---
 id: 203
 title: Web SinkingFundsStore
-status: in-progress
+status: done
 wave: 2
 depends_on: [102]
 priority: high
@@ -39,8 +39,8 @@ The "To pay & receive" page (`pages/finances/bills`) gets a Sinking funds sectio
 | Two refreshes overlap | the later answer wins (use `switchMap` on a trigger subject, or a request counter as `BillsStore.agendaRequest` does) |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] The spec covers every row above.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] The spec covers every row above.
 
 ## Out of scope
 UI, page wiring (401), demo data.
