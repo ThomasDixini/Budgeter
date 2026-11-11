@@ -1,0 +1,79 @@
+<section class="ui-card list" [attr.aria-label]="'Sinking funds' | t">
+  <header class="list-header">
+    <h2 class="title">{{ 'Sinking funds' | t }}</h2>
+    <button class="ui-button-ghost" type="button" (click)="add.emit()">
+      {{ 'New sinking fund' | t }}
+    </button>
+  </header>
+
+  @if (funds().length === 0) {
+    <p class="ui-muted empty">
+      {{
+        'No sinking funds yet. Add one for a bill you pay from time to time, like a yearly tax.' | t
+      }}
+    </p>
+  } @else {
+    <ul class="rows">
+      @for (fund of funds(); track fund.id) {
+        <li class="fund">
+          <div class="text">
+            <span class="description" [attr.title]="fund.description">{{ fund.description }}</span>
+            <span class="detail">
+              @if (categoryName(fund); as category) {
+                {{ category }} ·
+              }
+              {{ 'Falls due {date}' | t: { date: dueDate(fund) } }}
+            </span>
+            <span class="detail ui-tabular">
+              {{
+                'Saved so far {savedCents} of {amountCents}'
+                  | t: { savedCents: money(fund.savedCents), amountCents: money(fund.amountCents) }
+              }}
+              · {{ percent(fund) }}%
+            </span>
+            <div
+              class="progress"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-valuenow]="percent(fund)"
+            >
+              <div class="progress-fill" [style.width.%]="percent(fund)"></div>
+            </div>
+            <span class="monthly ui-tabular">
+              {{
+                'Set aside {amountCents} per month' | t: { amountCents: money(fund.monthlyCents) }
+              }}
+            </span>
+          </div>
+          <div class="actions">
+            <button
+              class="ui-button-ghost"
+              type="button"
+              [attr.aria-label]="'Edit {name}' | t: { name: fund.description }"
+              (click)="edit.emit(fund)"
+            >
+              {{ 'Edit' | t }}
+            </button>
+            <button
+              class="ui-button-ghost"
+              type="button"
+              [attr.aria-label]="
+                'Delete sinking fund {description}' | t: { description: fund.description }
+              "
+              (click)="remove.emit(fund)"
+            >
+              {{ 'Delete' | t }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+    <p class="total ui-tabular">
+      {{
+        'Total to set aside per month: {amountCents}'
+          | t: { amountCents: money(totalMonthlyCents()) }
+      }}
+    </p>
+  }
+</section>

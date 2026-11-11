@@ -1,7 +1,7 @@
 ---
 id: 302
 title: Web SinkingFundList component
-status: in-progress
+status: done
 wave: 3
 depends_on: [102, 103]
 priority: high
@@ -41,9 +41,9 @@ Selector `app-sinking-fund-list`; inputs `funds: readonly SinkingFund[]`, `total
 | Category id unknown | falls back like `bill-group` does |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] No file over 500 lines; no function over 20 lines.
-- [ ] Progress is exposed as text and as `role="progressbar"`.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] No file over 500 lines; no function over 20 lines.
+- [x] Progress is exposed as text and as `role="progressbar"`.
 
 ## Out of scope
 The form (303), store/page wiring (401), translations (103).

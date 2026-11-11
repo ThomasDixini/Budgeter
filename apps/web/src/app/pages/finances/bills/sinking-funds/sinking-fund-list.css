@@ -1,0 +1,97 @@
+:host {
+  display: block;
+}
+
+.list {
+  padding: 8px 24px 16px;
+}
+
+.list-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 12px 8px;
+  border-bottom: var(--border-hairline) solid rgba(255, 255, 255, 0.06);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-faint);
+}
+
+.empty {
+  margin: 0;
+  padding: 16px 12px;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fund {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+}
+
+.text {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.description {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-md);
+}
+
+.detail,
+.monthly {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.progress {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-income);
+}
+
+.actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.total {
+  margin: 0;
+  padding: 12px 12px 0;
+  text-align: right;
+  font-size: var(--font-size-md);
+}
+
+@media (max-width: 479px) {
+  .list {
+    padding: 4px 8px 12px;
+  }
+}
