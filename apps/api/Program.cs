@@ -11,6 +11,7 @@ using Orbit.Api.Application.Tasks;
 using Orbit.Api.Endpoints;
 using Orbit.Api.Infrastructure.Auth;
 using Orbit.Api.Infrastructure.Cdi;
+using Orbit.Api.Infrastructure.Hosting;
 using Orbit.Api.Infrastructure.Quotes;
 using Orbit.Api.Infrastructure.Sqlite;
 
@@ -35,6 +36,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.RespectRequiredConstructorParameters = true;
 });
 builder.Services.AddProblemDetails();
+// A published build carries the web app in wwwroot; see BundledWebApp.
+builder.Services.AddBundledWebApp();
 builder.Services.AddExceptionHandler<BusinessExceptionHandler>();
 builder.Services.AddOrbitAuth(
     builder.Environment.IsDevelopment(), Path.Combine(builder.Environment.ContentRootPath, "auth-dev.key"));
