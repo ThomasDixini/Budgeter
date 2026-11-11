@@ -1,5 +1,6 @@
 using System.Globalization;
 using Orbit.Api.Domain.Goals;
+using Orbit.Api.Domain.Users;
 using Orbit.Api.Infrastructure.Sqlite;
 using Microsoft.Data.Sqlite;
 using Shouldly;
@@ -10,11 +11,12 @@ namespace Orbit.Api.Tests.Infrastructure;
 public sealed class SqliteMigrationTests : IDisposable
 {
     private readonly TemporarySqliteDatabase _database = new();
+    private readonly MovableCurrentUser _user = new();
     private readonly SqliteConnectionFactory _connections;
 
     public SqliteMigrationTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = new SqliteConnectionFactory(_database.ConnectionString, _user);
     }
 
     public void Dispose() => _database.Dispose();
@@ -45,6 +47,9 @@ public sealed class SqliteMigrationTests : IDisposable
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        var owners = await SqliteCommands.QueryAsync(
+            connection, "SELECT id FROM users", reader => reader.GetString(0), CancellationToken.None);
+        if (owners.Count == 1) _user.Id = owners[0];
     }
 
     private async Task<long> CountAsync(string sql)
@@ -94,7 +99,7 @@ public sealed class SqliteMigrationTests : IDisposable
         await MigrateAsync();
 
         (await CountAsync("SELECT COUNT(*) FROM goal_progress")).ShouldBe(0);
-        (await CountAsync("PRAGMA user_version")).ShouldBe(3);
+        (await CountAsync("PRAGMA user_version")).ShouldBe(SqliteSchema.CurrentVersion);
         (await goals.ListAsync(TestDays.Today, CancellationToken.None))
             .Select(goal => goal.Done).ShouldBe([0, 0]);
     }
@@ -104,7 +109,7 @@ public sealed class SqliteMigrationTests : IDisposable
     {
         await MigrateAsync();
 
-        (await CountAsync("PRAGMA user_version")).ShouldBe(3);
+        (await CountAsync("PRAGMA user_version")).ShouldBe(SqliteSchema.CurrentVersion);
         (await CountAsync("SELECT COUNT(*) FROM pragma_table_info('goals') WHERE name = 'tracking'")).ShouldBe(1);
     }
 
@@ -135,12 +140,12 @@ public sealed class SqliteMigrationTests : IDisposable
     public async Task StoredGoals_GetTheTrackingTheirTypeImplies()
     {
         await CreateOldDatabaseAsync();
-        await MigrateAsync();
         await using (var connection = await _connections.OpenAsync(CancellationToken.None))
         {
             await SqliteCommands.ExecuteAsync(
                 connection,
                 """
+                ALTER TABLE goals ADD COLUMN tracking TEXT NOT NULL DEFAULT 'manual';
                 INSERT INTO goals (id, category_id, title, type, period, target, unit, deadline, tracking)
                     VALUES ('g3', 'study', 'Course', 'objective', 'custom', 12, 'modules', '2026-12-15', 'blocks');
                 UPDATE goals SET tracking = 'tasks' WHERE id = 'g2';
@@ -153,5 +158,44 @@ public sealed class SqliteMigrationTests : IDisposable
 
         (await CountAsync("SELECT COUNT(*) FROM goals WHERE id = 'g2' AND tracking = 'blocks'")).ShouldBe(1);
         (await CountAsync("SELECT COUNT(*) FROM goals WHERE id = 'g3' AND tracking = 'manual'")).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task OldRecords_BelongToAPlaceholderOwnerNobodyCanSignInTo()
+    {
+        await CreateOldDatabaseAsync();
+
+        await MigrateAsync();
+
+        (await CountAsync("SELECT COUNT(*) FROM users WHERE password_hash = ''")).ShouldBe(1);
+        (await CountAsync("SELECT COUNT(*) FROM categories WHERE user_id = (SELECT id FROM users)")).ShouldBe(1);
+        (await CountAsync("SELECT COUNT(*) FROM goals WHERE user_id = (SELECT id FROM users)")).ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task TheOldStarterMarkers_AreDropped_BecauseNewAccountsStartEmpty()
+    {
+        await CreateOldDatabaseAsync();
+
+        await MigrateAsync();
+
+        (await CountAsync(
+            "SELECT COUNT(*) FROM sqlite_master WHERE name IN ('sample_seed', 'finance_seed')")).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task TheFirstAccount_TakesOverTheOldRecordsAndTheSecondOneStartsEmpty()
+    {
+        await CreateOldDatabaseAsync();
+        await MigrateAsync();
+        var users = new SqliteUserRepository(_connections);
+
+        var first = await users.AddAsync(User.Register("ana@mail.com", "Ana"), "hash-a", CancellationToken.None);
+        var second = await users.AddAsync(User.Register("bia@mail.com", "Bia"), "hash-b", CancellationToken.None);
+
+        first!.Id.ShouldBe(_user.Id);
+        second!.Id.ShouldNotBe(first.Id);
+        (await CountAsync("SELECT COUNT(*) FROM users")).ShouldBe(2);
+        (await CountAsync($"SELECT COUNT(*) FROM goals WHERE user_id = '{second.Id}'")).ShouldBe(0);
     }
 }

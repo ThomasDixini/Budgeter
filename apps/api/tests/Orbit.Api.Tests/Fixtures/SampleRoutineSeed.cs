@@ -29,17 +29,18 @@ internal static class SampleRoutineSeed
     /// <summary>
     /// Inserts the sample routines only while no routine exists, so blocks the user removed never come back.
     /// </summary>
-    /// <example><code>await SampleRoutineSeed.ApplyAsync(connection, ct);</code></example>
-    public static async Task ApplyAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    /// <example><code>await SampleRoutineSeed.ApplyAsync(connection, userId, ct);</code></example>
+    public static async Task ApplyAsync(SqliteConnection connection, string userId, CancellationToken cancellationToken)
     {
         var counts = await SqliteCommands.QueryAsync(
-            connection, "SELECT COUNT(*) FROM routines", reader => reader.GetInt64(0), cancellationToken);
+            connection, "SELECT COUNT(*) FROM routines WHERE user_id = $user", reader => reader.GetInt64(0), cancellationToken,
+            ("$user", userId));
         if (counts[0] > 0) return;
 
-        // Runs inside the transaction of SampleData.ApplyOnceAsync, so no transaction of its own.
+        // Runs inside the transaction of SampleData.ApplyAsync, so no transaction of its own.
         foreach (var routine in Routines)
         {
-            await SqliteRoutineRepository.WriteAsync(connection, routine, cancellationToken);
+            await SqliteRoutineRepository.WriteAsync(connection, userId, routine, cancellationToken);
         }
     }
 }

@@ -1,3 +1,5 @@
+import { fakeSession } from '../../core/auth/fake-auth-gateway';
+import { SessionStore } from '../../core/auth/session-store';
 import { provideFakeBackupGateway } from '../../core/backups/fake-backup-gateway';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -29,6 +31,7 @@ export async function openPage(
     ],
   });
   prepare(TestBed.inject(RoutinesStore));
+  TestBed.inject(SessionStore).start(fakeSession(), false);
   const harness = await RouterTestingHarness.create(url);
   harness.detectChanges();
   return harness.routeNativeElement as HTMLElement;

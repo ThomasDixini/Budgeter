@@ -19,7 +19,7 @@ public sealed class SqliteCardPaymentRepositoryTests : IAsyncLifetime, IDisposab
 
     public SqliteCardPaymentRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _payments = new SqliteCardPaymentRepository(_connections);
         _transactions = new SqliteMoneyTransactionRepository(_connections);
     }
@@ -28,7 +28,9 @@ public sealed class SqliteCardPaymentRepositoryTests : IAsyncLifetime, IDisposab
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
-        await FinanceStarterSeed.ApplyOnceAsync(connection, CancellationToken.None);
+        await TestUsers.InsertAsync(connection, TestUsers.DefaultId);
+        await TestUsers.InsertAsync(connection, TestUsers.OtherId);
+        await FinanceStarterSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -123,4 +125,57 @@ public sealed class SqliteCardPaymentRepositoryTests : IAsyncLifetime, IDisposab
     private Task SaveTransactionAsync(string id, DateOnly date, long amountCents) =>
         _transactions.SaveAsync(
             MoneyTransaction.Create(id, date, "Purchase", "food", "credit-card", amountCents), CancellationToken.None);
+
+    private async Task<SqliteCardPaymentRepository> OtherUsersPaymentsAsync()
+    {
+        var others = TestUsers.FactoryFor(_database, TestUsers.OtherId);
+        await FinanceStarterSeed.ApplyAsync(others);
+        return new SqliteCardPaymentRepository(others);
+    }
+
+    [Fact]
+    public async Task TwoUsers_StoreTheSamePaymentIdWithoutSeeingEachOther()
+    {
+        var others = await OtherUsersPaymentsAsync();
+        await _payments.SaveAsync(Payment("p1", 11, 1, 10000), CancellationToken.None);
+        await others.SaveAsync(Payment("p1", 11, 1, 99000), CancellationToken.None);
+
+        var mine = await _payments.ListInMonthAsync(November, CancellationToken.None);
+        var theirs = await others.ListInMonthAsync(November, CancellationToken.None);
+
+        (mine.Single().AmountCents, theirs.Single().AmountCents).ShouldBe((10000L, 99000L));
+    }
+
+    [Fact]
+    public async Task Sums_CountOnlyTheSignedInUsersPayments()
+    {
+        var others = await OtherUsersPaymentsAsync();
+        await _payments.SaveAsync(Payment("p1", 11, 1, 10000), CancellationToken.None);
+        await others.SaveAsync(Payment("p2", 11, 1, 99000), CancellationToken.None);
+
+        var paidFrom = await _payments.SumPaidFromAsync("checking-account", new DateOnly(2026, 12, 1), CancellationToken.None);
+        var paidTo = await _payments.SumPaidToAsync("credit-card", new DateOnly(2026, 12, 1), CancellationToken.None);
+
+        (paidFrom, paidTo).ShouldBe((10000L, 10000L));
+    }
+
+    [Fact]
+    public async Task AnyForAccount_IgnoresAnotherUsersPayments()
+    {
+        var others = await OtherUsersPaymentsAsync();
+        await others.SaveAsync(Payment("p1", 11, 1), CancellationToken.None);
+
+        (await _payments.AnyForAccountAsync("credit-card", CancellationToken.None)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Delete_NeverRemovesAnotherUsersPayment()
+    {
+        var others = await OtherUsersPaymentsAsync();
+        await others.SaveAsync(Payment("p1", 11, 1), CancellationToken.None);
+
+        await _payments.DeleteAsync("p1", CancellationToken.None);
+
+        (await others.ListInMonthAsync(November, CancellationToken.None)).Count.ShouldBe(1);
+    }
 }

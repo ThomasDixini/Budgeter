@@ -57,9 +57,9 @@ internal static class SqliteBackupFile
     private static async Task RequireKnownVersionAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
         var version = await PragmaAsync(connection, "user_version", cancellationToken);
-        if (version <= SqliteMigrations.LatestVersion) return;
+        if (version <= SqliteSchema.CurrentVersion) return;
         throw new InvalidBackupException(
-            $"Expected a backup of schema version {SqliteMigrations.LatestVersion} or older, received version {version} from a newer Orbit");
+            $"Expected a backup of schema version {SqliteSchema.CurrentVersion} or older, received version {version} from a newer Orbit");
     }
 
     private static async Task RequireIntactAsync(SqliteConnection connection, CancellationToken cancellationToken)

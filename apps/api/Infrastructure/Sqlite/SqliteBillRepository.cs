@@ -22,7 +22,8 @@ public sealed class SqliteBillRepository(SqliteConnectionFactory connections) : 
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var found = await SqliteCommands.QueryAsync(
-            lease.Connection, $"SELECT {Columns} FROM bills WHERE id = $id", ToBill, cancellationToken, ("$id", id));
+            lease.Connection, $"SELECT {Columns} FROM bills WHERE user_id = $user AND id = $id", ToBill, cancellationToken,
+            ("$user", connections.UserId), ("$id", id));
         return found.SingleOrDefault();
     }
 
@@ -31,10 +32,10 @@ public sealed class SqliteBillRepository(SqliteConnectionFactory connections) : 
         await using var lease = await connections.LeaseAsync(cancellationToken);
         return await SqliteCommands.QueryAsync(
             lease.Connection,
-            $"SELECT {Columns} FROM bills WHERE settled_on IS NULL AND due_date < $until ORDER BY due_date, rowid",
+            $"SELECT {Columns} FROM bills WHERE user_id = $user AND settled_on IS NULL AND due_date < $until ORDER BY due_date, rowid",
             ToBill,
             cancellationToken,
-            ("$until", ToText(until)));
+            ("$user", connections.UserId), ("$until", ToText(until)));
     }
 
     public async Task<IReadOnlyList<Bill>> ListSettledSinceAsync(DateOnly since, CancellationToken cancellationToken)
@@ -42,10 +43,10 @@ public sealed class SqliteBillRepository(SqliteConnectionFactory connections) : 
         await using var lease = await connections.LeaseAsync(cancellationToken);
         return await SqliteCommands.QueryAsync(
             lease.Connection,
-            $"SELECT {Columns} FROM bills WHERE settled_on >= $since ORDER BY settled_on DESC, rowid DESC",
+            $"SELECT {Columns} FROM bills WHERE user_id = $user AND settled_on >= $since ORDER BY settled_on DESC, rowid DESC",
             ToBill,
             cancellationToken,
-            ("$since", ToText(since)));
+            ("$user", connections.UserId), ("$since", ToText(since)));
     }
 
     public async Task SaveAsync(Bill bill, CancellationToken cancellationToken)
@@ -55,11 +56,11 @@ public sealed class SqliteBillRepository(SqliteConnectionFactory connections) : 
         await SqliteCommands.ExecuteAsync(
             lease.Connection,
             """
-            INSERT INTO bills (id, kind, description, category_id, amount_cents, due_date, settled_on,
+            INSERT INTO bills (user_id, id, kind, description, category_id, amount_cents, due_date, settled_on,
                 settled_account_id, series_id, recurrence, series_number, series_count)
-            VALUES ($id, $kind, $description, $categoryId, $amountCents, $dueDate, $settledOn,
+            VALUES ($user, $id, $kind, $description, $categoryId, $amountCents, $dueDate, $settledOn,
                 $settledAccountId, $seriesId, $recurrence, $seriesNumber, $seriesCount)
-            ON CONFLICT (id) DO UPDATE SET
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 kind = excluded.kind, description = excluded.description, category_id = excluded.category_id,
                 amount_cents = excluded.amount_cents, due_date = excluded.due_date,
                 settled_on = excluded.settled_on, settled_account_id = excluded.settled_account_id,
@@ -67,7 +68,7 @@ public sealed class SqliteBillRepository(SqliteConnectionFactory connections) : 
                 series_number = excluded.series_number, series_count = excluded.series_count
             """,
             cancellationToken,
-            ("$id", bill.Id), ("$kind", bill.Kind.ToString()), ("$description", bill.Description),
+            ("$user", connections.UserId), ("$id", bill.Id), ("$kind", bill.Kind.ToString()), ("$description", bill.Description),
             ("$categoryId", bill.CategoryId), ("$amountCents", bill.AmountCents), ("$dueDate", ToText(bill.DueDate)),
             ("$settledOn", bill.Settlement is { } settlement ? ToText(settlement.Date) : null),
             ("$settledAccountId", bill.Settlement?.AccountId),
@@ -79,7 +80,10 @@ public sealed class SqliteBillRepository(SqliteConnectionFactory connections) : 
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         await SqliteCommands.ExecuteAsync(
-            lease.Connection, "DELETE FROM bills WHERE id = $id", cancellationToken, ("$id", billId));
+            lease.Connection,
+            "DELETE FROM bills WHERE user_id = $user AND id = $id",
+            cancellationToken,
+            ("$user", connections.UserId), ("$id", billId));
     }
 
     public async Task<bool> AnyInCategoryAsync(string categoryId, CancellationToken cancellationToken)
@@ -87,10 +91,10 @@ public sealed class SqliteBillRepository(SqliteConnectionFactory connections) : 
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var found = await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT EXISTS (SELECT 1 FROM bills WHERE category_id = $categoryId)",
+            "SELECT EXISTS (SELECT 1 FROM bills WHERE user_id = $user AND category_id = $categoryId)",
             reader => reader.GetBoolean(0),
             cancellationToken,
-            ("$categoryId", categoryId));
+            ("$user", connections.UserId), ("$categoryId", categoryId));
         return found[0];
     }
 

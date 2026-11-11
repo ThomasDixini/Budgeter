@@ -21,13 +21,14 @@ internal static class SampleTaskSeed
     /// <summary>
     /// Inserts the sample tasks only while no task exists, so tasks the user removed never come back.
     /// </summary>
-    /// <example><code>await SampleTaskSeed.ApplyAsync(connection, ct);</code></example>
-    public static async Task ApplyAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    /// <example><code>await SampleTaskSeed.ApplyAsync(connection, userId, ct);</code></example>
+    public static async Task ApplyAsync(SqliteConnection connection, string userId, CancellationToken cancellationToken)
     {
         var counts = await SqliteCommands.QueryAsync(
-            connection, "SELECT COUNT(*) FROM tasks", reader => reader.GetInt64(0), cancellationToken);
+            connection, "SELECT COUNT(*) FROM tasks WHERE user_id = $user", reader => reader.GetInt64(0), cancellationToken,
+            ("$user", userId));
         if (counts[0] > 0) return;
 
-        foreach (var task in Tasks) await SqliteTaskRepository.WriteAsync(connection, task, cancellationToken);
+        foreach (var task in Tasks) await SqliteTaskRepository.WriteAsync(connection, userId, task, cancellationToken);
     }
 }

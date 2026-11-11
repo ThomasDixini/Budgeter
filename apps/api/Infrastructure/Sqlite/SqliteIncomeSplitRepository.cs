@@ -14,67 +14,76 @@ public sealed class SqliteIncomeSplitRepository(SqliteConnectionFactory connecti
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var incomes = await SqliteCommands.QueryAsync(
-            lease.Connection, "SELECT base_income_cents FROM income_split", reader => reader.GetInt64(0), cancellationToken);
+            lease.Connection, "SELECT base_income_cents FROM income_split WHERE user_id = $user",
+            reader => reader.GetInt64(0),
+            cancellationToken,
+            ("$user", connections.UserId));
         if (incomes.Count == 0) return IncomeSplit.Empty;
-        return IncomeSplit.Restore(incomes[0], await ReadPartsAsync(lease.Connection, cancellationToken));
+        return IncomeSplit.Restore(incomes[0], await ReadPartsAsync(lease.Connection, connections.UserId, cancellationToken));
     }
 
     public async Task ReplaceAsync(IncomeSplit plan, CancellationToken cancellationToken)
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
-        await lease.RunInTransactionAsync(() => WriteAsync(lease.Connection, plan, cancellationToken), cancellationToken);
+        await lease.RunInTransactionAsync(() => WriteAsync(lease.Connection, connections.UserId, plan, cancellationToken), cancellationToken);
     }
 
     private static async Task<IReadOnlyList<IncomeSplitPart>> ReadPartsAsync(
-        SqliteConnection connection, CancellationToken cancellationToken)
+        SqliteConnection connection, string userId, CancellationToken cancellationToken)
     {
         var categories = (await SqliteCommands.QueryAsync(
                 connection,
-                "SELECT part_id, category_id FROM income_split_categories ORDER BY position",
+                "SELECT part_id, category_id FROM income_split_categories WHERE user_id = $user ORDER BY position",
                 reader => (PartId: reader.GetString(0), CategoryId: reader.GetString(1)),
-                cancellationToken))
+                cancellationToken,
+                ("$user", userId)))
             .ToLookup(row => row.PartId, row => row.CategoryId);
         return await SqliteCommands.QueryAsync(
             connection,
-            "SELECT id, name, percent, color FROM income_split_parts ORDER BY position",
+            "SELECT id, name, percent, color FROM income_split_parts WHERE user_id = $user ORDER BY position",
             reader => IncomeSplitPart.Restore(
                 reader.GetString(0), reader.GetString(1), reader.GetInt32(2), reader.GetInt32(3),
                 categories[reader.GetString(0)].ToList()),
-            cancellationToken);
+            cancellationToken,
+            ("$user", userId));
     }
 
-    private static async Task WriteAsync(SqliteConnection connection, IncomeSplit plan, CancellationToken cancellationToken)
+    private static async Task WriteAsync(
+        SqliteConnection connection, string userId, IncomeSplit plan, CancellationToken cancellationToken)
     {
-        await SqliteCommands.ExecuteAsync(connection, "DELETE FROM income_split_parts", cancellationToken);
+        await SqliteCommands.ExecuteAsync(connection,
+            "DELETE FROM income_split_parts WHERE user_id = $user",
+            cancellationToken,
+            ("$user", userId));
         await SqliteCommands.ExecuteAsync(
             connection,
             """
-            INSERT INTO income_split (id, base_income_cents) VALUES (1, $income)
-            ON CONFLICT (id) DO UPDATE SET base_income_cents = excluded.base_income_cents
+            INSERT INTO income_split (user_id, base_income_cents) VALUES ($user, $income)
+            ON CONFLICT (user_id) DO UPDATE SET base_income_cents = excluded.base_income_cents
             """,
             cancellationToken,
-            ("$income", plan.BaseIncomeCents));
+            ("$user", userId), ("$income", plan.BaseIncomeCents));
         for (var position = 0; position < plan.Parts.Count; position++)
         {
-            await InsertPartAsync(connection, plan.Parts[position], position, cancellationToken);
+            await InsertPartAsync(connection, userId, plan.Parts[position], position, cancellationToken);
         }
     }
 
     private static async Task InsertPartAsync(
-        SqliteConnection connection, IncomeSplitPart part, int position, CancellationToken cancellationToken)
+        SqliteConnection connection, string userId, IncomeSplitPart part, int position, CancellationToken cancellationToken)
     {
         await SqliteCommands.ExecuteAsync(
             connection,
-            "INSERT INTO income_split_parts (id, position, name, percent, color) VALUES ($id, $position, $name, $percent, $color)",
+            "INSERT INTO income_split_parts (user_id, id, position, name, percent, color) VALUES ($user, $id, $position, $name, $percent, $color)",
             cancellationToken,
-            ("$id", part.Id), ("$position", position), ("$name", part.Name), ("$percent", part.Percent), ("$color", part.Color));
+            ("$user", userId), ("$id", part.Id), ("$position", position), ("$name", part.Name), ("$percent", part.Percent), ("$color", part.Color));
         for (var order = 0; order < part.CategoryIds.Count; order++)
         {
             await SqliteCommands.ExecuteAsync(
                 connection,
-                "INSERT INTO income_split_categories (category_id, part_id, position) VALUES ($categoryId, $partId, $position)",
+                "INSERT INTO income_split_categories (user_id, category_id, part_id, position) VALUES ($user, $categoryId, $partId, $position)",
                 cancellationToken,
-                ("$categoryId", part.CategoryIds[order]), ("$partId", part.Id), ("$position", order));
+                ("$user", userId), ("$categoryId", part.CategoryIds[order]), ("$partId", part.Id), ("$position", order));
         }
     }
 }

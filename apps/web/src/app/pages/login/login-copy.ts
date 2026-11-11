@@ -1,4 +1,5 @@
 import { AccessMode, PasswordStrength } from '../../core/auth/credential-rules';
+import { AuthFailureReason } from '../../core/auth/auth-gateway';
 
 /** Texts that change with the mode of the sign-in screen, in English (the translation keys). */
 export interface AccessCopy {
@@ -9,8 +10,8 @@ export interface AccessCopy {
   readonly submitLabel: string;
   readonly doneTitle: string;
   readonly doneText: string;
-  /** The other mode the footer link switches to; absent while resetting a password. */
-  readonly switchTo?: {
+  /** The other mode the footer link switches to. */
+  readonly switchTo: {
     readonly mode: AccessMode;
     readonly question: string;
     readonly action: string;
@@ -22,7 +23,7 @@ export const ACCESS_COPY: Readonly<Record<AccessMode, AccessCopy>> = {
     headline: 'Welcome back.',
     subline: 'Your routine and your money are waiting where you left them.',
     formTitle: 'Sign in to your account',
-    formSubtitle: 'Use your e-mail and password or continue with an account.',
+    formSubtitle: 'Use your e-mail and password.',
     submitLabel: 'Sign in',
     doneTitle: 'All set!',
     doneText: 'You are signed in to your account.',
@@ -38,16 +39,14 @@ export const ACCESS_COPY: Readonly<Record<AccessMode, AccessCopy>> = {
     doneText: 'Now just open the app and build your first routine.',
     switchTo: { mode: 'login', question: 'Already have an account?', action: 'Sign in' },
   },
-  reset: {
-    headline: 'It happens to everyone.',
-    subline: 'Let us help you get back to your account.',
-    formTitle: 'Recover password',
-    formSubtitle:
-      'Type the e-mail of your account and we will send a link to create a new password.',
-    submitLabel: 'Send link',
-    doneTitle: 'Link sent',
-    doneText: 'If there is an account with this e-mail, you will get the link in a few minutes.',
-  },
+};
+
+/** What the person is told for each way a sign-in or sign-up can fail. */
+export const FAILURE_MESSAGES: Readonly<Record<AuthFailureReason, string>> = {
+  'invalid-credentials': 'Wrong e-mail or password.',
+  'email-taken': 'There is already an account with this e-mail.',
+  'invalid-input': 'Check your details: the server did not accept them.',
+  unreachable: "Couldn't reach your account. Try again.",
 };
 
 /** Label under the strength bars, by score. */

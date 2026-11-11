@@ -14,14 +14,13 @@ public sealed class SqliteRoutineRepositoryTests : IAsyncLifetime, IDisposable
 
     public SqliteRoutineRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _routines = new SqliteRoutineRepository(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
         await new SqliteCategoryRepository(_connections)
             .AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
     }
@@ -105,14 +104,14 @@ public sealed class SqliteRoutineRepositoryTests : IAsyncLifetime, IDisposable
     public async Task SampleSeed_InsertsRoutinesOnlyIntoAnEmptyTable()
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SampleCategorySeed.ApplyAsync(connection, CancellationToken.None);
-        await SampleRoutineSeed.ApplyAsync(connection, CancellationToken.None);
+        await SampleCategorySeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
+        await SampleRoutineSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
         var weekdays = (await _routines.ListAsync(CancellationToken.None))[0];
         await _routines.SaveAsync(
             Routine.Create(weekdays.Id, weekdays.Name, weekdays.Days, weekdays.Start, weekdays.End, []),
             CancellationToken.None);
 
-        await SampleRoutineSeed.ApplyAsync(connection, CancellationToken.None);
+        await SampleRoutineSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
 
         var routines = await _routines.ListAsync(CancellationToken.None);
         routines.Select(routine => routine.Id).ShouldBe(["weekdays", "weekend"]);

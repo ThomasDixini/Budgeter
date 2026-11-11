@@ -42,6 +42,7 @@ internal sealed class BusinessExceptionHandler(
     {
         DomainRuleException => StatusCodes.Status400BadRequest,
         InvalidBackupException => StatusCodes.Status400BadRequest,
+        UnauthorizedException => StatusCodes.Status401Unauthorized,
         ResourceNotFoundException => StatusCodes.Status404NotFound,
         ConflictException => StatusCodes.Status409Conflict,
         BadHttpRequestException badRequest => badRequest.StatusCode,

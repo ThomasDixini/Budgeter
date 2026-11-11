@@ -15,15 +15,14 @@ public sealed class SqliteGoalProgressTests : IAsyncLifetime, IDisposable
 
     public SqliteGoalProgressTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _goals = new SqliteGoalRepository(_connections);
         _ledger = new SqliteGoalProgressLedger(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
         await new SqliteCategoryRepository(_connections)
             .AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
     }

@@ -21,15 +21,17 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
         var connection = lease.Connection;
         var blocks = await SqliteCommands.QueryAsync(
             connection,
-            "SELECT routine_id, id, name, start_time, end_time, category_id FROM routine_blocks ORDER BY routine_id, position",
+            "SELECT routine_id, id, name, start_time, end_time, category_id FROM routine_blocks WHERE user_id = $user ORDER BY routine_id, position",
             ToBlockRow,
-            cancellationToken);
+            cancellationToken,
+            ("$user", connections.UserId));
         var blocksByRoutine = blocks.ToLookup(row => row.RoutineId, row => row.Block);
         return await SqliteCommands.QueryAsync(
             connection,
-            "SELECT id, name, days, start_time, end_time FROM routines ORDER BY rowid",
+            "SELECT id, name, days, start_time, end_time FROM routines WHERE user_id = $user ORDER BY rowid",
             reader => ToRoutine(reader, blocksByRoutine),
-            cancellationToken);
+            cancellationToken,
+            ("$user", connections.UserId));
     }
 
     public async Task<Routine?> FindAsync(string routineId, CancellationToken cancellationToken)
@@ -37,24 +39,24 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var blocks = await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT routine_id, id, name, start_time, end_time, category_id FROM routine_blocks WHERE routine_id = $id ORDER BY position",
+            "SELECT routine_id, id, name, start_time, end_time, category_id FROM routine_blocks WHERE user_id = $user AND routine_id = $id ORDER BY position",
             ToBlockRow,
             cancellationToken,
-            ("$id", routineId));
+            ("$user", connections.UserId), ("$id", routineId));
         var blocksByRoutine = blocks.ToLookup(row => row.RoutineId, row => row.Block);
         var routines = await SqliteCommands.QueryAsync(
             lease.Connection,
-            "SELECT id, name, days, start_time, end_time FROM routines WHERE id = $id",
+            "SELECT id, name, days, start_time, end_time FROM routines WHERE user_id = $user AND id = $id",
             reader => ToRoutine(reader, blocksByRoutine),
             cancellationToken,
-            ("$id", routineId));
+            ("$user", connections.UserId), ("$id", routineId));
         return routines.Count == 0 ? null : routines[0];
     }
 
     public async Task SaveAsync(Routine routine, CancellationToken cancellationToken)
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
-        await lease.RunInTransactionAsync(() => WriteAsync(lease.Connection, routine, cancellationToken), cancellationToken);
+        await lease.RunInTransactionAsync(() => WriteAsync(lease.Connection, connections.UserId, routine, cancellationToken), cancellationToken);
     }
 
     public async Task DeleteAsync(string routineId, CancellationToken cancellationToken)
@@ -63,45 +65,50 @@ public sealed class SqliteRoutineRepository(SqliteConnectionFactory connections)
         var connection = lease.Connection;
         // Blocks go with it through ON DELETE CASCADE (foreign keys are enforced per connection).
         await SqliteCommands.ExecuteAsync(
-            connection, "DELETE FROM routines WHERE id = $id", cancellationToken, ("$id", routineId));
+            connection, "DELETE FROM routines WHERE user_id = $user AND id = $id", cancellationToken,
+            ("$user", connections.UserId), ("$id", routineId));
     }
 
     /// <summary>
     /// Upserts the routine row (keeping its position in the list) and rewrites its blocks.
     /// Runs inside the caller's transaction, if any.
     /// </summary>
-    /// <example><code>await SqliteRoutineRepository.WriteAsync(connection, routine, ct);</code></example>
-    internal static async Task WriteAsync(SqliteConnection connection, Routine routine, CancellationToken cancellationToken)
+    /// <example><code>await SqliteRoutineRepository.WriteAsync(connection, userId, routine, ct);</code></example>
+    internal static async Task WriteAsync(
+        SqliteConnection connection, string userId, Routine routine, CancellationToken cancellationToken)
     {
         await SqliteCommands.ExecuteAsync(
             connection,
             """
-            INSERT INTO routines (id, name, days, start_time, end_time) VALUES ($id, $name, $days, $start, $end)
-            ON CONFLICT (id) DO UPDATE SET
+            INSERT INTO routines (user_id, id, name, days, start_time, end_time)
+            VALUES ($user, $id, $name, $days, $start, $end)
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 name = excluded.name, days = excluded.days, start_time = excluded.start_time, end_time = excluded.end_time
             """,
             cancellationToken,
-            ("$id", routine.Id), ("$name", routine.Name), ("$days", string.Join(DaySeparator, routine.Days)),
+            ("$user", userId), ("$id", routine.Id), ("$name", routine.Name), ("$days", string.Join(DaySeparator, routine.Days)),
             ("$start", routine.Start), ("$end", routine.End));
         await SqliteCommands.ExecuteAsync(
-            connection, "DELETE FROM routine_blocks WHERE routine_id = $id", cancellationToken, ("$id", routine.Id));
+            connection, "DELETE FROM routine_blocks WHERE user_id = $user AND routine_id = $id", cancellationToken,
+            ("$user", userId), ("$id", routine.Id));
         for (var position = 0; position < routine.Blocks.Count; position++)
         {
-            await InsertBlockAsync(connection, routine.Id, position, routine.Blocks[position], cancellationToken);
+            await InsertBlockAsync(connection, userId, routine.Id, position, routine.Blocks[position], cancellationToken);
         }
     }
 
     private static Task InsertBlockAsync(
-        SqliteConnection connection, string routineId, int position, RoutineBlock block, CancellationToken cancellationToken)
+        SqliteConnection connection, string userId, string routineId, int position, RoutineBlock block,
+        CancellationToken cancellationToken)
     {
         return SqliteCommands.ExecuteAsync(
             connection,
             """
-            INSERT INTO routine_blocks (routine_id, id, position, name, start_time, end_time, category_id)
-            VALUES ($routineId, $id, $position, $name, $start, $end, $categoryId)
+            INSERT INTO routine_blocks (user_id, routine_id, id, position, name, start_time, end_time, category_id)
+            VALUES ($user, $routineId, $id, $position, $name, $start, $end, $categoryId)
             """,
             cancellationToken,
-            ("$routineId", routineId), ("$id", block.Id), ("$position", position), ("$name", block.Name),
+            ("$user", userId), ("$routineId", routineId), ("$id", block.Id), ("$position", position), ("$name", block.Name),
             ("$start", block.Start), ("$end", block.End), ("$categoryId", block.CategoryId));
     }
 

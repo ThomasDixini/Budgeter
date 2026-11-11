@@ -13,7 +13,7 @@ public sealed class SqliteIncomeSplitRepositoryTests : IAsyncLifetime, IDisposab
 
     public SqliteIncomeSplitRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _plans = new SqliteIncomeSplitRepository(_connections);
     }
 
@@ -21,7 +21,9 @@ public sealed class SqliteIncomeSplitRepositoryTests : IAsyncLifetime, IDisposab
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
-        await FinanceStarterSeed.ApplyOnceAsync(connection, CancellationToken.None);
+        await TestUsers.InsertAsync(connection, TestUsers.DefaultId);
+        await TestUsers.InsertAsync(connection, TestUsers.OtherId);
+        await FinanceStarterSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -107,5 +109,75 @@ public sealed class SqliteIncomeSplitRepositoryTests : IAsyncLifetime, IDisposab
         var housing = await transactions.AnyInCategoryAsync("housing", CancellationToken.None);
 
         (food, housing).ShouldBe((true, false));
+    }
+
+    private SqliteIncomeSplitRepository OtherUsersPlans() =>
+        new(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+
+    private async Task SeedOtherUserAsync() =>
+        await FinanceStarterSeed.ApplyAsync(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+
+    [Fact]
+    public async Task TwoUsers_KeepTheirOwnPlansWithTheSamePartIds()
+    {
+        await SeedOtherUserAsync();
+        await _plans.ReplaceAsync(IncomeSplit.Create(1000, [Part("fixed", "Mine", 50, "food")]), CancellationToken.None);
+        await OtherUsersPlans().ReplaceAsync(IncomeSplit.Create(9000, [Part("fixed", "Theirs", 70, "food")]), CancellationToken.None);
+
+        var mine = await _plans.GetAsync(CancellationToken.None);
+        var theirs = await OtherUsersPlans().GetAsync(CancellationToken.None);
+
+        (mine.BaseIncomeCents, mine.Parts.Single().Name, mine.Parts.Single().CategoryIds.Single())
+            .ShouldBe((1000L, "Mine", "food"));
+        (theirs.BaseIncomeCents, theirs.Parts.Single().Name).ShouldBe((9000L, "Theirs"));
+    }
+
+    [Fact]
+    public async Task Get_AnswersAnEmptyPlanToAUserWhoNeverSavedOne()
+    {
+        await _plans.ReplaceAsync(IncomeSplit.Create(1000, [Part("fixed", "Mine", 50, "food")]), CancellationToken.None);
+
+        var theirs = await OtherUsersPlans().GetAsync(CancellationToken.None);
+
+        (theirs.BaseIncomeCents, theirs.Parts.Count).ShouldBe((0L, 0));
+    }
+
+    [Fact]
+    public async Task Replace_NeverDropsThePartsOfAnotherUser()
+    {
+        await SeedOtherUserAsync();
+        await _plans.ReplaceAsync(IncomeSplit.Create(1000, [Part("fixed", "Mine", 50, "food")]), CancellationToken.None);
+
+        await OtherUsersPlans().ReplaceAsync(IncomeSplit.Create(2000, [Part("fun", "Theirs", 10, "leisure")]), CancellationToken.None);
+
+        (await _plans.GetAsync(CancellationToken.None)).Parts.Select(part => part.Id).ShouldBe(["fixed"]);
+    }
+
+    [Fact]
+    public async Task CategoryRepository_KeepsEachUsersCategoriesApart()
+    {
+        await SeedOtherUserAsync();
+        var theirs = new SqliteFinanceCategoryRepository(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+        var mine = new SqliteFinanceCategoryRepository(_connections);
+        await mine.SaveAsync(FinanceCategory.Create("courses", "Mine"), CancellationToken.None);
+        await theirs.SaveAsync(FinanceCategory.Create("courses", "Theirs"), CancellationToken.None);
+
+        await theirs.DeleteAsync("food", CancellationToken.None);
+
+        (await mine.FindAsync("courses", CancellationToken.None))!.Name.ShouldBe("Mine");
+        (await mine.FindAsync("food", CancellationToken.None)).ShouldNotBeNull();
+        (await theirs.FindAsync("food", CancellationToken.None)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task DeletingACategory_NeverTouchesAnotherUsersPlan()
+    {
+        await SeedOtherUserAsync();
+        await _plans.ReplaceAsync(IncomeSplit.Create(0, [Part("a", "A", 10, "food")]), CancellationToken.None);
+        var theirs = new SqliteFinanceCategoryRepository(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+
+        await theirs.DeleteAsync("food", CancellationToken.None);
+
+        (await _plans.GetAsync(CancellationToken.None)).Parts.Single().CategoryIds.ShouldBe(["food"]);
     }
 }

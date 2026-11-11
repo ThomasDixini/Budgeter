@@ -14,7 +14,7 @@ public sealed class SqliteMoneyTransactionRepositoryTests : IAsyncLifetime, IDis
 
     public SqliteMoneyTransactionRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _transactions = new SqliteMoneyTransactionRepository(_connections);
     }
 
@@ -22,7 +22,9 @@ public sealed class SqliteMoneyTransactionRepositoryTests : IAsyncLifetime, IDis
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
-        await FinanceStarterSeed.ApplyOnceAsync(connection, CancellationToken.None);
+        await TestUsers.InsertAsync(connection, TestUsers.DefaultId);
+        await TestUsers.InsertAsync(connection, TestUsers.OtherId);
+        await FinanceStarterSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -98,5 +100,64 @@ public sealed class SqliteMoneyTransactionRepositoryTests : IAsyncLifetime, IDis
         var onUnknownAccount = MoneyTransaction.Create("tx1", new DateOnly(2026, 10, 1), "Cash", "food", "wallet", -100);
 
         await Should.ThrowAsync<SqliteException>(() => _transactions.SaveAsync(onUnknownAccount, CancellationToken.None));
+    }
+
+    private async Task<SqliteMoneyTransactionRepository> OtherUsersTransactionsAsync()
+    {
+        var others = TestUsers.FactoryFor(_database, TestUsers.OtherId);
+        await FinanceStarterSeed.ApplyAsync(others);
+        return new SqliteMoneyTransactionRepository(others);
+    }
+
+    private static MoneyTransaction Lunch(string id, long amountCents) =>
+        MoneyTransaction.Create(id, new DateOnly(2026, 10, 5), "Lunch", "food", "checking-account", amountCents);
+
+    [Fact]
+    public async Task TwoUsers_StoreTheSameTransactionIdWithoutSeeingEachOther()
+    {
+        var others = await OtherUsersTransactionsAsync();
+        await _transactions.SaveAsync(Lunch("tx1", -100), CancellationToken.None);
+        await others.SaveAsync(Lunch("tx1", -900), CancellationToken.None);
+
+        var mine = await _transactions.ListInMonthAsync(October, CancellationToken.None);
+        var theirs = await others.ListInMonthAsync(October, CancellationToken.None);
+
+        (mine.Single().AmountCents, theirs.Single().AmountCents).ShouldBe((-100L, -900L));
+    }
+
+    [Fact]
+    public async Task Sum_CountsOnlyTheSignedInUsersTransactions()
+    {
+        var others = await OtherUsersTransactionsAsync();
+        await _transactions.SaveAsync(Lunch("tx1", -100), CancellationToken.None);
+        await others.SaveAsync(Lunch("tx2", -900), CancellationToken.None);
+
+        var sum = await _transactions.SumAsync(
+            "checking-account", new DateOnly(2026, 10, 1), new DateOnly(2026, 11, 1), CancellationToken.None);
+
+        sum.ShouldBe(-100L);
+    }
+
+    [Fact]
+    public async Task AnyChecks_IgnoreAnotherUsersTransactions()
+    {
+        var others = await OtherUsersTransactionsAsync();
+        await others.SaveAsync(Lunch("tx1", -900), CancellationToken.None);
+
+        var onAccount = await _transactions.AnyOnAccountAsync("checking-account", CancellationToken.None);
+        var inCategory = await _transactions.AnyInCategoryAsync("food", CancellationToken.None);
+
+        (onAccount, inCategory).ShouldBe((false, false));
+    }
+
+    [Fact]
+    public async Task Delete_NeverRemovesAnotherUsersTransaction()
+    {
+        var others = await OtherUsersTransactionsAsync();
+        await others.SaveAsync(Lunch("tx1", -900), CancellationToken.None);
+
+        await _transactions.DeleteAsync("tx1", CancellationToken.None);
+
+        (await others.ListInMonthAsync(October, CancellationToken.None)).Count.ShouldBe(1);
     }
 }

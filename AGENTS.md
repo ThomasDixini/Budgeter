@@ -129,4 +129,8 @@ docs(api): document pagination parameters
 
 - Frontend/backend stack and serverless provider.
 - Database and offline sync strategy.
-- Authentication (even if minimal).
+- Social sign-in (Google/Apple) and password recovery: not planned.
+
+## Decided
+
+- Authentication: e-mail and password, PBKDF2 hashes, JWT bearer tokens (`Auth:SigningKey` is required outside Development). Every record belongs to a user: user tables carry `user_id` in their primary and foreign keys, and repositories filter by `SqliteConnectionFactory.UserId`.

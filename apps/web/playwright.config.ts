@@ -16,6 +16,8 @@ const e2eDatabase = join(tmpdir(), `orbit-e2e-${Date.now()}.db`);
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.e2e.ts',
+  // Creates the suite's account and its starting data before any worker starts.
+  globalSetup: './e2e/support/global-setup.ts',
   fullyParallel: true,
   // The default (half the cores) starts so many browsers against one dev server and one SQLite file that
   // checks time out on a laptop; three keeps the suite steady and still fast.
@@ -44,7 +46,6 @@ export default defineConfig({
       env: {
         ASPNETCORE_ENVIRONMENT: 'Development',
         ConnectionStrings__Orbit: `Data Source=${e2eDatabase}`,
-        Persistence__SeedSampleData: 'true',
         // The CDI comes from the Central Bank; the suite never reaches the internet.
         Cdi__Enabled: 'false',
         // Stock quotes come from brapi.dev, which the suite never reaches either.

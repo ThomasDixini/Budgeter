@@ -17,15 +17,14 @@ public sealed class SqliteInvestmentRepositoryTests : IAsyncLifetime, IDisposabl
 
     public SqliteInvestmentRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _investments = new SqliteInvestmentRepository(_connections);
         _rates = new SqliteCdiRateStore(_connections);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -94,6 +93,91 @@ public sealed class SqliteInvestmentRepositoryTests : IAsyncLifetime, IDisposabl
     [Fact]
     public async Task Trade_RefusesAnInvestmentThatIsNotStored()
     {
+        await Should.ThrowAsync<SqliteException>(() =>
+            _investments.SaveTradeAsync(Trade("t1", January2), CancellationToken.None));
+    }
+
+    private SqliteInvestmentRepository RepositoryOfOtherUser() =>
+        new(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+
+    [Fact]
+    public async Task Investments_OfTwoUsersCanShareIdsAndNeverMix()
+    {
+        var other = RepositoryOfOtherUser();
+        await _investments.SaveAsync(Petr4(PricePoint.Create(3845, January2)), CancellationToken.None);
+        await other.SaveAsync(Investment.Create("petr4", "Other PETR4", InvestmentKind.Fund, null), CancellationToken.None);
+
+        var mine = await _investments.FindAsync("petr4", CancellationToken.None);
+        var theirs = await other.FindAsync("petr4", CancellationToken.None);
+
+        (mine!.Name, theirs!.Name).ShouldBe(("PETR4", "Other PETR4"));
+        (await _investments.ListAsync(CancellationToken.None)).Count.ShouldBe(1);
+        (await other.ListAsync(CancellationToken.None)).Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task DeletingAnInvestment_NeverTouchesTheOtherUsersOne()
+    {
+        var other = RepositoryOfOtherUser();
+        await _investments.SaveAsync(Petr4(), CancellationToken.None);
+        await other.SaveAsync(Petr4(), CancellationToken.None);
+
+        await _investments.DeleteAsync("petr4", CancellationToken.None);
+
+        (await _investments.FindAsync("petr4", CancellationToken.None)).ShouldBeNull();
+        (await other.FindAsync("petr4", CancellationToken.None)).ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Trades_OfTwoUsersCanShareIdsAndNeverMixOrDeleteEachOther()
+    {
+        var other = RepositoryOfOtherUser();
+        await _investments.SaveAsync(Petr4(), CancellationToken.None);
+        await other.SaveAsync(Petr4(), CancellationToken.None);
+        await _investments.SaveTradeAsync(Trade("t1", January2), CancellationToken.None);
+        await other.SaveTradeAsync(Trade("t1", January2.AddDays(1), TradeKind.Sell), CancellationToken.None);
+
+        await _investments.DeleteTradeAsync("t1", CancellationToken.None);
+
+        (await _investments.ListTradesAsync(CancellationToken.None)).ShouldBeEmpty();
+        (await _investments.FindTradeAsync("t1", CancellationToken.None)).ShouldBeNull();
+        var theirs = await other.ListTradesAsync(CancellationToken.None);
+        theirs.Select(trade => (trade.Id, trade.Kind)).ShouldBe([("t1", TradeKind.Sell)]);
+    }
+
+    [Fact]
+    public async Task Incomes_OfTwoUsersCanShareIdsAndNeverMixOrDeleteEachOther()
+    {
+        var other = RepositoryOfOtherUser();
+        await _investments.SaveAsync(Petr4(), CancellationToken.None);
+        await other.SaveAsync(Petr4(), CancellationToken.None);
+        await _investments.SaveIncomeAsync(InvestmentIncome.Create("i1", "petr4", January2, IncomeKind.Yield, 500), CancellationToken.None);
+        await other.SaveIncomeAsync(InvestmentIncome.Create("i1", "petr4", January2, IncomeKind.Dividend, 900), CancellationToken.None);
+
+        await _investments.DeleteIncomeAsync("i1", CancellationToken.None);
+
+        (await _investments.ListIncomesAsync(CancellationToken.None)).ShouldBeEmpty();
+        var theirs = await other.ListIncomesAsync(CancellationToken.None);
+        theirs.Select(income => (income.Id, income.AmountCents)).ShouldBe([("i1", 900L)]);
+    }
+
+    [Fact]
+    public async Task HasActivity_OnlyCountsTheUsersOwnTradesAndIncomes()
+    {
+        var other = RepositoryOfOtherUser();
+        await _investments.SaveAsync(Petr4(), CancellationToken.None);
+        await other.SaveAsync(Petr4(), CancellationToken.None);
+        await other.SaveTradeAsync(Trade("t1", January2), CancellationToken.None);
+
+        (await _investments.HasActivityAsync("petr4", CancellationToken.None)).ShouldBeFalse();
+        (await other.HasActivityAsync("petr4", CancellationToken.None)).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Trade_RefusesAnInvestmentOnlyTheOtherUserHas()
+    {
+        await RepositoryOfOtherUser().SaveAsync(Petr4(), CancellationToken.None);
+
         await Should.ThrowAsync<SqliteException>(() =>
             _investments.SaveTradeAsync(Trade("t1", January2), CancellationToken.None));
     }

@@ -17,13 +17,12 @@ public sealed class SqliteStoredRowsTests : IAsyncLifetime, IDisposable
 
     public SqliteStoredRowsTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
     }
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -33,13 +32,14 @@ public sealed class SqliteStoredRowsTests : IAsyncLifetime, IDisposable
     private async Task StoreAsync(string sql)
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteCommands.ExecuteAsync(connection, sql, CancellationToken.None, ("$text", LongerThanAnyLimit));
+        await SqliteCommands.ExecuteAsync(connection, sql, CancellationToken.None,
+            ("$user", TestUsers.DefaultId), ("$text", LongerThanAnyLimit));
     }
 
     [Fact]
     public async Task ACategoryNamedLongerThanTodaysLimit_StillLists()
     {
-        await StoreAsync("INSERT INTO categories (id, name, color) VALUES ('old', $text, '#7DD3FC')");
+        await StoreAsync("INSERT INTO categories (user_id, id, name, color) VALUES ($user, 'old', $text, '#7DD3FC')");
 
         var categories = await new SqliteCategoryRepository(_connections).ListAsync(CancellationToken.None);
 
@@ -49,11 +49,11 @@ public sealed class SqliteStoredRowsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task AGoalTitledLongerThanTodaysLimit_StillLists()
     {
-        await StoreAsync("INSERT INTO categories (id, name, color) VALUES ('study', 'Study', '#7DD3FC')");
+        await StoreAsync("INSERT INTO categories (user_id, id, name, color) VALUES ($user, 'study', 'Study', '#7DD3FC')");
         await StoreAsync(
             """
-            INSERT INTO goals (id, category_id, title, type, period, target, tracking)
-            VALUES ('g1', 'study', $text, 'frequency', 'weekly', 5, 'blocks')
+            INSERT INTO goals (user_id, id, category_id, title, type, period, target, tracking)
+            VALUES ($user, 'g1', 'study', $text, 'frequency', 'weekly', 5, 'blocks')
             """);
 
         var goals = await new SqliteGoalRepository(_connections).ListAsync(TestDays.Today, CancellationToken.None);
@@ -64,11 +64,11 @@ public sealed class SqliteStoredRowsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task ARoutineBlockNamedLongerThanTodaysLimit_StillLists()
     {
-        await StoreAsync("INSERT INTO routines (id, name, days, start_time, end_time) VALUES ('r1', 'Day', '0', '08:00', '17:00')");
+        await StoreAsync("INSERT INTO routines (user_id, id, name, days, start_time, end_time) VALUES ($user, 'r1', 'Day', '0', '08:00', '17:00')");
         await StoreAsync(
             """
-            INSERT INTO routine_blocks (routine_id, id, position, name, start_time, end_time)
-            VALUES ('r1', 'b1', 0, $text, '08:00', '09:00')
+            INSERT INTO routine_blocks (user_id, routine_id, id, position, name, start_time, end_time)
+            VALUES ($user, 'r1', 'b1', 0, $text, '08:00', '09:00')
             """);
 
         var routines = await new SqliteRoutineRepository(_connections).ListAsync(CancellationToken.None);
@@ -79,7 +79,7 @@ public sealed class SqliteStoredRowsTests : IAsyncLifetime, IDisposable
     [Fact]
     public async Task ATaskTitledLongerThanTodaysLimit_StillLists()
     {
-        await StoreAsync("INSERT INTO tasks (id, title, repeat, days) VALUES ('t1', $text, 'daily', '')");
+        await StoreAsync("INSERT INTO tasks (user_id, id, title, repeat, days) VALUES ($user, 't1', $text, 'daily', '')");
 
         var tasks = await new SqliteTaskRepository(_connections).ListAsync(CancellationToken.None);
 

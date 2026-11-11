@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/test';
 import { AccountsPage } from './pages/accounts.page';
 import {
   createAccount,
@@ -23,7 +23,11 @@ test.beforeEach(async ({ page }) => {
 test('the Banks & Cards tab opens the page', async ({ page }) => {
   await page.goto('/finances/transactions');
 
-  await page.getByRole('link', { name: 'Banks & Cards' }).click();
+  // Scoped to the tabs: the Transactions setup hint links to the same page.
+  await page
+    .getByRole('navigation', { name: 'Module sections' })
+    .getByRole('link', { name: 'Banks & Cards' })
+    .click();
 
   await expect(page).toHaveURL(/\/finances\/accounts$/);
   await expect(accounts.title).toHaveText('Banks & Cards');

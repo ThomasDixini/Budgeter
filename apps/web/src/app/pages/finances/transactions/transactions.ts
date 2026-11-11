@@ -1,4 +1,5 @@
 import { Component, LOCALE_ID, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { LoadFailed } from '../../../components/load-failed/load-failed';
 import { PageHeading } from '../../../components/page-heading/page-heading';
 import { Clock } from '../../../core/calendar/clock';
@@ -30,6 +31,7 @@ import { TranslatePipe } from '../../../core/i18n/translate.pipe';
 @Component({
   selector: 'app-finances-transactions',
   imports: [
+    RouterLink,
     TranslatePipe,
     PageHeading,
     LoadFailed,

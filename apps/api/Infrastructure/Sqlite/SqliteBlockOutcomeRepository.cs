@@ -19,10 +19,10 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
         var connection = lease.Connection;
         return await SqliteCommands.QueryAsync(
             connection,
-            "SELECT routine_id, block_id, date, kind, at FROM block_outcomes WHERE date = $date ORDER BY rowid",
+            "SELECT routine_id, block_id, date, kind, at FROM block_outcomes WHERE user_id = $user AND date = $date ORDER BY rowid",
             ToOutcome,
             cancellationToken,
-            ("$date", ToText(date)));
+            ("$user", connections.UserId), ("$date", ToText(date)));
     }
 
     public async Task SaveAsync(BlockOutcome outcome, CancellationToken cancellationToken)
@@ -32,11 +32,12 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
         await SqliteCommands.ExecuteAsync(
             connection,
             """
-            INSERT INTO block_outcomes (routine_id, block_id, date, kind, at) VALUES ($routineId, $blockId, $date, $kind, $at)
-            ON CONFLICT (routine_id, block_id, date) DO UPDATE SET kind = excluded.kind, at = excluded.at
+            INSERT INTO block_outcomes (user_id, routine_id, block_id, date, kind, at)
+            VALUES ($user, $routineId, $blockId, $date, $kind, $at)
+            ON CONFLICT (user_id, routine_id, block_id, date) DO UPDATE SET kind = excluded.kind, at = excluded.at
             """,
             cancellationToken,
-            ("$routineId", outcome.RoutineId), ("$blockId", outcome.BlockId), ("$date", ToText(outcome.Date)),
+            ("$user", connections.UserId), ("$routineId", outcome.RoutineId), ("$blockId", outcome.BlockId), ("$date", ToText(outcome.Date)),
             ("$kind", outcome.Kind.ToString().ToLowerInvariant()), ("$at", outcome.At));
     }
 
@@ -46,9 +47,9 @@ public sealed class SqliteBlockOutcomeRepository(SqliteConnectionFactory connect
         var connection = lease.Connection;
         await SqliteCommands.ExecuteAsync(
             connection,
-            "DELETE FROM block_outcomes WHERE routine_id = $routineId AND block_id = $blockId AND date = $date",
+            "DELETE FROM block_outcomes WHERE user_id = $user AND routine_id = $routineId AND block_id = $blockId AND date = $date",
             cancellationToken,
-            ("$routineId", routineId), ("$blockId", blockId), ("$date", ToText(date)));
+            ("$user", connections.UserId), ("$routineId", routineId), ("$blockId", blockId), ("$date", ToText(date)));
     }
 
     private static BlockOutcome ToOutcome(SqliteDataReader reader)

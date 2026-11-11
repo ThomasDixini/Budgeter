@@ -18,16 +18,16 @@ internal static class SampleCategorySeed
     /// <summary>
     /// Inserts the sample categories that are missing; existing rows are left untouched.
     /// </summary>
-    /// <example><code>await SampleCategorySeed.ApplyAsync(connection, ct);</code></example>
-    public static async Task ApplyAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    /// <example><code>await SampleCategorySeed.ApplyAsync(connection, userId, ct);</code></example>
+    public static async Task ApplyAsync(SqliteConnection connection, string userId, CancellationToken cancellationToken)
     {
         foreach (var (id, name, color) in Categories)
         {
             await SqliteCommands.ExecuteAsync(
                 connection,
-                "INSERT OR IGNORE INTO categories (id, name, color) VALUES ($id, $name, $color)",
+                "INSERT OR IGNORE INTO categories (user_id, id, name, color) VALUES ($user, $id, $name, $color)",
                 cancellationToken,
-                ("$id", id), ("$name", name), ("$color", color));
+                ("$user", userId), ("$id", id), ("$name", name), ("$color", color));
         }
     }
 }

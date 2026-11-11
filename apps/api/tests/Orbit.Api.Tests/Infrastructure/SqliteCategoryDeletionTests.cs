@@ -15,7 +15,7 @@ public sealed class SqliteCategoryDeletionTests : IAsyncLifetime, IDisposable
 
     public SqliteCategoryDeletionTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _categories = new SqliteCategoryRepository(_connections);
         _routines = new SqliteRoutineRepository(_connections);
         _goals = new SqliteGoalRepository(_connections);
@@ -23,8 +23,7 @@ public sealed class SqliteCategoryDeletionTests : IAsyncLifetime, IDisposable
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _connections.OpenAsync(CancellationToken.None);
-        await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.CreateSchemaAsync(_connections, TestUsers.DefaultId, TestUsers.OtherId);
         await _categories.AddAsync(Category.Create("study", "Study", "#7DD3FC"), CancellationToken.None);
     }
 

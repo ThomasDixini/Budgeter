@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { FakeAuthGateway, provideFakeAuthGateway } from '../../core/auth/fake-auth-gateway';
+import { SESSION_STORAGE_KEY, SessionStore } from '../../core/auth/session-store';
 import { APP_HOME_ROUTE, Login } from './login';
 
 let gateway: FakeAuthGateway;
+let sessions: SessionStore;
 
 function createLogin(): ComponentFixture<Login> {
   const fixture = TestBed.createComponent(Login);
@@ -43,7 +45,10 @@ describe('Login', () => {
     TestBed.configureTestingModule({
       providers: [provideRouter([]), provideFakeAuthGateway(gateway)],
     });
+    sessions = TestBed.inject(SessionStore);
   });
+
+  afterEach(() => sessions.end());
 
   it('opens on the sign-in mode', () => {
     const fixture = createLogin();
@@ -101,17 +106,6 @@ describe('Login', () => {
     ]);
   });
 
-  it('sends a reset link with only the e-mail and offers a way back', () => {
-    const fixture = createLogin();
-    click(fixture, '.password-heading .link');
-    type(fixture, 'email', 'ana@mail.com');
-
-    submit(fixture);
-
-    expect(gateway.resets).toEqual(['ana@mail.com']);
-    expect(exists(fixture, '.done .secondary')).toBe(true);
-  });
-
   it('toggles the password between hidden and shown', () => {
     const fixture = createLogin();
 
@@ -120,23 +114,39 @@ describe('Login', () => {
     expect(element<HTMLInputElement>(fixture, '#password').type).toBe('text');
   });
 
-  it('signs in through an identity provider', () => {
-    const fixture = createLogin();
-
-    click(fixture, '.provider');
-
-    expect(gateway.providers).toEqual(['google']);
-  });
-
-  it('says so when the account cannot be reached', () => {
-    gateway.failure = new Error('offline');
+  it.each([
+    ['invalid-credentials', 'Wrong e-mail or password.'],
+    ['email-taken', 'There is already an account with this e-mail.'],
+    ['unreachable', "Couldn't reach your account. Try again."],
+  ] as const)('tells what went wrong when the API answers %s', (reason, message) => {
+    gateway.failure = reason;
     const fixture = createLogin();
     type(fixture, 'email', 'ana@mail.com');
     type(fixture, 'password', 'secret');
 
     submit(fixture);
 
-    expect(element(fixture, '.error').textContent).toContain("Couldn't reach your account");
+    expect(element(fixture, '.error').textContent).toContain(message);
     expect(exists(fixture, '.done')).toBe(false);
+  });
+
+  it('keeps the session it gets, for this tab only unless asked to stay signed in', () => {
+    const fixture = createLogin();
+    type(fixture, 'email', 'ana@mail.com');
+    type(fixture, 'password', 'secret');
+    click(fixture, '.remember input');
+
+    submit(fixture);
+
+    expect(sessions.isSignedIn()).toBe(true);
+    expect(localStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
+    expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).not.toBeNull();
+  });
+
+  it('offers neither identity providers nor a password reset', () => {
+    const fixture = createLogin();
+
+    expect(exists(fixture, '.provider')).toBe(false);
+    expect(exists(fixture, '.password-heading .link')).toBe(false);
   });
 });

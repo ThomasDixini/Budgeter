@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/test';
 import { FinancesPage } from './pages/finances.page';
 import { LandingPage } from './pages/landing.page';
 import { createTransaction, isoDayOf, ownMonth } from './support/finances-api';

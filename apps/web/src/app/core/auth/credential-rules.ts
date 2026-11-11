@@ -1,5 +1,5 @@
-/** The three things the sign-in screen does. */
-export type AccessMode = 'login' | 'signup' | 'reset';
+/** The two things the sign-in screen does. */
+export type AccessMode = 'login' | 'signup';
 
 /** What the person typed on the sign-in screen. */
 export interface AccessForm {
@@ -46,15 +46,15 @@ export function passwordStrength(password: string): PasswordStrength {
 }
 
 /**
- * Finds the fields that block the form in the given mode: a reset needs only the e-mail, a new
- * account also needs a name and a long enough password.
+ * Finds the fields that block the form in the given mode: signing in needs an e-mail and a password, a
+ * new account also needs a name and a long enough password.
  * @example accessFormErrors('login', { name: '', email: 'ana@mail.com', password: '' }).password // true
  */
 export function accessFormErrors(mode: AccessMode, form: AccessForm): AccessFormErrors {
   return {
     name: mode === 'signup' && form.name.trim() === '',
     email: !isEmail(form.email),
-    password: mode !== 'reset' && !isPasswordAccepted(mode, form.password),
+    password: !isPasswordAccepted(mode, form.password),
   };
 }
 

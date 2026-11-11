@@ -13,15 +13,16 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
 {
     private const string DateFormat = "yyyy-MM-dd";
     private const string SelectColumns =
-        "SELECT id, category_id, title, type, period, target, unit, deadline, tracking FROM goals";
+        "SELECT id, category_id, title, type, period, target, unit, deadline, tracking FROM goals WHERE user_id = $user";
 
     // Two queries whatever the number of goals: the definitions, then the log entries of their periods.
     public async Task<IReadOnlyList<Goal>> ListAsync(DateOnly day, CancellationToken cancellationToken)
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var definitions = await SqliteCommands.QueryAsync(
-            lease.Connection, $"{SelectColumns} ORDER BY rowid", ToDefinition, cancellationToken);
-        var entries = await EntriesAroundAsync(lease.Connection, definitions, day, cancellationToken);
+            lease.Connection, $"{SelectColumns} ORDER BY rowid", ToDefinition, cancellationToken,
+            ("$user", connections.UserId));
+        var entries = await EntriesAroundAsync(lease.Connection, connections.UserId, definitions, day, cancellationToken);
         return [.. definitions.Select(definition => Goal.StandingOn(definition, entries[definition.Id], day))];
     }
 
@@ -29,9 +30,10 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var definitions = await SqliteCommands.QueryAsync(
-            lease.Connection, $"{SelectColumns} WHERE id = $id", ToDefinition, cancellationToken, ("$id", id));
+            lease.Connection, $"{SelectColumns} AND id = $id", ToDefinition, cancellationToken,
+            ("$user", connections.UserId), ("$id", id));
         if (definitions.Count == 0) return null;
-        var entries = await EntriesAroundAsync(lease.Connection, definitions, day, cancellationToken);
+        var entries = await EntriesAroundAsync(lease.Connection, connections.UserId, definitions, day, cancellationToken);
         return Goal.StandingOn(definitions[0], entries[id], day);
     }
 
@@ -42,12 +44,12 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
         var inserted = await SqliteCommands.ExecuteAsync(
             lease.Connection,
             """
-            INSERT INTO goals (id, category_id, title, type, period, target, unit, deadline, tracking)
-            VALUES ($id, $categoryId, $title, $type, $period, $target, $unit, $deadline, $tracking)
-            ON CONFLICT (id) DO NOTHING
+            INSERT INTO goals (user_id, id, category_id, title, type, period, target, unit, deadline, tracking)
+            VALUES ($user, $id, $categoryId, $title, $type, $period, $target, $unit, $deadline, $tracking)
+            ON CONFLICT (user_id, id) DO NOTHING
             """,
             cancellationToken,
-            ("$id", definition.Id), ("$categoryId", definition.CategoryId), ("$title", definition.Title),
+            ("$user", connections.UserId), ("$id", definition.Id), ("$categoryId", definition.CategoryId), ("$title", definition.Title),
             ("$type", ToText(definition.Type)), ("$period", ToText(definition.Period)),
             ("$target", definition.Target), ("$unit", definition.Unit),
             ("$deadline", definition.Deadline?.ToString(DateFormat, CultureInfo.InvariantCulture)),
@@ -64,10 +66,10 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
             """
             UPDATE goals SET title = $title, period = $period, target = $target, unit = $unit,
                 deadline = $deadline, tracking = $tracking
-            WHERE id = $id
+            WHERE user_id = $user AND id = $id
             """,
             cancellationToken,
-            ("$id", definition.Id), ("$title", definition.Title), ("$period", ToText(definition.Period)),
+            ("$user", connections.UserId), ("$id", definition.Id), ("$title", definition.Title), ("$period", ToText(definition.Period)),
             ("$target", definition.Target), ("$unit", definition.Unit),
             ("$deadline", definition.Deadline?.ToString(DateFormat, CultureInfo.InvariantCulture)),
             ("$tracking", ToText(definition.Tracking)));
@@ -79,7 +81,8 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
         var connection = lease.Connection;
         // The progress entries go with it through ON DELETE CASCADE.
         await SqliteCommands.ExecuteAsync(
-            connection, "DELETE FROM goals WHERE id = $id", cancellationToken, ("$id", id));
+            connection, "DELETE FROM goals WHERE user_id = $user AND id = $id", cancellationToken,
+            ("$user", connections.UserId), ("$id", id));
     }
 
     /// <summary>
@@ -87,17 +90,17 @@ public sealed class SqliteGoalRepository(SqliteConnectionFactory connections) : 
     /// covering every goal's window is read, then <see cref="Goal.StandingOn"/> keeps each goal's own.
     /// </summary>
     private static async Task<ILookup<string, GoalProgressEvent>> EntriesAroundAsync(
-        SqliteConnection connection, IReadOnlyList<GoalDefinition> definitions, DateOnly day,
+        SqliteConnection connection, string userId, IReadOnlyList<GoalDefinition> definitions, DateOnly day,
         CancellationToken cancellationToken)
     {
         if (definitions.Count == 0) return Array.Empty<GoalProgressEvent>().ToLookup(entry => entry.GoalId);
         var windows = definitions.Select(definition => GoalWindow.For(definition.Period, day, definition.Deadline)).ToList();
         var entries = await SqliteCommands.QueryAsync(
             connection,
-            "SELECT event_id, goal_id, date, amount, source, source_ref FROM goal_progress WHERE date >= $start AND date <= $end",
+            "SELECT event_id, goal_id, date, amount, source, source_ref FROM goal_progress WHERE user_id = $user AND date >= $start AND date <= $end",
             ToEntry,
             cancellationToken,
-            ("$start", ToText(windows.Min(window => window.Start))), ("$end", ToText(windows.Max(window => window.End))));
+            ("$user", userId), ("$start", ToText(windows.Min(window => window.Start))), ("$end", ToText(windows.Max(window => window.End))));
         return entries.ToLookup(entry => entry.GoalId);
     }
 

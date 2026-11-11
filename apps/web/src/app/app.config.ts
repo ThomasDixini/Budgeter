@@ -4,7 +4,7 @@ import {
   inject,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { TitleStrategy, provideRouter, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
 import { provideLanguage } from './core/i18n/locale-provider';
@@ -61,7 +61,8 @@ import { HttpBillsGateway } from './core/finances/http-bills-gateway';
 import { BackupGateway } from './core/backups/backup-gateway';
 import { HttpBackupGateway } from './core/backups/http-backup-gateway';
 import { AuthGateway } from './core/auth/auth-gateway';
-import { UnconnectedAuthGateway } from './core/auth/unconnected-auth-gateway';
+import { HttpAuthGateway } from './core/auth/http-auth-gateway';
+import { authInterceptor } from './core/auth/auth-interceptor';
 
 // A link with ?demo=on (or off) switches the made-up data before the gateways are chosen.
 applyDemoFromAddress(globalThis.location?.search ?? '');
@@ -70,7 +71,7 @@ const isDemo = isDemoMode();
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideRouter(routes, withViewTransitions({ onViewTransitionCreated: animateModuleSwitch })),
     provideLanguage(),
     { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
@@ -113,7 +114,7 @@ export const appConfig: ApplicationConfig = {
     },
     { provide: BackupGateway, useClass: HttpBackupGateway },
     // No auth backend yet: every request is accepted until one is built.
-    { provide: AuthGateway, useClass: UnconnectedAuthGateway },
+    { provide: AuthGateway, useClass: HttpAuthGateway },
     ...(isDemo
       ? [
           {

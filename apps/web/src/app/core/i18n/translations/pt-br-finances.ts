@@ -205,6 +205,9 @@ export const PT_BR_FINANCES: Readonly<Record<string, string>> = {
 
   // Income split
   'Used by transactions and by the parts above': 'Usadas nas transações e nas partes acima',
+  'To record transactions, first add a bank account or card in':
+    'Para lançar transações, primeiro cadastre uma conta ou cartão em',
+  'and a category in': 'e uma categoria em',
   'New category': 'Nova categoria',
   'E.g. Courses': 'Ex.: Cursos',
   'Add category': 'Adicionar categoria',

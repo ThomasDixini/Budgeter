@@ -13,7 +13,7 @@ public sealed class SqliteAccountRepositoryTests : IAsyncLifetime, IDisposable
 
     public SqliteAccountRepositoryTests()
     {
-        _connections = new SqliteConnectionFactory(_database.ConnectionString);
+        _connections = TestUsers.FactoryFor(_database);
         _accounts = new SqliteAccountRepository(_connections);
     }
 
@@ -21,6 +21,8 @@ public sealed class SqliteAccountRepositoryTests : IAsyncLifetime, IDisposable
     {
         await using var connection = await _connections.OpenAsync(CancellationToken.None);
         await SqliteSchema.EnsureCreatedAsync(connection, CancellationToken.None);
+        await TestUsers.InsertAsync(connection, TestUsers.DefaultId);
+        await TestUsers.InsertAsync(connection, TestUsers.OtherId);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -75,7 +77,7 @@ public sealed class SqliteAccountRepositoryTests : IAsyncLifetime, IDisposable
     {
         await using (var connection = await _connections.OpenAsync(CancellationToken.None))
         {
-            await FinanceStarterSeed.ApplyOnceAsync(connection, CancellationToken.None);
+            await FinanceStarterSeed.ApplyAsync(connection, TestUsers.DefaultId, CancellationToken.None);
         }
         var transactions = new SqliteMoneyTransactionRepository(_connections);
         await transactions.SaveAsync(
@@ -83,5 +85,50 @@ public sealed class SqliteAccountRepositoryTests : IAsyncLifetime, IDisposable
             CancellationToken.None);
 
         await Should.ThrowAsync<SqliteException>(() => _accounts.DeleteAsync("checking-account", CancellationToken.None));
+    }
+
+    private SqliteAccountRepository OtherUsersAccounts() =>
+        new(TestUsers.FactoryFor(_database, TestUsers.OtherId));
+
+    [Fact]
+    public async Task TwoUsers_StoreTheSameAccountIdWithoutSeeingEachOther()
+    {
+        await _accounts.SaveAsync(Account.CreateBankAccount("nubank", "Mine"), CancellationToken.None);
+        await OtherUsersAccounts().SaveAsync(Account.CreateBankAccount("nubank", "Theirs"), CancellationToken.None);
+
+        var mine = await _accounts.ListAsync(CancellationToken.None);
+        var theirs = await OtherUsersAccounts().ListAsync(CancellationToken.None);
+
+        mine.Select(account => account.Name).ShouldBe(["Mine"]);
+        theirs.Select(account => account.Name).ShouldBe(["Theirs"]);
+    }
+
+    [Fact]
+    public async Task Find_NeverReturnsAnotherUsersAccount()
+    {
+        await OtherUsersAccounts().SaveAsync(Account.CreateBankAccount("nubank", "Theirs"), CancellationToken.None);
+
+        (await _accounts.FindAsync("nubank", CancellationToken.None)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Delete_NeverRemovesAnotherUsersAccount()
+    {
+        await _accounts.SaveAsync(Account.CreateBankAccount("nubank", "Mine"), CancellationToken.None);
+
+        await OtherUsersAccounts().DeleteAsync("nubank", CancellationToken.None);
+
+        (await _accounts.FindAsync("nubank", CancellationToken.None))!.Name.ShouldBe("Mine");
+    }
+
+    [Fact]
+    public async Task Save_NeverOverwritesAnotherUsersAccountWithTheSameId()
+    {
+        await _accounts.SaveAsync(Account.CreateBankAccount("nubank", "Mine", 500), CancellationToken.None);
+
+        await OtherUsersAccounts().SaveAsync(Account.CreateBankAccount("nubank", "Theirs", 900), CancellationToken.None);
+
+        var mine = (await _accounts.FindAsync("nubank", CancellationToken.None))!;
+        (mine.Name, mine.OpeningBalanceCents).ShouldBe(("Mine", 500L));
     }
 }

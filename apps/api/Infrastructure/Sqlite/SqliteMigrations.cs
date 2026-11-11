@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using Orbit.Api.Domain.Finances;
 
 namespace Orbit.Api.Infrastructure.Sqlite;
 
@@ -8,6 +9,9 @@ namespace Orbit.Api.Infrastructure.Sqlite;
 /// </summary>
 internal static class SqliteMigrations
 {
+    /// <summary>The terms version 3 gave to cards stored without any (R$ 5,000.00, closing on the 3rd, due on the 10th).</summary>
+    public static readonly CardTerms StarterCardTerms = CardTerms.Create(500_000, closingDay: 3, dueDay: 10);
+
     /// <summary>The <c>user_version</c> once every step ran; raise it with each new step.</summary>
     public const int LatestVersion = 3;
 
@@ -42,9 +46,9 @@ internal static class SqliteMigrations
             WHERE kind = 'CreditCard' AND credit_limit_cents IS NULL
             """,
             cancellationToken,
-            ("$limit", FinanceStarterSeed.CardTerms.LimitCents),
-            ("$closingDay", FinanceStarterSeed.CardTerms.ClosingDay),
-            ("$dueDay", FinanceStarterSeed.CardTerms.DueDay));
+            ("$limit", StarterCardTerms.LimitCents),
+            ("$closingDay", StarterCardTerms.ClosingDay),
+            ("$dueDay", StarterCardTerms.DueDay));
         await SqliteCommands.ExecuteAsync(connection, "PRAGMA user_version = 3", cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }

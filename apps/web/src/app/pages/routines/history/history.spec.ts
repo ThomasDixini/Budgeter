@@ -1,3 +1,5 @@
+import { fakeSession } from '../../../core/auth/fake-auth-gateway';
+import { SessionStore } from '../../../core/auth/session-store';
 import { provideFakeBackupGateway } from '../../../core/backups/fake-backup-gateway';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -47,6 +49,7 @@ async function openHistory() {
       ),
     ],
   });
+  TestBed.inject(SessionStore).start(fakeSession(), false);
   const harness = await RouterTestingHarness.create('/routines/history');
   harness.detectChanges();
   const element = harness.routeNativeElement as HTMLElement;

@@ -13,13 +13,14 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
 {
     private const string DateFormat = "yyyy-MM-dd";
     private const char DaySeparator = ',';
-    private const string SelectColumns = "SELECT id, title, category_id, repeat, days, date FROM tasks";
+    private const string SelectColumns = "SELECT id, title, category_id, repeat, days, date FROM tasks WHERE user_id = $user";
 
     public async Task<IReadOnlyList<TaskItem>> ListAsync(CancellationToken cancellationToken)
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var connection = lease.Connection;
-        return await SqliteCommands.QueryAsync(connection, $"{SelectColumns} ORDER BY rowid", ToTask, cancellationToken);
+        return await SqliteCommands.QueryAsync(connection, $"{SelectColumns} ORDER BY rowid", ToTask, cancellationToken,
+            ("$user", connections.UserId));
     }
 
     public async Task<TaskItem?> FindAsync(string id, CancellationToken cancellationToken)
@@ -27,7 +28,8 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var connection = lease.Connection;
         var rows = await SqliteCommands.QueryAsync(
-            connection, $"{SelectColumns} WHERE id = $id", ToTask, cancellationToken, ("$id", id));
+            connection, $"{SelectColumns} AND id = $id", ToTask, cancellationToken,
+            ("$user", connections.UserId), ("$id", id));
         return rows.FirstOrDefault();
     }
 
@@ -35,7 +37,7 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
     {
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var connection = lease.Connection;
-        await WriteAsync(connection, task, cancellationToken);
+        await WriteAsync(connection, connections.UserId, task, cancellationToken);
     }
 
     public async Task DeleteAsync(string taskId, CancellationToken cancellationToken)
@@ -44,7 +46,8 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
         var connection = lease.Connection;
         // Completions go with it through ON DELETE CASCADE.
         await SqliteCommands.ExecuteAsync(
-            connection, "DELETE FROM tasks WHERE id = $id", cancellationToken, ("$id", taskId));
+            connection, "DELETE FROM tasks WHERE user_id = $user AND id = $id", cancellationToken,
+            ("$user", connections.UserId), ("$id", taskId));
     }
 
     public async Task<IReadOnlyList<string>> ListCompletedAsync(DateOnly day, CancellationToken cancellationToken)
@@ -52,8 +55,8 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var connection = lease.Connection;
         return await SqliteCommands.QueryAsync(
-            connection, "SELECT task_id FROM task_completions WHERE date = $date ORDER BY rowid",
-            reader => reader.GetString(0), cancellationToken, ("$date", ToText(day)));
+            connection, "SELECT task_id FROM task_completions WHERE user_id = $user AND date = $date ORDER BY rowid",
+            reader => reader.GetString(0), cancellationToken, ("$user", connections.UserId), ("$date", ToText(day)));
     }
 
     public async Task SetCompletedAsync(string taskId, DateOnly day, bool isDone, CancellationToken cancellationToken)
@@ -61,28 +64,31 @@ public sealed class SqliteTaskRepository(SqliteConnectionFactory connections) : 
         await using var lease = await connections.LeaseAsync(cancellationToken);
         var connection = lease.Connection;
         var sql = isDone
-            ? "INSERT OR IGNORE INTO task_completions (task_id, date) VALUES ($taskId, $date)"
-            : "DELETE FROM task_completions WHERE task_id = $taskId AND date = $date";
+            ? "INSERT OR IGNORE INTO task_completions (user_id, task_id, date) VALUES ($user, $taskId, $date)"
+            : "DELETE FROM task_completions WHERE user_id = $user AND task_id = $taskId AND date = $date";
         await SqliteCommands.ExecuteAsync(
-            connection, sql, cancellationToken, ("$taskId", taskId), ("$date", ToText(day)));
+            connection, sql, cancellationToken,
+            ("$user", connections.UserId), ("$taskId", taskId), ("$date", ToText(day)));
     }
 
     /// <summary>
     /// Upserts a task row, keeping its position in the list.
     /// </summary>
-    /// <example><code>await SqliteTaskRepository.WriteAsync(connection, task, ct);</code></example>
-    internal static Task WriteAsync(SqliteConnection connection, TaskItem task, CancellationToken cancellationToken)
+    /// <example><code>await SqliteTaskRepository.WriteAsync(connection, userId, task, ct);</code></example>
+    internal static Task WriteAsync(
+        SqliteConnection connection, string userId, TaskItem task, CancellationToken cancellationToken)
     {
         return SqliteCommands.ExecuteAsync(
             connection,
             """
-            INSERT INTO tasks (id, title, category_id, repeat, days, date) VALUES ($id, $title, $categoryId, $repeat, $days, $date)
-            ON CONFLICT (id) DO UPDATE SET
+            INSERT INTO tasks (user_id, id, title, category_id, repeat, days, date)
+            VALUES ($user, $id, $title, $categoryId, $repeat, $days, $date)
+            ON CONFLICT (user_id, id) DO UPDATE SET
                 title = excluded.title, category_id = excluded.category_id, repeat = excluded.repeat,
                 days = excluded.days, date = excluded.date
             """,
             cancellationToken,
-            ("$id", task.Id), ("$title", task.Title), ("$categoryId", task.CategoryId),
+            ("$user", userId), ("$id", task.Id), ("$title", task.Title), ("$categoryId", task.CategoryId),
             ("$repeat", task.Repeat.ToString().ToLowerInvariant()), ("$days", string.Join(DaySeparator, task.Days)),
             ("$date", task.Date is { } date ? ToText(date) : null));
     }
