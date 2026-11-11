@@ -1,7 +1,7 @@
 ---
 id: 301
 title: API endpoints, DI registration, endpoint tests
-status: backlog
+status: in-progress
 wave: 3
 depends_on: [201, 202]
 priority: high
