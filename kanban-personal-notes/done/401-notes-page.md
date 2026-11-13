@@ -1,7 +1,7 @@
 ---
 id: 401
 title: Notes page, route and tab
-status: in-progress
+status: done
 wave: 4
 depends_on: [103, 203, 204, 302, 303]
 priority: high
@@ -47,9 +47,9 @@ Read first: `pages/routines/routines.routes.ts` (children of `RoutinesShell`, ti
 | Search matches only archived items | list under Open is empty → "Nothing matches" |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] `notes.ts` stays under 500 lines and every function ≤ 20 lines.
-- [ ] The page works in DEMO mode (`/routines/notes?demo=on`): verify in the browser pane (list, quick idea, create, edit, mark done, archive, phone width 375 px) and report what you saw, or say explicitly that it was not possible.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] `notes.ts` stays under 500 lines and every function ≤ 20 lines.
+- [x] The page works in DEMO mode (`/routines/notes?demo=on`): verify in the browser pane (list, quick idea, create, edit, mark done, archive, phone width 375 px) and report what you saw, or say explicitly that it was not possible.
 
 ## Out of scope
 E2E tests (501), API changes, changes to the item/form components (report a needed change instead).
