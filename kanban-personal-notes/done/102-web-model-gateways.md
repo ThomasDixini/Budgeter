@@ -1,7 +1,7 @@
 ---
 id: 102
 title: Web model, gateway port, HTTP and fake gateways
-status: in-progress
+status: done
 wave: 1
 depends_on: []
 priority: high
@@ -35,9 +35,9 @@ Types and `NotesGateway` exactly as in BOARD.md "Web types" (notes.ts and notes-
 6. `app.config.ts`: add `{ provide: NotesGateway, useClass: HttpNotesGateway }` next to the `TasksGateway` provider (keep imports sorted as the file does). Task 204 later turns it into the demo switch.
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .` and `npx ng test --no-watch` pass in `apps/web`.
-- [ ] The HTTP spec covers list, save, setStatus and delete.
-- [ ] Types and gateway signatures match BOARD.md exactly.
+- [x] `npm run lint`, `npx prettier --check .` and `npx ng test --no-watch` pass in `apps/web`.
+- [x] The HTTP spec covers list, save, setStatus and delete.
+- [x] Types and gateway signatures match BOARD.md exactly.
 
 ## Out of scope
 The store (203), filter (103), demo gateway (204), UI, translations, any API code.
