@@ -23,6 +23,7 @@ export class SinkingFundsStore {
   private readonly loadFailed = signal(false);
   private readonly actionFailed = signal(false);
   private readonly rolled = signal<readonly Bill[]>([]);
+  private readonly saves = signal(0);
   /** Counts list requests, so an answer overtaken by a newer one is dropped. */
   private listRequest = 0;
 
@@ -35,6 +36,8 @@ export class SinkingFundsStore {
   readonly hasActionFailed = this.actionFailed.asReadonly();
   /** Bills the roll created on load. */
   readonly rolledBills = this.rolled.asReadonly();
+  /** How many saves the API has accepted; a form waits for it to grow to know its save went through. */
+  readonly savedCount = this.saves.asReadonly();
 
   constructor() {
     this.load();
@@ -55,7 +58,9 @@ export class SinkingFundsStore {
    */
   save(draft: SinkingFundDraft, id?: string): void {
     const fundId = id ?? this.ids.next();
-    this.change(this.gateway.save(fundId, this.today, draft));
+    this.change(this.gateway.save(fundId, this.today, draft), () =>
+      this.saves.update((count) => count + 1),
+    );
   }
 
   /**
@@ -66,10 +71,13 @@ export class SinkingFundsStore {
     this.change(this.gateway.delete(id));
   }
 
-  private change(request: Observable<unknown>): void {
+  private change(request: Observable<unknown>, onAccepted?: () => void): void {
     this.actionFailed.set(false);
     request.subscribe({
-      next: () => this.refresh(),
+      next: () => {
+        onAccepted?.();
+        this.refresh();
+      },
       error: (error: unknown) => this.failAction(error),
     });
   }

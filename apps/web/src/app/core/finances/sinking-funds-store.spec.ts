@@ -172,6 +172,26 @@ describe('SinkingFundsStore', () => {
     expect(store.totalMonthlyCents()).toBe(0);
   });
 
+  it('counts each save the API accepts', () => {
+    const { store } = createStore(new FakeSinkingFundsGateway());
+
+    store.save(NEW_FUND);
+    store.save(NEW_FUND, 'ipva');
+
+    expect(store.savedCount()).toBe(2);
+  });
+
+  it('does not count a failed save or a delete as a save', () => {
+    const gateway = new FakeSinkingFundsGateway();
+    const { store } = createStore(gateway);
+
+    store.remove('ipva');
+    gateway.failure = new Error('save failed');
+    store.save(NEW_FUND);
+
+    expect(store.savedCount()).toBe(0);
+  });
+
   it('deletes a fund and refreshes the list', () => {
     const gateway = new FakeSinkingFundsGateway();
     const { store } = createStore(gateway);
