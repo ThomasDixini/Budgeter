@@ -1,7 +1,7 @@
 ---
 id: 103
 title: Web pure filter and search
-status: in-progress
+status: done
 wave: 1
 depends_on: []
 priority: medium
@@ -41,8 +41,8 @@ export function matchesQuery(note: Note, query: string): boolean;
 | Body empty | only the title is searched |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] Every row of the spec list above has a test.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] Every row of the spec list above has a test.
 
 ## Out of scope
 UI, store, any Angular code, ordering of notes.
