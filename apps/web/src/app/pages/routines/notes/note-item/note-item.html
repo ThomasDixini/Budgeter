@@ -1,0 +1,99 @@
+<article class="note" [class.archived]="note().status === 'archived'">
+  <p class="kind ui-muted">
+    <svg class="kind-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      @switch (note().kind) {
+        @case ('goal') {
+          <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5" />
+          <circle cx="8" cy="8" r="2" fill="currentColor" />
+        }
+        @case ('idea') {
+          <path
+            d="M8 1.5a4.5 4.5 0 0 0-2.5 8.2V11h5V9.7A4.5 4.5 0 0 0 8 1.5ZM6 13.5h4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        }
+        @default {
+          <path
+            d="M3 2.5h10v11H3zM5.5 6h5M5.5 9h5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        }
+      }
+    </svg>
+    {{ kindLabel() | t }}
+  </p>
+
+  <h3 class="title" [class.struck]="note().status === 'done'">{{ note().title }}</h3>
+  @if (note().status === 'done') {
+    <p class="ui-muted state">{{ 'Marked as done' | t }}</p>
+  }
+  @if (note().body) {
+    <p class="body">{{ note().body }}</p>
+  }
+  <p class="ui-muted edited ui-tabular">{{ 'Last edited {date}' | t: { date: editedDate() } }}</p>
+
+  <div class="actions">
+    <button
+      class="ui-button-ghost"
+      type="button"
+      [attr.aria-label]="'Edit note {title}' | t: { title: note().title }"
+      (click)="edit.emit(note())"
+    >
+      {{ 'Edit' | t }}
+    </button>
+    @if (canToggleDone()) {
+      @if (note().status === 'done') {
+        <button
+          class="ui-button-ghost"
+          type="button"
+          [attr.aria-label]="'Reopen note {title}' | t: { title: note().title }"
+          (click)="toggleDone()"
+        >
+          {{ 'Reopen' | t }}
+        </button>
+      } @else {
+        <button
+          class="ui-button-ghost"
+          type="button"
+          [attr.aria-label]="'Mark note {title} as done' | t: { title: note().title }"
+          (click)="toggleDone()"
+        >
+          {{ 'Mark as done' | t }}
+        </button>
+      }
+    }
+    @if (note().status === 'archived') {
+      <button
+        class="ui-button-ghost"
+        type="button"
+        [attr.aria-label]="'Restore note {title}' | t: { title: note().title }"
+        (click)="toggleArchive()"
+      >
+        {{ 'Restore' | t }}
+      </button>
+    } @else {
+      <button
+        class="ui-button-ghost"
+        type="button"
+        [attr.aria-label]="'Archive note {title}' | t: { title: note().title }"
+        (click)="toggleArchive()"
+      >
+        {{ 'Archive' | t }}
+      </button>
+    }
+    <button
+      class="ui-button-ghost"
+      type="button"
+      [attr.aria-label]="'Delete note {title}' | t: { title: note().title }"
+      (click)="remove.emit(note())"
+    >
+      {{ 'Delete' | t }}
+    </button>
+  </div>
+</article>

@@ -1,7 +1,7 @@
 ---
 id: 302
 title: Web NoteItem component
-status: in-progress
+status: done
 wave: 3
 depends_on: [102, 104]
 priority: high
@@ -43,9 +43,9 @@ Selector `app-note-item`; input `note: Note`; outputs `edit: Note`, `statusChang
 | Archived goal | no Done toggle, only Restore/Edit/Delete |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] No file over 500 lines, no function over 20 lines.
-- [ ] State is conveyed in text, not only by color.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] No file over 500 lines, no function over 20 lines.
+- [x] State is conveyed in text, not only by color.
 
 ## Out of scope
 The form (303), store/page wiring (401), translations (104).
