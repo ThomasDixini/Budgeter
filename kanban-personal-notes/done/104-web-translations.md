@@ -1,7 +1,7 @@
 ---
 id: 104
 title: Web PT-BR translations for notes
-status: in-progress
+status: done
 wave: 1
 depends_on: []
 priority: medium
@@ -25,8 +25,8 @@ The Angular app's texts are English (the key is the English text) with Brazilian
 4. Run the full web test suite. If `translator.spec.ts` (or any spec) fails because a new `{placeholder}` key now shadows an existing sentence, rename only that new key by changing its wording slightly (e.g. `Last edited {date}` → `Edited on {date}`), report the rename so the board and the UI tasks can follow, and re-run.
 
 ## Acceptance criteria
-- [ ] Every key of the table exists exactly once across the translations folder (or was skipped as an identical existing one), checked with grep.
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] Every key of the table exists exactly once across the translations folder (or was skipped as an identical existing one), checked with grep.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
 
 ## Out of scope
 Any component or template; English texts need no file.
