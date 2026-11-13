@@ -162,10 +162,6 @@ If a key already exists with the same PT-BR value, skip it; with a different val
 ## Backlog
 | ID | Wave | Task | Priority | Estimate | Depends on |
 |----|------|------|----------|----------|------------|
-| 101 | 1 | API domain: Note, kind, status, repository port | high | M | – |
-| 102 | 1 | Web model, gateway port, HTTP + fake gateways | high | S | – |
-| 103 | 1 | Web pure filter and search | medium | S | – |
-| 104 | 1 | Web PT-BR translations | medium | XS | – |
 | 201 | 2 | API use cases (+ in-memory fake) | high | M | 101 |
 | 202 | 2 | SQLite table and repository | high | M | 101 |
 | 203 | 2 | Web NotesStore | high | S | 102 |
@@ -180,4 +176,9 @@ If a key already exists with the same PT-BR value, skip it; with a different val
 _(empty)_
 
 ## Done
-_(empty)_
+| ID | Task |
+|----|------|
+| 101 | API domain: Note, kind, status, repository port |
+| 102 | Web model, gateway port, HTTP + fake gateways |
+| 103 | Web pure filter and search |
+| 104 | Web PT-BR translations |
