@@ -162,7 +162,6 @@ If a key already exists with the same PT-BR value, skip it; with a different val
 ## Backlog
 | ID | Wave | Task | Priority | Estimate | Depends on |
 |----|------|------|----------|----------|------------|
-| 401 | 4 | Notes page, route and tab | high | M | 103, 203, 204, 302, 303 |
 | 501 | 5 | E2E test and TODO ticks | medium | S | 301, 401 |
 
 ## In progress
@@ -182,3 +181,4 @@ _(empty)_
 | 301 | API endpoints, DI registration, endpoint tests |
 | 302 | Web NoteItem component |
 | 303 | Web NoteForm component |
+| 401 | Notes page, route and tab |

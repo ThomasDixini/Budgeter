@@ -1,7 +1,7 @@
 ---
 id: 501
 title: E2E test for notes and TODO ticks
-status: backlog
+status: in-progress
 wave: 5
 depends_on: [301, 401]
 priority: medium
