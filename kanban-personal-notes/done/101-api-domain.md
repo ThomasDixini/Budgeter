@@ -1,7 +1,7 @@
 ---
 id: 101
 title: API domain - Note, kind, status, repository port
-status: in-progress
+status: done
 wave: 1
 depends_on: []
 priority: high
@@ -46,9 +46,9 @@ Exactly BOARD.md "Server types" (task 101 block): `NoteKind { Goal, Note, Idea }
 | Same status set twice | accepted, `UpdatedAt` refreshed |
 
 ## Acceptance criteria
-- [ ] `dotnet build Orbit.slnx` has 0 warnings; `dotnet test Orbit.slnx` passes with the new tests; `dotnet format Orbit.slnx --no-restore --verify-no-changes` is clean.
-- [ ] Public signatures match BOARD.md exactly.
-- [ ] Every function is 4–20 lines and no file passes 500 lines.
+- [x] `dotnet build Orbit.slnx` has 0 warnings; `dotnet test Orbit.slnx` passes with the new tests; `dotnet format Orbit.slnx --no-restore --verify-no-changes` is clean.
+- [x] Public signatures match BOARD.md exactly.
+- [x] Every function is 4–20 lines and no file passes 500 lines.
 
 ## Out of scope
 SQLite, use cases, endpoints, DI registration, the in-memory repository fake (task 201), any web code.
