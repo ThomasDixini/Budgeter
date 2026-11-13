@@ -1,7 +1,7 @@
 ---
 id: 204
 title: Web demo gateway and binding
-status: in-progress
+status: done
 wave: 2
 depends_on: [102]
 priority: medium
@@ -27,8 +27,8 @@ The app has a DEMO mode (header DEMO button or `?demo=on`) that serves sample da
 4. Spec: seeded list order and kinds/statuses; save a new note and edit one (created stays, updated moves); set status; delete; dates are relative to the clock (run with another demo clock year and check the seeded `updatedAt` follow it).
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] Demo data is relative to the demo clock.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] Demo data is relative to the demo clock.
 
 ## Out of scope
 Editing `demo-routines-gateways.ts`, the store, UI.
