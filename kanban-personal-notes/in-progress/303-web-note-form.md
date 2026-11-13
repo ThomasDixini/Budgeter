@@ -1,7 +1,7 @@
 ---
 id: 303
 title: Web NoteForm component
-status: backlog
+status: in-progress
 wave: 3
 depends_on: [102, 104]
 priority: high

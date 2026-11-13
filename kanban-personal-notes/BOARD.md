@@ -162,10 +162,6 @@ If a key already exists with the same PT-BR value, skip it; with a different val
 ## Backlog
 | ID | Wave | Task | Priority | Estimate | Depends on |
 |----|------|------|----------|----------|------------|
-| 201 | 2 | API use cases (+ in-memory fake) | high | M | 101 |
-| 202 | 2 | SQLite table and repository | high | M | 101 |
-| 203 | 2 | Web NotesStore | high | S | 102 |
-| 204 | 2 | Web demo gateway and binding | medium | S | 102 |
 | 301 | 3 | API endpoints, DI registration, endpoint tests | high | M | 201, 202 |
 | 302 | 3 | Web NoteItem component | high | M | 102, 104 |
 | 303 | 3 | Web NoteForm component | high | M | 102, 104 |
@@ -182,3 +178,7 @@ _(empty)_
 | 102 | Web model, gateway port, HTTP + fake gateways |
 | 103 | Web pure filter and search |
 | 104 | Web PT-BR translations |
+| 201 | API use cases (+ in-memory fake) |
+| 202 | SQLite table and repository |
+| 203 | Web NotesStore |
+| 204 | Web demo gateway and binding |
