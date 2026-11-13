@@ -1,7 +1,7 @@
 ---
 id: 501
 title: E2E test for notes and TODO ticks
-status: in-progress
+status: done
 wave: 5
 depends_on: [301, 401]
 priority: medium
@@ -37,8 +37,8 @@ Lessons from earlier boards: locate tab links inside `getByRole('navigation', { 
 4. Run the whole E2E suite once (`npx playwright test` in `apps/web`, long timeout) to confirm nothing else broke.
 
 ## Acceptance criteria
-- [ ] `npm run e2e:typecheck`, `npx prettier --check .` (the e2e files) and `npm run lint` pass; the new spec passes on the desktop and mobile projects; the full suite stays green.
-- [ ] The spec uses unique names and no global assertions.
+- [x] `npm run e2e:typecheck`, `npx prettier --check .` (the e2e files) and `npm run lint` pass; the new spec passes on the desktop and mobile projects; the full suite stays green.
+- [x] The spec uses unique names and no global assertions.
 
 ## Out of scope
 Application code changes (report a bug instead).

@@ -33,6 +33,6 @@
 - [x] Charts
 
 ## Goals & personal notes
-- [ ] Write down goals and important notes for myself (examples: leaving the comfort zone, Cambly, sales, etc.)
-- [ ] A place to keep ideas and tasks that have no defined scope or date yet, just so they are recorded
+- [x] Write down goals and important notes for myself (examples: leaving the comfort zone, Cambly, sales, etc.)
+- [x] A place to keep ideas and tasks that have no defined scope or date yet, just so they are recorded
 
