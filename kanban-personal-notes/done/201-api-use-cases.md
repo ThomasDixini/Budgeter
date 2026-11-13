@@ -1,7 +1,7 @@
 ---
 id: 201
 title: API use cases - save, set status, delete, list
-status: in-progress
+status: done
 wave: 2
 depends_on: [101]
 priority: high
@@ -42,9 +42,9 @@ BOARD.md "Server types", task 201 block. Constructors: `SaveNote(INoteRepository
 | Status of an unknown id | not found (404 in the endpoint) |
 
 ## Acceptance criteria
-- [ ] `dotnet build Orbit.slnx` 0 warnings; `dotnet test Orbit.slnx` passes; `dotnet format Orbit.slnx --no-restore --verify-no-changes` clean.
-- [ ] Every scenario of the test list has a test.
-- [ ] Functions 4–20 lines, files < 500 lines.
+- [x] `dotnet build Orbit.slnx` 0 warnings; `dotnet test Orbit.slnx` passes; `dotnet format Orbit.slnx --no-restore --verify-no-changes` clean.
+- [x] Every scenario of the test list has a test.
+- [x] Functions 4–20 lines, files < 500 lines.
 
 ## Out of scope
 SQLite, endpoints, `Program.cs` DI registration (task 301).
