@@ -1,7 +1,7 @@
 ---
 id: 303
 title: Web NoteForm component
-status: in-progress
+status: done
 wave: 3
 depends_on: [102, 104]
 priority: high
@@ -41,8 +41,8 @@ Selector `app-note-form`; input `note: Note | null` (null = new); outputs `saved
 | Pasted text over 4000 chars | blocked/cut, never emitted over the limit |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] Keyboard operable; every field has a label; phone width without sideways scrolling.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] Keyboard operable; every field has a label; phone width without sideways scrolling.
 
 ## Out of scope
 The item (302), store and page wiring (401), translations (104).

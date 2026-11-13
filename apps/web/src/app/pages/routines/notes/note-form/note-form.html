@@ -1,0 +1,61 @@
+<form
+  class="note-form ui-enter"
+  [attr.aria-label]="(isEditing() ? 'Edit note' : 'New note') | t"
+  (submit)="submit($event)"
+  (keydown.escape)="cancelled.emit()"
+>
+  <h3 class="heading">{{ (isEditing() ? 'Edit note' : 'New note') | t }}</h3>
+
+  <div class="fields">
+    <label class="ui-field">
+      {{ 'Note kind' | t }}
+      <select class="ui-input" name="kind" (change)="chooseKind(valueOf($event))">
+        @for (option of kindOptions(); track option.value) {
+          <option [value]="option.value" [selected]="option.value === kind()">
+            {{ option.label | t }}
+          </option>
+        }
+      </select>
+    </label>
+
+    <label class="ui-field">
+      {{ 'Note title' | t }}
+      <input
+        class="ui-input"
+        name="title"
+        type="text"
+        autocomplete="off"
+        required
+        [maxLength]="maxTitleLength"
+        [value]="title()"
+        (input)="title.set(valueOf($event))"
+      />
+    </label>
+
+    <label class="ui-field body">
+      {{ 'Note text' | t }}
+      <textarea
+        class="ui-input"
+        name="body"
+        [rows]="bodyRows"
+        [maxLength]="maxBodyLength"
+        [value]="body()"
+        (input)="body.set(valueOf($event))"
+      ></textarea>
+      <span class="counter" aria-live="polite">
+        @if (isCounterVisible()) {
+          {{ '{count} / {max} characters' | t: { count: bodyLength(), max: maxBodyLength } }}
+        }
+      </span>
+    </label>
+  </div>
+
+  <div class="actions">
+    <button class="ui-button-ghost" type="button" (click)="cancelled.emit()">
+      {{ 'Cancel' | t }}
+    </button>
+    <button class="ui-button-primary" type="submit" [disabled]="!canSave()">
+      {{ 'Save' | t }}
+    </button>
+  </div>
+</form>
