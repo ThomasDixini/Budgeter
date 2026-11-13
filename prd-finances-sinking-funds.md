@@ -103,5 +103,5 @@ No feature flag; a new table only, so no data migration.
 
 - Assumption: fixed date means a yearly date; monthly-on-a-day is already covered by monthly bills.
 - Assumption: the category of a fund must be an expense category.
-- Open: should the monthly set-aside also be shown in the Overview or the income split? Left out for now.
-- Open: when several cycles were missed, one bill per cycle is created (up to 12); confirm this is wanted rather than a single bill.
+- Decided: the monthly set-aside is not shown in the Overview or the income split in this MVP slice; it stays on the To pay & receive page.
+- Decided: when several cycles were missed, one bill per cycle is created (up to 12 per roll), so each missed payment stays visible and can be settled on its own.
