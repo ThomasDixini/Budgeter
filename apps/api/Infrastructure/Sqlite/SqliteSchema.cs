@@ -30,7 +30,7 @@ internal static class SqliteSchema
         "routine_rotation_steps", "tasks", "task_completions", "block_outcomes",
         "finance_categories", "accounts", "transactions", "card_payments", "bills", "sinking_funds", "investments",
         "investment_trades", "investment_incomes", "income_split", "income_split_parts",
-        "income_split_categories",
+        "income_split_categories", "notes",
     ];
 
     private const string CreateTables = """
@@ -133,6 +133,18 @@ internal static class SqliteSchema
             FOREIGN KEY (user_id, task_id) REFERENCES tasks (user_id, id) ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS ix_task_completions_date ON task_completions (user_id, date);
+        CREATE TABLE IF NOT EXISTS notes (
+            user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+            id TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            title TEXT NOT NULL,
+            body TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, id)
+        );
+        CREATE INDEX IF NOT EXISTS ix_notes_updated_at ON notes (user_id, updated_at);
         CREATE TABLE IF NOT EXISTS block_outcomes (
             user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
             routine_id TEXT NOT NULL,

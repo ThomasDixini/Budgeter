@@ -1,7 +1,7 @@
 ---
 id: 202
 title: SQLite table and repository for notes
-status: in-progress
+status: done
 wave: 2
 depends_on: [101]
 priority: high
@@ -53,8 +53,8 @@ CREATE INDEX IF NOT EXISTS ix_notes_updated_at ON notes (user_id, updated_at);
 | Unknown `kind`/`status` text in a row | `InvalidOperationException` naming the value |
 
 ## Acceptance criteria
-- [ ] `dotnet build`, `dotnet test Orbit.slnx`, `dotnet format --no-restore --verify-no-changes` pass.
-- [ ] A database created before this change gains the table on startup (test).
+- [x] `dotnet build`, `dotnet test Orbit.slnx`, `dotnet format --no-restore --verify-no-changes` pass.
+- [x] A database created before this change gains the table on startup (test).
 
 ## Out of scope
 Use cases, endpoints, Program.cs, any web code.
