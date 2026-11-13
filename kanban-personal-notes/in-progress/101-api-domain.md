@@ -1,7 +1,7 @@
 ---
 id: 101
 title: API domain - Note, kind, status, repository port
-status: backlog
+status: in-progress
 wave: 1
 depends_on: []
 priority: high

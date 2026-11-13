@@ -1,7 +1,7 @@
 ---
 id: 104
 title: Web PT-BR translations for notes
-status: backlog
+status: in-progress
 wave: 1
 depends_on: []
 priority: medium
