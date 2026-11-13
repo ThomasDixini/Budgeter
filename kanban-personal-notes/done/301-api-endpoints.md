@@ -1,7 +1,7 @@
 ---
 id: 301
 title: API endpoints, DI registration, endpoint tests
-status: in-progress
+status: done
 wave: 3
 depends_on: [201, 202]
 priority: high
@@ -33,8 +33,8 @@ Use cases (`SaveNote`, `SetNoteStatus`, `DeleteNote`, `ListNotes`) and the SQLit
 | Missing/null `body` | stored as empty text |
 
 ## Acceptance criteria
-- [ ] `dotnet build`, `dotnet test Orbit.slnx` (all), `dotnet format --no-restore --verify-no-changes` pass.
-- [ ] JSON matches BOARD.md exactly (property names and enum strings).
+- [x] `dotnet build`, `dotnet test Orbit.slnx` (all), `dotnet format --no-restore --verify-no-changes` pass.
+- [x] JSON matches BOARD.md exactly (property names and enum strings).
 
 ## Out of scope
 Domain, use cases, SQLite and web changes.
