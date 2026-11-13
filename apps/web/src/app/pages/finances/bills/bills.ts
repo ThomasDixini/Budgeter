@@ -67,8 +67,8 @@ export class Bills {
   private readonly store = inject(BillsStore);
   private readonly sinkingFunds = inject(SinkingFundsStore);
   private readonly locale = inject(LOCALE_ID);
-  /** The funds on screen when a save was sent; the form closes once the list is replaced after it. */
-  private readonly fundsAtSave = signal<readonly SinkingFund[] | null>(null);
+  /** The saves accepted when a save was sent; the form closes once the count grows past it. */
+  private readonly savesAtSend = signal<number | null>(null);
   private hasRefreshedAfterRoll = false;
 
   protected readonly today = this.store.today;
@@ -178,7 +178,7 @@ export class Bills {
   }
 
   protected openFundForm(panel: FundPanel): void {
-    this.fundsAtSave.set(null);
+    this.savesAtSend.set(null);
     this.fundPanel.set(panel);
   }
 
@@ -188,7 +188,7 @@ export class Bills {
    * @example this.saveFund({ id: null, draft: { description: 'IPVA', categoryId: 'transport', amountCents: 120000, schedule: { kind: 'fixedDate', month: 1, day: 15 } } })
    */
   protected saveFund(saved: { id: string | null; draft: SinkingFundDraft }): void {
-    this.fundsAtSave.set(this.funds());
+    this.savesAtSend.set(this.sinkingFunds.savedCount());
     this.sinkingFunds.save(saved.draft, saved.id ?? undefined);
   }
 
@@ -203,10 +203,9 @@ export class Bills {
     this.store.refreshAgenda();
   }
 
-  // A saved list is always a new array, so a changed list after a save means the save went through.
   private closeFundFormAfterSave(): void {
-    const awaited = this.fundsAtSave();
-    if (awaited === null || this.funds() === awaited) return;
+    const awaited = this.savesAtSend();
+    if (awaited === null || this.sinkingFunds.savedCount() === awaited) return;
     untracked(() => this.openFundForm(null));
   }
 

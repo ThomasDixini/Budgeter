@@ -295,11 +295,6 @@ describe('To pay & receive page sinking funds', () => {
     const { fixture, funds } = render(new FakeBillsGateway(), fundsGateway());
 
     fillNewFund(fixture);
-    // The API answers the refresh with the stored list, a new array like any response.
-    funds.overviewToServe = {
-      funds: [FOOD_FUND, { ...FOOD_FUND, id: 'id-1' }],
-      totalMonthlyCents: 20000,
-    };
     submit(fixture, 'New sinking fund');
 
     expect(funds.saved).toEqual([
