@@ -1,7 +1,7 @@
 ---
 id: 203
 title: Web NotesStore
-status: in-progress
+status: done
 wave: 2
 depends_on: [102]
 priority: high
@@ -41,8 +41,8 @@ The Notes page (task 401) shows the user's notes. Its state lives in a store pro
 | Two notes with the same `updatedAt` | ordered by id |
 
 ## Acceptance criteria
-- [ ] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
-- [ ] The spec covers every row above and every item of step 9.
+- [x] `npm run lint`, `npx prettier --check .`, `npx ng test --no-watch` pass in `apps/web`.
+- [x] The spec covers every row above and every item of step 9.
 
 ## Out of scope
 UI, page wiring (401), demo data, the filter (103).
