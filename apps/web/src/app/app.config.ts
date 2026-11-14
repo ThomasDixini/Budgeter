@@ -28,6 +28,7 @@ import {
   DemoRoutinesGateway,
   DemoTasksGateway,
 } from './core/routines/demo/demo-routines-gateways';
+import { DemoNotesGateway } from './core/routines/demo/demo-notes';
 import { HttpRoutineRotationGateway } from './core/routines/http-routine-rotation-gateway';
 import { RoutineRotationGateway } from './core/routines/routine-rotation-gateway';
 import { TranslatedTitleStrategy } from './core/i18n/translated-title-strategy';
@@ -39,7 +40,9 @@ import { HttpGoalsGateway } from './core/routines/http-goals-gateway';
 import { HttpRoutinesGateway } from './core/routines/http-routines-gateway';
 import { BlockOutcomesGateway } from './core/routines/block-outcomes-gateway';
 import { HttpBlockOutcomesGateway } from './core/routines/http-block-outcomes-gateway';
+import { HttpNotesGateway } from './core/routines/http-notes-gateway';
 import { HttpTasksGateway } from './core/routines/http-tasks-gateway';
+import { NotesGateway } from './core/routines/notes-gateway';
 import { RoutinesGateway } from './core/routines/routines-gateway';
 import { TasksGateway } from './core/routines/tasks-gateway';
 import {
@@ -90,6 +93,7 @@ export const appConfig: ApplicationConfig = {
       useClass: isDemo ? DemoRoutineRotationGateway : HttpRoutineRotationGateway,
     },
     { provide: TasksGateway, useClass: isDemo ? DemoTasksGateway : HttpTasksGateway },
+    { provide: NotesGateway, useClass: isDemo ? DemoNotesGateway : HttpNotesGateway },
     {
       provide: BlockOutcomesGateway,
       useClass: isDemo ? DemoBlockOutcomesGateway : HttpBlockOutcomesGateway,

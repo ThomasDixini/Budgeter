@@ -4,6 +4,7 @@ using Orbit.Api.Application.Categories;
 using Orbit.Api.Application.Finances;
 using Orbit.Api.Application.Goals;
 using Orbit.Api.Application.Investments;
+using Orbit.Api.Application.Notes;
 using Orbit.Api.Application.Routines;
 using Orbit.Api.Application.Tasks;
 using Orbit.Api.Application.Users;
@@ -41,6 +42,7 @@ public static class SqlitePersistenceRegistration
         services.AddSingleton<IIncomeSplitRepository, SqliteIncomeSplitRepository>();
         services.AddSingleton<IBillRepository, SqliteBillRepository>();
         services.AddSingleton<ISinkingFundRepository, SqliteSinkingFundRepository>();
+        services.AddSingleton<INoteRepository, SqliteNoteRepository>();
         services.AddSingleton<IInvestmentRepository, SqliteInvestmentRepository>();
         services.AddSingleton<ICdiRateStore, SqliteCdiRateStore>();
         services.AddSingleton<IMonthEndPriceStore, SqliteMonthEndPriceStore>();

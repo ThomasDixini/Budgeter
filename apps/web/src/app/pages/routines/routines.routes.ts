@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { Categories } from './categories/categories';
 import { CategoryDetail } from './category-detail/category-detail';
 import { History } from './history/history';
+import { Notes } from './notes/notes';
 import { RoutineEditor } from './routine-editor/routine-editor';
 import { RoutinesShell } from './routines-shell/routines-shell';
 import { Today } from './today/today';
@@ -21,6 +22,7 @@ export const ROUTINES_ROUTES: Routes = [
         title: 'Category · Routines & Goals',
       },
       { path: 'history', component: History, title: 'History · Routines & Goals' },
+      { path: 'notes', component: Notes, title: 'Notes · Routines & Goals' },
     ],
   },
 ];

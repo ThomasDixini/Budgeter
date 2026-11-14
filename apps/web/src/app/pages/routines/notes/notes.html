@@ -1,0 +1,111 @@
+<div class="page ui-enter">
+  <app-page-heading eyebrow="Routines & Goals" eyebrowIcon="routines" heading="Notes">
+    <button class="ui-button-ghost" type="button" (click)="openForm({ kind: 'new' })">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      {{ 'New note' | t }}
+    </button>
+  </app-page-heading>
+
+  @if (store.hasLoadFailed()) {
+    <app-load-failed message="Could not load the notes." (retry)="store.reload()" />
+  } @else if (store.isLoaded()) {
+    <form class="quick-idea" (submit)="$event.preventDefault(); addIdea()">
+      <label class="ui-field quick-field">
+        {{ 'Jot down an idea' | t }}
+        <input
+          class="ui-input"
+          name="quickIdea"
+          type="text"
+          autocomplete="off"
+          maxlength="80"
+          [value]="quickIdea()"
+          (input)="quickIdea.set(valueOf($event))"
+        />
+      </label>
+      <button class="ui-button-primary" type="submit">{{ 'Add idea' | t }}</button>
+    </form>
+
+    <div class="filters">
+      <div class="chips" role="group" [attr.aria-label]="'Filter notes by kind' | t">
+        @for (chip of kindChips; track chip.value) {
+          <button
+            class="ui-chip"
+            type="button"
+            [attr.aria-pressed]="chip.value === kind()"
+            (click)="setKind(chip.value)"
+          >
+            {{ chip.label | t }}
+          </button>
+        }
+      </div>
+      <div class="chips" role="group" [attr.aria-label]="'Filter notes by status' | t">
+        @for (chip of statusChips; track chip.value) {
+          <button
+            class="ui-chip"
+            type="button"
+            [attr.aria-pressed]="chip.value === status()"
+            (click)="setStatus(chip.value)"
+          >
+            {{ chip.label | t }}
+          </button>
+        }
+      </div>
+      <input
+        class="ui-input search"
+        type="search"
+        [attr.aria-label]="'Search notes' | t"
+        [value]="query()"
+        (input)="query.set(valueOf($event))"
+      />
+    </div>
+  }
+
+  @if (store.hasActionFailed()) {
+    <p class="ui-muted" role="alert">
+      {{ (panel() === null ? 'Could not update the note.' : 'Could not save the note.') | t }}
+    </p>
+  }
+
+  @if (store.isLoaded()) {
+    @if (store.notes().length === 0) {
+      <p class="ui-card empty">{{ 'No notes yet. Write down a goal, a note or an idea.' | t }}</p>
+    } @else if (visible().length === 0) {
+      <div class="ui-card empty">
+        <p>{{ 'Nothing matches these filters.' | t }}</p>
+        @if (hasFilters()) {
+          <button class="ui-button-ghost" type="button" (click)="clearFilters()">
+            {{ 'Clear filters' | t }}
+          </button>
+        }
+      </div>
+    } @else {
+      <ul class="notes">
+        @for (note of visible(); track note.id) {
+          <li class="ui-card">
+            <app-note-item
+              [note]="note"
+              (edit)="openForm({ kind: 'edit', note: $event })"
+              (statusChange)="changeStatus($event)"
+              (remove)="removeNote($event)"
+            />
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  @if (panel() !== null) {
+    <app-note-form [note]="editedNote()" (saved)="saveNote($event)" (cancelled)="openForm(null)" />
+  }
+</div>

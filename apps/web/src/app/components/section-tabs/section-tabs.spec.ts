@@ -45,6 +45,7 @@ describe('SectionTabs', () => {
       'Routine',
       'Categories & Goals',
       'History',
+      'Notes',
     ]);
   });
 });

@@ -6,4 +6,5 @@ export const ROUTINES_SECTIONS: readonly ModuleSection[] = [
   { label: 'Routine', path: '/routines/routine', matchesChildren: false },
   { label: 'Categories & Goals', path: '/routines/categories', matchesChildren: true },
   { label: 'History', path: '/routines/history', matchesChildren: false },
+  { label: 'Notes', path: '/routines/notes', matchesChildren: false },
 ];
